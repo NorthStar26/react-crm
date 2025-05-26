@@ -16,6 +16,7 @@
     "@types/material-ui": "^0.21.12",
     "@types/node": "^20.3.2",
     "@types/react-dom": "^18.2.6",
+    "leven": "^4.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-icons": "^4.10.1",
@@ -26,9 +27,9 @@
     "web-vitals": "^3.3.2"
   },
   "scripts": {
-    "start": "react-app-rewired start",
-    "build": "react-app-rewired build",
-    "test": "react-app-rewired test",
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
@@ -51,9 +52,7 @@
   },
   "devDependencies": {
     "@mui/types": "^7.2.4",
-    "@types/react": "^18.2.14",
-    "customize-cra": "^1.0.0",
-    "react-app-rewired": "^2.2.1"
+    "@types/react": "^18.2.14"
   },
   "overrides": {
     "typescript": "^5.1.6"
