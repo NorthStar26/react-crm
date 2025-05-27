@@ -1,36 +1,25 @@
-FROM ubuntu:20.04
+FROM node:18-slim
 
 ARG APP_NAME
+ENV APP_NAME=${APP_NAME:-react-crm}
 
-# test arg
-RUN test -n "$APP_NAME"
+# Create app directory
+WORKDIR /app
 
-# install system packages
-RUN apt-get update -y
-RUN apt-get install -y \
-  vim \
-  wget \
-  curl \
-  net-tools \
-  xz-utils
-
-# install node
-WORKDIR /opt
-RUN wget https://nodejs.org/dist/v14.19.1/node-v14.19.1-linux-x64.tar.xz
-RUN tar -xvf node-v14.19.1-linux-x64.tar.xz
-ENV PATH="${PATH}:/opt/node-v14.19.1-linux-x64/bin"
-# RUN ln -s /opt/node-v14.19.1-linux-x64/bin/node /usr/bin/
-# RUn ln -s /opt/node-v14.19.1-linux-x64/bin/npm /usr/bin/
-
-# setup user
-RUN useradd -ms /bin/bash ubuntu
-USER ubuntu
-
-# install app
-RUN mkdir -p /home/ubuntu/"$APP_NAME"/"$APP_NAME"
-WORKDIR /home/ubuntu/"$APP_NAME"/"$APP_NAME"
-COPY . .
-RUN echo $PATH
+# Copy package files and install dependencies
+COPY package*.json ./
 RUN npm install
 
+# Copy application code
+COPY . .
+
+# Set environment variables for React
+ENV DISABLE_ESLINT_PLUGIN=true
+ENV GENERATE_SOURCEMAP=false
+
+# Build for production or use development mode
+# RUN npm run build  # Uncomment for production build
+EXPOSE 3000
+
+# Start the app
 CMD ["npm", "start"]

@@ -1,0 +1,4 @@
+DISABLE_ESLINT_PLUGIN=true
+GENERATE_SOURCEMAP=false
+REACT_APP_CLIENT_ID=your_google_auth_client_id
+REACT_APP_API_BASE_URL=http://localhost:8000/api/
