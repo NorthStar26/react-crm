@@ -1,10 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Grid, Stack, Typography, TextField, Button, Alert } from "@mui/material";
 import imgLogo from '../../assets/images/auth/img_logo.png';
 import imgLogin from '../../assets/images/auth/img_login.png';
 import { ActivateAccountUrl } from '../../services/ApiUrls';
 import { fetchData } from '../../components/FetchData';
+
+// Add parseResponse utility function
+function parseResponse(res: any): { success: boolean, error: string | null } {
+  if (!res) return { success: false, error: "No response from server." };
+  if (res.success) return { success: true, error: null };
+  if (res.error) return { success: false, error: res.error };
+  if (typeof res === "string") return { success: false, error: res };
+  return { success: false, error: "Invalid activation key." };
+}
 
 const NewUserSetPassword: React.FC = () => {
   const { activationKey } = useParams<{ activationKey: string }>();
@@ -15,10 +24,23 @@ const NewUserSetPassword: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+  // Check for missing activation key when component mounts
+  useEffect(() => {
+    if (!activationKey) {
+      setError("Invalid activation link. Activation key is missing.");
+    }
+  }, [activationKey]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccess(false);
+
+    // Guard against missing activation key
+    if (!activationKey) {
+      setError("Invalid activation link. Activation key is missing.");
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
