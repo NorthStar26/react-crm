@@ -39,30 +39,10 @@ const NewUserSetPassword: React.FC = () => {
       });
       const res = await fetchData(`${ActivateAccountUrl}/`, 'POST', body, headers);
 
-      // More reliable success/error detection
-      if (
-        (res && res.status && res.status >= 200 && res.status < 300) || 
-        (res && res.success === true) ||
-        (res && res.message && typeof res.message === "string" && 
-         res.message.toLowerCase().includes("success"))
-      ) {
-        setSuccess(true);
-        setError(null);
-      } else {
-        // Process different error response formats
-        if (res && res.detail) {
-          setError(res.detail);
-        } else if (res && res.error) {
-          setError(typeof res.error === 'string' ? res.error : "Failed to set password.");
-        } else if (res && res.message && !res.success) {
-          setError(res.message);
-        } else if (res && res.non_field_errors) {
-          setError(Array.isArray(res.non_field_errors) ? res.non_field_errors[0] : res.non_field_errors);
-        } else {
-          setError("Failed to set password. Please try again.");
-        }
-        setSuccess(false);
-      }
+      // Parse response using utility function
+      const { success: isSuccess, error: errorMessage } = parseResponse(res);
+      setSuccess(isSuccess);
+      setError(errorMessage);
     } catch (err: any) {
       console.error("Password reset error:", err);
       setError(err?.message || "Failed to connect to server. Please check your internet connection.");
