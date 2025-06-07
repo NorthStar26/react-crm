@@ -3,6 +3,8 @@ import { useParams } from "react-router-dom";
 import { Grid, Stack, Typography, TextField, Button, Alert } from "@mui/material";
 import imgLogo from '../../assets/images/auth/img_logo.png';
 import imgLogin from '../../assets/images/auth/img_login.png';
+import backGroundImage from '../../assets/images/auth/newBackGroundImage.jpg';
+import newLogo from '../../assets/images/auth/newLogo.png'; 
 import { ActivateAccountUrl } from '../../services/ApiUrls';
 import { fetchData } from '../../components/FetchData';
 
@@ -84,16 +86,36 @@ const NewUserSetPassword: React.FC = () => {
         <Grid
           container
           item
-          xs={8}
+          xs={6.4}
+          direction='column'
+          justifyContent='center'
+          alignItems='center'
+          className='rightBg'
+          sx={{ height: '100%', overflow: 'hidden', justifyItems: 'center' }}
+        >
+          <Grid item>
+            <Stack sx={{ alignItems: 'center' }}>
+                <img
+                src={newLogo}
+                alt='register_ad_image'
+                className='register-ad-image'
+                style={{  width: '100%' ,maxHeight: '40px' }}
+                />
+            </Stack>
+          </Grid>
+        </Grid>
+        <Grid
+          container
+          item
+          xs={9.6}
           direction='column'
           justifyContent='space-evenly'
           alignItems='center'
           sx={{ height: '100%', overflow: 'hidden' }}
         >
+          
           <Grid item>
-            <Grid sx={{ mt: 2 }}>
-              <img src={imgLogo} alt='register_logo' className='register-logo' />
-            </Grid>
+            
             <Typography variant='h5' style={{ fontWeight: 'bolder', marginTop: 16 }}>
               Set Your Password
             </Typography>
@@ -132,41 +154,21 @@ const NewUserSetPassword: React.FC = () => {
                   type="submit"
                   variant="contained"
                   color="primary"
-                  sx={{ fontWeight: 500, py: 1.2 }}
-                  fullWidth
+                  sx={{ 
+                    fontWeight: 500, 
+                    py: 1, 
+                    width: '120px', 
+                    alignSelf: 'flex-end' 
+                  }}
                   disabled={loading}
                 >
-                  {loading ? "Submitting..." : "Confirm"}
+                  {loading ? "Submitting..." : "Next"}
                 </Button>
               </Stack>
             </form>
           </Grid>
         </Grid>
-        <Grid
-          container
-          item
-          xs={8}
-          direction='column'
-          justifyContent='center'
-          alignItems='center'
-          className='rightBg'
-          sx={{ height: '100%', overflow: 'hidden', justifyItems: 'center' }}
-        >
-          <Grid item>
-            <Stack sx={{ alignItems: 'center' }}>
-              <h3>Welcome to BottleCRM</h3>
-              <p> Free and OpenSource CRM from small medium business.</p>
-              <img
-                src={imgLogin}
-                alt='register_ad_image'
-                className='register-ad-image'
-              />
-              <footer className='register-footer'>
-                bottlecrm.com
-              </footer>
-            </Stack>
-          </Grid>
-        </Grid>
+        
       </Stack>
     </div>
   );
