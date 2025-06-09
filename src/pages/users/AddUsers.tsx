@@ -97,13 +97,34 @@ export function AddUsers() {
     const backbtnHandle = () => {
         navigate('/app/users')
     }
+    // const handleSubmit = (e: any) => {
+    //     e.preventDefault();
+    //     submitForm();
+    // }
+    const validateForm = () => {
+        const errors: Partial<FormData> = {};
+
+        if (!formData.email) errors.email = 'Email is required.';
+        if (!formData.phone) errors.phone = 'Phone is required.';
+
+
+        return Object.keys(errors).length === 0 ? null : errors;
+    };
+
     const handleSubmit = (e: any) => {
         e.preventDefault();
+
+        const validationErrors = validateForm();
+        if (validationErrors) {
+            setUserErrors(validationErrors);
+            return;
+        }
+
         submitForm();
-    }
+    };
     const [errors, setErrors] = useState<FormErrors>({});
     const [profileErrors, setProfileErrors] = useState<FormErrors>({});
-    const [userErrors, setUserErrors] = useState<FormErrors>({});
+    const [userErrors, setUserErrors] = useState<any>({});
     const [formData, setFormData] = useState<FormData>({
         email: '',
         role: 'ADMIN',
@@ -139,7 +160,7 @@ export function AddUsers() {
             'Content-Type': 'application/json',
             Authorization: localStorage.getItem('Token'),
             org: localStorage.getItem('org')
-          }
+        }
         // console.log('Form data:', data);
 
         const data = {
@@ -208,6 +229,14 @@ export function AddUsers() {
     const backBtn = 'Back To Users'
 
     // console.log(formData.profile_pic, 'formData.profile_pic')
+    const validateInternationalPhoneNumber = (phone: string) => {
+        // E.164 international phone number format (starts with + and up to 15 digits)
+        const internationalPhoneRegex = /^\+?[1-9]\d{1,14}$/;
+        return internationalPhoneRegex.test(phone);
+    };
+    // return (
+    //     <>sdfsfdsfdf</>
+    // )
     return (
         <Box sx={{ mt: '60px' }}>
             <CustomAppBar backbtnHandle={backbtnHandle} module={module} backBtn={backBtn} crntPage={crntPage} onCancel={onCancel} onSubmit={handleSubmit} />
@@ -230,16 +259,19 @@ export function AddUsers() {
                                         <div className='fieldContainer'>
                                             <div className='fieldSubContainer'>
                                                 <div className='fieldTitle'>Email</div>
-                                                <RequiredTextField
+                                                <Tooltip title = 'Enter an email' >
+                                                     <RequiredTextField
                                                     required
                                                     name='email'
                                                     value={formData.email}
                                                     onChange={handleChange}
                                                     style={{ width: '70%' }}
                                                     size='small'
-                                                    error={!!profileErrors?.email?.[0] || !!userErrors?.email?.[0]}
-                                                    helperText={profileErrors?.email?.[0] || userErrors?.email?.[0] || ''}
+                                                    error={!!profileErrors?.email || !!userErrors?.email}
+                                                    helperText={profileErrors?.email || userErrors?.email || ''}
                                                 />
+                                                </Tooltip>
+                                               
                                             </div>
                                             <div className='fieldSubContainer'>
                                                 <div className='fieldTitle'>Role</div>
@@ -271,8 +303,8 @@ export function AddUsers() {
                                         <div className='fieldContainer2'>
                                             <div className='fieldSubContainer'>
                                                 <div className='fieldTitle'>Phone Number</div>
-                                                <Tooltip title="Number must starts with +91">
-                                                    <RequiredTextField
+                                                <Tooltip title="Enter a phone number">
+                                                    {/* <RequiredTextField
                                                         name='phone'
                                                         id='outlined-error-helper-text'
                                                         value={formData.phone}
@@ -282,12 +314,33 @@ export function AddUsers() {
                                                         size='small'
                                                         error={!!profileErrors?.phone?.[0] || !!userErrors?.phone?.[0]}
                                                         helperText={profileErrors?.phone?.[0] || userErrors?.phone?.[0] || ''}
+                                                    /> */}
+                                                    <RequiredTextField
+                                                        name="phone"
+                                                        id="outlined-error-helper-text"
+                                                        value={formData.phone}
+                                                        onChange={handleChange}
+                                                        required
+                                                        style={{ width: '70%' }}
+                                                        size="small"
+                                                        error={
+                                                            !!profileErrors?.phone ||
+                                                            !!userErrors?.phone ||
+                                                            (!!formData.phone && !validateInternationalPhoneNumber(formData.phone))
+                                                        }
+                                                        helperText={
+                                                            profileErrors?.phone||
+                                                            userErrors?.phone ||
+                                                            (formData.phone && !validateInternationalPhoneNumber(formData.phone)
+                                                                ? 'Please enter a valid international phone number (e.g. +14155552671)'
+                                                                : '')
+                                                        }
                                                     />
                                                 </Tooltip>
                                             </div>
                                             <div className='fieldSubContainer'>
                                                 <div className='fieldTitle'>Alternate Phone</div>
-                                                <Tooltip title="Number must starts with +91">
+                                                <Tooltip title="Enter a phone number">
                                                     <RequiredTextField
                                                         required
                                                         name='alternate_phone'

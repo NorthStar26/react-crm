@@ -87,7 +87,7 @@ export default function Sidebar(props: any) {
         } else if (location.pathname.split('/')[2] === 'companies') {
             setScreen('companies')
         } else if (location.pathname.split('/')[2] === 'users') {
-            setScreen('users')
+            setScreen('CRM-Admin Dashboard')
         } else if (location.pathname.split('/')[2] === 'cases') {
             setScreen('cases')
         }
