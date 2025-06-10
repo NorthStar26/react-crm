@@ -9,6 +9,7 @@ export const API_URL = `${SERVER}/api`;
 // authurl
 export const LoginUrl = 'auth/login';
 export const RegisterUrl = 'auth/register';
+export const ActivateAccountUrl = 'auth/set-password';
 export const ForgotPasswordUrl = 'auth/forgot-password';
 
 export const AuthUrl = 'auth/google';
