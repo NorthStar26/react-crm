@@ -79,7 +79,7 @@ export default function Login() {
         if (error.status === 400 && error.data) {
           // Check for email/password errors from CustomTokenObtainPairSerializer
           if (error.data.email) {
-            // Бэкенд вернул: {"email": "User with this email not found"}
+            // Backend returned: {"email": "User with this email not found"}
             setLoginError(error.data.email);
             return;
           }

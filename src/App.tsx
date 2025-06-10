@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import Login from './pages/auth/Login';
 import { Home } from './pages/home/Home';
-import NewUserSetPassword from './pages/users/NewUserSetPassword';
+import NewUserSetPassword from './pages/auth/NewUserSetPassword';
 
 function App() {
 
