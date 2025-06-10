@@ -117,8 +117,8 @@ body {
 }
 
 /* auth */
-.rightBg {
-  background-image: url(../assets/images/auth/newBackGroundImage.jpg);
+.leftBg {
+  background-image: url(../assets/images/auth/img_BG.jpg);
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
