@@ -15,7 +15,7 @@ export const CustomToolbar = styled(Toolbar)`
   max-height: 50px !important;
   display: flex;
   justify-content: space-between;
-   backgroundColor: '#ffffff',
+  background-color: #ffffff;
 `;
 export const CustomTab = styled(Tab)`
   height: 36px !important;
