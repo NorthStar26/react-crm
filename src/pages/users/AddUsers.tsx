@@ -100,32 +100,54 @@ export function AddUsers() {
     // setFormData({ ...formData, [name]: newValue });
   };
 
-  const backbtnHandle = () => {
-    navigate('/app/users');
-  };
-  const handleSubmit = (e: any) => {
-    e.preventDefault();
-    submitForm();
-  };
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [profileErrors, setProfileErrors] = useState<FormErrors>({});
-  const [userErrors, setUserErrors] = useState<FormErrors>({});
-  const [formData, setFormData] = useState<FormData>({
-    email: '',
-    role: 'ADMIN',
-    phone: '',
-    alternate_phone: '',
-    address_line: '',
-    street: '',
-    city: '',
-    state: '',
-    pincode: '',
-    country: '',
-    profile_pic: null,
-    has_sales_access: false,
-    has_marketing_access: false,
-    is_organization_admin: false,
-  });
+    const backbtnHandle = () => {
+        navigate('/app/users')
+    }
+    // const handleSubmit = (e: any) => {
+    //     e.preventDefault();
+    //     submitForm();
+    // }
+    const validateForm = () => {
+        const errors: Partial<FormData> = {};
+
+        if (!formData.email) errors.email = 'Email is required.';
+        if (!formData.phone) errors.phone = 'Phone is required.';
+
+
+        return Object.keys(errors).length === 0 ? null : errors;
+    };
+
+    const handleSubmit = (e: any) => {
+        e.preventDefault();
+
+        const validationErrors = validateForm();
+        if (validationErrors) {
+            setUserErrors(validationErrors);
+            return;
+        }
+
+        submitForm();
+    };
+    const [errors, setErrors] = useState<FormErrors>({});
+    const [profileErrors, setProfileErrors] = useState<FormErrors>({});
+    const [userErrors, setUserErrors] = useState<any>({});
+    const [formData, setFormData] = useState<FormData>({
+        email: '',
+        role: 'ADMIN',
+        phone: '',
+        alternate_phone: '',
+        address_line: '',
+        street: '',
+        city: '',
+        state: '',
+        pincode: '',
+        country: '',
+        profile_pic: null,
+        has_sales_access: false,
+        has_marketing_access: false,
+        is_organization_admin: false
+
+    })
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] || null;
@@ -138,16 +160,14 @@ export function AddUsers() {
     }
   };
 
-  const submitForm = () => {
-    const Header = {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      Authorization: localStorage.getItem('Token'),
-      org: localStorage.getItem('org'),
-    };
-    console.log('🚀 Save button clicked');
-    console.log('📝 Form data:', formData);
-    console.log('🔑 Headers:', Header);
+    const submitForm = () => {
+        const Header = {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            Authorization: localStorage.getItem('Token'),
+            org: localStorage.getItem('org')
+        }
+        // console.log('Form data:', data);
 
     const data = {
       email: formData.email,
@@ -213,142 +233,133 @@ export function AddUsers() {
   const crntPage = 'Add Users';
   const backBtn = 'Back To Users';
 
-  // console.log(formData.profile_pic, 'formData.profile_pic')
-  return (
-    <Box sx={{ mt: '60px' }}>
-      <CustomAppBar
-        backbtnHandle={backbtnHandle}
-        module={module}
-        backBtn={backBtn}
-        crntPage={crntPage}
-        onCancel={onCancel}
-        onSubmit={handleSubmit}
-      />
-      <Box sx={{ mt: '120px' }}>
-        <form onSubmit={handleSubmit}>
-          <div style={{ padding: '10px' }}>
-            <div className="leadContainer">
-              <Accordion defaultExpanded style={{ width: '98%' }}>
-                <AccordionSummary
-                  expandIcon={<FiChevronDown style={{ fontSize: '25px' }} />}
-                >
-                  <Typography className="accordion-header">
-                    User Information
-                  </Typography>
-                </AccordionSummary>
-                <Divider className="divider" />
-                <AccordionDetails>
-                  <Box
-                    sx={{ width: '98%', color: '#1A3353', mb: 1 }}
-                    component="form"
-                    noValidate
-                    autoComplete="off"
-                  >
-                    <div className="fieldContainer">
-                      <div className="fieldSubContainer">
-                        <div className="fieldTitle">Email</div>
-                        <RequiredTextField
-                          required
-                          name="email"
-                          value={formData.email}
-                          onChange={handleChange}
-                          style={{ width: '70%' }}
-                          size="small"
-                          error={
-                            !!profileErrors?.email?.[0] ||
-                            !!userErrors?.email?.[0]
-                          }
-                          helperText={
-                            profileErrors?.email?.[0] ||
-                            userErrors?.email?.[0] ||
-                            ''
-                          }
-                        />
-                      </div>
-                      <div className="fieldSubContainer">
-                        <div className="fieldTitle">Role</div>
-                        <FormControl sx={{ width: '70%' }}>
-                          <Select
-                            name="role"
-                            value={formData.role}
-                            open={roleSelectOpen}
-                            onClick={() => setRoleSelectOpen(!roleSelectOpen)}
-                            IconComponent={() => (
-                              <div
-                                onClick={() =>
-                                  setRoleSelectOpen(!roleSelectOpen)
-                                }
-                                className="select-icon-background"
-                              >
-                                {roleSelectOpen ? (
-                                  <FiChevronUp className="select-icon" />
-                                ) : (
-                                  <FiChevronDown className="select-icon" />
-                                )}
-                              </div>
-                            )}
-                            className={'select'}
-                            onChange={handleChange}
-                            error={!!errors?.role?.[0]}
-                          >
-                            {['ADMIN', 'USER'].map((option) => (
-                              <MenuItem key={option} value={option}>
-                                {option}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                          {/* <FormHelperText>{errors?.[0] ? errors[0] : ''}</FormHelperText> */}
-                        </FormControl>
-                      </div>
-                    </div>
-                    <div className="fieldContainer2">
-                      <div className="fieldSubContainer">
-                        <div className="fieldTitle">Phone Number</div>
-                        <Tooltip title="Number must starts with +91">
-                          <RequiredTextField
-                            name="phone"
-                            id="outlined-error-helper-text"
-                            value={formData.phone}
-                            onChange={handleChange}
-                            required
-                            style={{ width: '70%' }}
-                            size="small"
-                            error={
-                              !!profileErrors?.phone?.[0] ||
-                              !!userErrors?.phone?.[0]
-                            }
-                            helperText={
-                              profileErrors?.phone?.[0] ||
-                              userErrors?.phone?.[0] ||
-                              ''
-                            }
-                          />
-                        </Tooltip>
-                      </div>
-                      <div className="fieldSubContainer">
-                        <div className="fieldTitle">Alternate Phone</div>
-                        <Tooltip title="Number must starts with +91">
-                          <RequiredTextField
-                            required
-                            name="alternate_phone"
-                            value={formData.alternate_phone}
-                            onChange={handleChange}
-                            style={{ width: '70%' }}
-                            size="small"
-                            error={
-                              !!profileErrors?.alternate_phone?.[0] ||
-                              !!userErrors?.alternate_phone?.[0]
-                            }
-                            helperText={
-                              profileErrors?.alternate_phone?.[0] ||
-                              userErrors?.alternate_phone?.[0] ||
-                              ''
-                            }
-                          />
-                        </Tooltip>
-                      </div>
-                    </div>
-                    {/* <div className='fieldContainer2'>
+    // console.log(formData.profile_pic, 'formData.profile_pic')
+    const validateInternationalPhoneNumber = (phone: string) => {
+        // E.164 international phone number format (starts with + and up to 15 digits)
+        const internationalPhoneRegex = /^\+?[1-9]\d{1,14}$/;
+        return internationalPhoneRegex.test(phone);
+    };
+    // return (
+    //     <>sdfsfdsfdf</>
+    // )
+    return (
+        <Box sx={{ mt: '60px' }}>
+            <CustomAppBar backbtnHandle={backbtnHandle} module={module} backBtn={backBtn} crntPage={crntPage} onCancel={onCancel} onSubmit={handleSubmit} />
+            <Box sx={{ mt: "120px" }}>
+                <form onSubmit={handleSubmit}>
+                    <div style={{ padding: '10px' }}>
+                        <div className='leadContainer'>
+                            <Accordion defaultExpanded style={{ width: '98%' }}>
+                                <AccordionSummary expandIcon={<FiChevronDown style={{ fontSize: '25px' }} />}>
+                                    <Typography className='accordion-header'>User Information</Typography>
+                                </AccordionSummary>
+                                <Divider className='divider' />
+                                <AccordionDetails>
+                                    <Box
+                                        sx={{ width: '98%', color: '#1A3353', mb: 1 }}
+                                        component='form'
+                                        noValidate
+                                        autoComplete='off'
+                                    >
+                                        <div className='fieldContainer'>
+                                            <div className='fieldSubContainer'>
+                                                <div className='fieldTitle'>Email</div>
+                                                <Tooltip title = 'Enter an email' >
+                                                     <RequiredTextField
+                                                    required
+                                                    name='email'
+                                                    value={formData.email}
+                                                    onChange={handleChange}
+                                                    style={{ width: '70%' }}
+                                                    size='small'
+                                                    error={!!profileErrors?.email || !!userErrors?.email}
+                                                    helperText={profileErrors?.email || userErrors?.email || ''}
+                                                />
+                                                </Tooltip>
+                                               
+                                            </div>
+                                            <div className='fieldSubContainer'>
+                                                <div className='fieldTitle'>Role</div>
+                                                <FormControl sx={{ width: '70%' }}>
+                                                    <Select
+                                                        name='role'
+                                                        value={formData.role}
+                                                        open={roleSelectOpen}
+                                                        onClick={() => setRoleSelectOpen(!roleSelectOpen)}
+                                                        IconComponent={() => (
+                                                            <div onClick={() => setRoleSelectOpen(!roleSelectOpen)} className="select-icon-background">
+                                                                {roleSelectOpen ? <FiChevronUp className='select-icon' /> : <FiChevronDown className='select-icon' />}
+                                                            </div>
+                                                        )}
+                                                        className={'select'}
+                                                        onChange={handleChange}
+                                                        error={!!errors?.role?.[0]}
+                                                    >
+                                                        {['ADMIN', 'USER'].map((option) => (
+                                                            <MenuItem key={option} value={option}>
+                                                                {option}
+                                                            </MenuItem>
+                                                        ))}
+                                                    </Select>
+                                                    {/* <FormHelperText>{errors?.[0] ? errors[0] : ''}</FormHelperText> */}
+                                                </FormControl>
+                                            </div>
+                                        </div>
+                                        <div className='fieldContainer2'>
+                                            <div className='fieldSubContainer'>
+                                                <div className='fieldTitle'>Phone Number</div>
+                                                <Tooltip title="Enter a phone number">
+                                                    {/* <RequiredTextField
+                                                        name='phone'
+                                                        id='outlined-error-helper-text'
+                                                        value={formData.phone}
+                                                        onChange={handleChange}
+                                                        required
+                                                        style={{ width: '70%' }}
+                                                        size='small'
+                                                        error={!!profileErrors?.phone?.[0] || !!userErrors?.phone?.[0]}
+                                                        helperText={profileErrors?.phone?.[0] || userErrors?.phone?.[0] || ''}
+                                                    /> */}
+                                                    <RequiredTextField
+                                                        name="phone"
+                                                        id="outlined-error-helper-text"
+                                                        value={formData.phone}
+                                                        onChange={handleChange}
+                                                        required
+                                                        style={{ width: '70%' }}
+                                                        size="small"
+                                                        error={
+                                                            !!profileErrors?.phone ||
+                                                            !!userErrors?.phone ||
+                                                            (!!formData.phone && !validateInternationalPhoneNumber(formData.phone))
+                                                        }
+                                                        helperText={
+                                                            profileErrors?.phone||
+                                                            userErrors?.phone ||
+                                                            (formData.phone && !validateInternationalPhoneNumber(formData.phone)
+                                                                ? 'Please enter a valid international phone number (e.g. +14155552671)'
+                                                                : '')
+                                                        }
+                                                    />
+                                                </Tooltip>
+                                            </div>
+                                            <div className='fieldSubContainer'>
+                                                <div className='fieldTitle'>Alternate Phone</div>
+                                                <Tooltip title="Enter a phone number">
+                                                    <RequiredTextField
+                                                        required
+                                                        name='alternate_phone'
+                                                        value={formData.alternate_phone}
+                                                        onChange={handleChange}
+                                                        style={{ width: '70%' }}
+                                                        size='small'
+                                                        error={!!profileErrors?.alternate_phone?.[0] || !!userErrors?.alternate_phone?.[0]}
+                                                        helperText={profileErrors?.alternate_phone?.[0] || userErrors?.alternate_phone?.[0] || ''}
+                                                    />
+                                                </Tooltip>
+                                            </div>
+                                        </div>
+                                        {/* <div className='fieldContainer2'>
                                             <div className='fieldSubContainer'>
                                                 <div className='fieldTitle'>Profile picture</div>
                                                 <Stack sx={{ display: 'flex', flexDirection: 'column' }}>

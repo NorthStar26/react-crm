@@ -15,7 +15,7 @@ export const CustomToolbar = styled(Toolbar)`
   max-height: 50px !important;
   display: flex;
   justify-content: space-between;
-  background-color: #1A3353;
+  background-color: #ffffff;
 `;
 export const CustomTab = styled(Tab)`
   height: 36px !important;
@@ -135,7 +135,7 @@ export const TextFieldStyled = styled.div`
 
 export const RequiredTextField = styled(TextField)`
   fieldset {
-    border-left: 3px solid red;
+    // border-left: 3px solid red;
     border-bottom-left-radius: 0px;
     border-top-left-radius: 0px;
     padding-left: 12px;

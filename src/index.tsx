@@ -11,7 +11,7 @@ const root = ReactDOM.createRoot(
 root.render(
   <React.StrictMode>
     <GoogleOAuthProvider clientId={process.env.REACT_APP_CLIENT_ID as string}>
-    <App />
+      <App />
     </GoogleOAuthProvider>
   </React.StrictMode>
 );

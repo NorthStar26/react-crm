@@ -78,31 +78,43 @@ export default function Sidebar(props: any) {
     setOrganizationModal(false);
   };
 
-  useEffect(() => {
-    toggleScreen();
-  }, [navigate]);
+    useEffect(() => {
+        toggleScreen()
+    }, [navigate])
 
-  const toggleScreen = () => {
-    if (
-      location.pathname.split('/')[1] === '' ||
-      location.pathname.split('/')[1] === undefined ||
-      location.pathname.split('/')[2] === 'leads'
-    ) {
-      setScreen('leads');
-    } else if (location.pathname.split('/')[2] === 'contacts') {
-      setScreen('contacts');
-    } else if (location.pathname.split('/')[2] === 'opportunities') {
-      setScreen('opportunities');
-    } else if (location.pathname.split('/')[2] === 'accounts') {
-      setScreen('accounts');
-    } else if (location.pathname.split('/')[2] === 'companies') {
-      setScreen('companies');
-    } else if (location.pathname.split('/')[2] === 'users') {
-      setScreen('users');
-    } else if (location.pathname.split('/')[2] === 'cases') {
-      setScreen('cases');
+    // useEffect(() => {
+    // navigate('/leads')
+    // if (localStorage.getItem('Token') && localStorage.getItem('org')) {
+    //     // setScreen('contacts')
+    //     navigate('/contacts')
+    // }
+    // if (!localStorage.getItem('Token')) {
+    //     navigate('/login')
+    // }
+    // if (!localStorage.getItem('org')) {
+    //     navigate('/organization')
+    // }
+    // toggleScreen()
+    // }, [])
+    const toggleScreen = () => {
+        // console.log(location.pathname.split('/'), 'll')
+        if (location.pathname.split('/')[1] === '' || location.pathname.split('/')[1] === undefined || location.pathname.split('/')[2] === 'leads') {
+            setScreen('leads')
+        } else if (location.pathname.split('/')[2] === 'contacts') {
+            setScreen('contacts')
+        } else if (location.pathname.split('/')[2] === 'opportunities') {
+            setScreen('opportunities')
+        } else if (location.pathname.split('/')[2] === 'accounts') {
+            setScreen('accounts')
+        } else if (location.pathname.split('/')[2] === 'companies') {
+            setScreen('companies')
+        } else if (location.pathname.split('/')[2] === 'users') {
+            setScreen('CRM-Admin Dashboard')
+        } else if (location.pathname.split('/')[2] === 'cases') {
+            setScreen('cases')
+        }
     }
-  };
+  
 
   const userProfile = () => {
     fetchData(`${ProfileUrl}/`, 'GET', null as any, Header1)
