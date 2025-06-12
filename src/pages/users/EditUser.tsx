@@ -27,6 +27,7 @@ import { FaArrowDown, FaTimes, FaUpload } from 'react-icons/fa';
 import { AntSwitch, RequiredTextField } from '../../styles/CssStyled';
 import { FiChevronDown } from '@react-icons/all-files/fi/FiChevronDown';
 import { FiChevronUp } from '@react-icons/all-files/fi/FiChevronUp';
+import { COUNTRIES } from '../../data/countries';
 import '../../styles/style.css';
 
 type FormErrors = {
@@ -38,7 +39,7 @@ type FormErrors = {
   street?: string[];
   city?: string[];
   state?: string[];
-  pincode?: string[];
+  postcode?: string[];
   country?: string[];
   // profile_pic?: string[];
   // has_sales_access?: string[];
@@ -54,7 +55,7 @@ interface FormData {
   street: string;
   city: string;
   state: string;
-  pincode: string;
+  postcode: string;
   country: string;
   // profile_pic: string | null,
   // has_sales_access: boolean,
@@ -81,7 +82,7 @@ export function EditUser() {
     street: '',
     city: '',
     state: '',
-    pincode: '',
+    postcode: '',
     country: '',
     // profile_pic: null,
     // has_sales_access: false,
@@ -90,6 +91,7 @@ export function EditUser() {
   });
   useEffect(() => {
     setFormData(state?.value);
+    
   }, [state?.id]);
 
   useEffect(() => {
@@ -153,7 +155,7 @@ export function EditUser() {
   //                     street: data?.address?.street || '',
   //                     city: data?.address?.city || '',
   //                     state: data?.address?.state || '',
-  //                     pincode: data?.address?.pincode || '',
+  //                     postcode: data?.address?.postcode || '',
   //                     country: data?.address?.country || '',
   //                     profile_pic: data?.user_details?.profile_pic || null,
   //                     has_sales_access: data.has_sales_access || false,
@@ -185,7 +187,7 @@ export function EditUser() {
       street: formData.street,
       city: formData.city,
       state: formData.state,
-      pincode: formData.pincode,
+      postcode: formData.postcode,
       country: formData.country,
       // profile_pic: formData.profile_pic,
       // has_sales_access: formData.has_sales_access,
@@ -220,7 +222,7 @@ export function EditUser() {
       street: '',
       city: '',
       state: '',
-      pincode: '',
+      postcode: '',
       country: '',
       // profile_pic: null,
       // has_sales_access: false,
@@ -468,7 +470,7 @@ export function EditUser() {
                         <TextField
                           required
                           name="address_line"
-                          value={formData.address_line}
+                          value={formData?.address_line}
                           onChange={handleChange}
                           style={{ width: '70%' }}
                           size="small"
@@ -548,21 +550,21 @@ export function EditUser() {
                     </div>
                     <div className="fieldContainer2">
                       <div className="fieldSubContainer">
-                        <div className="fieldTitle">Pincode</div>
+                        <div className="fieldTitle">Postcode</div>
                         <TextField
                           required
-                          name="pincode"
-                          value={formData.pincode}
+                          name="postcode"
+                          value={formData.postcode}
                           onChange={handleChange}
                           style={{ width: '70%' }}
                           size="small"
                           error={
-                            !!profileErrors?.pincode?.[0] ||
-                            !!userErrors?.pincode?.[0]
+                            !!profileErrors?.postcode?.[0] ||
+                            !!userErrors?.postcode?.[0]
                           }
                           helperText={
-                            profileErrors?.pincode?.[0] ||
-                            userErrors?.pincode?.[0] ||
+                            profileErrors?.postcode?.[0] ||
+                            userErrors?.postcode?.[0] ||
                             ''
                           }
                         />
@@ -590,13 +592,11 @@ export function EditUser() {
                                   <FiChevronDown className="select-icon" />
                                 )}
                               </div>
-                            )}
-                            className={'select'}
+                            )}                            className={'select'}
                             onChange={handleChange}
                             error={!!profileErrors?.country?.[0]}
                           >
-                            {state?.countries?.length &&
-                              state?.countries.map((option: any) => (
+                            {COUNTRIES.map((option) => (
                                 <MenuItem key={option[0]} value={option[0]}>
                                   {option[1]}
                                 </MenuItem>
