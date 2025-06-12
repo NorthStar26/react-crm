@@ -276,7 +276,7 @@ export default function Users() {
                                 street: data?.address?.street,
                                 city: data?.address?.city,
                                 state: data?.address?.state,
-                                pincode: data?.address?.postcode,
+                                postcode: data?.address?.postcode,
                                 country: data?.address?.country,
                                 profile_pic: data?.user_details?.profile_pic,
                                 has_sales_access: data?.has_sales_access,

@@ -41,6 +41,7 @@ import {
 } from '../../styles/CssStyled';
 import { FiChevronDown } from '@react-icons/all-files/fi/FiChevronDown';
 import { FiChevronUp } from '@react-icons/all-files/fi/FiChevronUp';
+import { COUNTRIES } from '../../data/countries';
 
 type FormErrors = {
   email?: string[];
@@ -51,7 +52,7 @@ type FormErrors = {
   street?: string[];
   city?: string[];
   state?: string[];
-  pincode?: string[];
+  postcode?: string[];
   country?: string[];
   profile_pic?: string[];
   has_sales_access?: string[];
@@ -67,7 +68,7 @@ interface FormData {
   street: string;
   city: string;
   state: string;
-  pincode: string;
+  postcode: string;
   country: string;
   profile_pic: string | null;
   has_sales_access: boolean;
@@ -140,7 +141,7 @@ export function AddUsers() {
         street: '',
         city: '',
         state: '',
-        pincode: '',
+        postcode: '',
         country: '',
         profile_pic: null,
         has_sales_access: false,
@@ -178,7 +179,7 @@ export function AddUsers() {
       street: formData.street,
       city: formData.city,
       state: formData.state,
-      pincode: formData.pincode,
+      postcode: formData.postcode,
       country: formData.country,
       profile_pic: formData.profile_pic,
       has_sales_access: formData.has_sales_access,
@@ -216,7 +217,7 @@ export function AddUsers() {
       street: '',
       city: '',
       state: '',
-      pincode: '',
+      postcode: '',
       country: '',
       profile_pic: null,
       has_sales_access: false,
@@ -569,29 +570,28 @@ export function AddUsers() {
                     </div>
                     <div className="fieldContainer2">
                       <div className="fieldSubContainer">
-                        <div className="fieldTitle">Pincode</div>
+                        <div className="fieldTitle">Postcode</div>
                         <TextField
                           required
-                          name="pincode"
-                          value={formData.pincode}
+                          name="postcode"
+                          value={formData.postcode}
                           onChange={handleChange}
                           style={{ width: '70%' }}
                           size="small"
                           error={
-                            !!profileErrors?.pincode?.[0] ||
-                            !!userErrors?.pincode?.[0]
+                            !!profileErrors?.postcode?.[0] ||
+                            !!userErrors?.postcode?.[0]
                           }
                           helperText={
-                            profileErrors?.pincode?.[0] ||
-                            userErrors?.pincode?.[0] ||
+                            profileErrors?.postcode?.[0] ||
+                            userErrors?.postcode?.[0] ||
                             ''
                           }
                         />
                       </div>
                       <div className="fieldSubContainer">
                         <div className="fieldTitle">Country</div>
-                        <FormControl sx={{ width: '70%' }}>
-                          <Select
+                        <FormControl sx={{ width: '70%' }}>                          <Select
                             name="country"
                             value={formData.country}
                             open={countrySelectOpen}
@@ -616,8 +616,7 @@ export function AddUsers() {
                             onChange={handleChange}
                             error={!!profileErrors?.country?.[0]}
                           >
-                            {state?.countries?.length &&
-                              state?.countries.map((option: any) => (
+                            {COUNTRIES.map((option) => (
                                 <MenuItem key={option[0]} value={option[0]}>
                                   {option[1]}
                                 </MenuItem>
