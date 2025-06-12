@@ -26,6 +26,17 @@ export const CustomTab = styled(Tab)`
   font-size: 15px;
   padding: 0px 15px;
   border-radius: 5px 5px 0px 0px;
+    /* ---------- when the tab is selected ---------- */
+  &.Mui-selected {
+    background-color: #D6E4FF;   /* ← your softer, slightly darker blue */
+    color: #3f51b5;              /* indigo text (keeps contrast) */
+  }
+
+  /* ---------- when the tab is NOT selected ---------- */
+  &:not(.Mui-selected) {
+    background-color: #284871;   /* dark navy you already had */
+    color: #fff;
+  }
 `;
 
 export const StyledTableCell = styled(TableCell)(({ theme }) => ({
