@@ -83,21 +83,24 @@ export function AddUsers() {
   const [error, setError] = useState(false);
   const [msg, setMsg] = useState('');
   const [responceError, setResponceError] = useState(false);
-
   const handleChange = (e: any) => {
     const { name, value, files, type, checked } = e.target;
+    
+    // Clear errors for the specific field being changed
+    if (profileErrors[name as keyof FormErrors]) {
+      setProfileErrors({ ...profileErrors, [name]: undefined });
+    }
+    if (userErrors[name as keyof FormErrors]) {
+      setUserErrors({ ...userErrors, [name]: undefined });
+    }
+    
     if (type === 'file') {
       setFormData({ ...formData, [name]: e.target.files?.[0] || null });
-    }
-    if (type === 'checkbox') {
+    } else if (type === 'checkbox') {
       setFormData({ ...formData, [name]: checked });
     } else {
       setFormData({ ...formData, [name]: value });
     }
-    // setValidationErrors(({ ...validationErrors, [name]: '' }));
-    // setErrors({});
-    // const newValue = type === 'checkbox' ? checked : value;
-    // setFormData({ ...formData, [name]: newValue });
   };
 
     const backbtnHandle = () => {
@@ -184,27 +187,24 @@ export function AddUsers() {
       has_sales_access: formData.has_sales_access,
       has_marketing_access: formData.has_marketing_access,
       is_organization_admin: formData.is_organization_admin,
-    };
-
-    fetchData(`${UsersUrl}/`, 'POST', JSON.stringify(data), Header)
+    };    fetchData(`${UsersUrl}/`, 'POST', JSON.stringify(data), Header)
       .then((res: any) => {
         console.log('Form data:', res);
-        if (!res.error) {
-          // setResponceError(data.error)
-          // navigate('/contacts')profile_errors
-
-          resetForm();
-          navigate('/app/users');
-        }
-        if (res.error) {
-          // profile_errors
-          // user_errors
-          setError(true);
-          setProfileErrors(res?.errors?.profile_errors);
-          setUserErrors(res?.errors?.user_errors);
-        }
+        resetForm();
+        navigate('/app/users');
       })
-      .catch(() => {});
+      .catch((error: any) => {
+        console.log('Error response:', error);
+        if (error.status === 400 && error.data) {
+          // Handle validation errors from API
+          setError(true);
+          setProfileErrors(error.data?.errors?.profile_errors || {});
+          setUserErrors(error.data?.errors?.user_errors || {});
+        } else {
+          // Handle other errors
+          console.error('Unexpected error:', error);
+        }
+      });
   };
   const resetForm = () => {
     setFormData({
@@ -236,7 +236,7 @@ export function AddUsers() {
     // console.log(formData.profile_pic, 'formData.profile_pic')
     const validateInternationalPhoneNumber = (phone: string) => {
         // E.164 international phone number format (starts with + and up to 15 digits)
-        const internationalPhoneRegex = /^\+?[1-9]\d{1,14}$/;
+        const internationalPhoneRegex = /^\+[1-9]\d{11}$/;
         return internationalPhoneRegex.test(phone);
     };
     // return (
@@ -271,9 +271,15 @@ export function AddUsers() {
                                                     value={formData.email}
                                                     onChange={handleChange}
                                                     style={{ width: '70%' }}
-                                                    size='small'
-                                                    error={!!profileErrors?.email || !!userErrors?.email}
-                                                    helperText={profileErrors?.email || userErrors?.email || ''}
+                                                    size='small'                                                    error={Boolean(
+                                                        (Array.isArray(profileErrors?.email) ? profileErrors?.email[0] : profileErrors?.email) ||
+                                                        (Array.isArray(userErrors?.email) ? userErrors?.email[0] : userErrors?.email)
+                                                    )}
+                                                    helperText={
+                                                        (Array.isArray(profileErrors?.email) ? profileErrors?.email[0] : profileErrors?.email) ||
+                                                        (Array.isArray(userErrors?.email) ? userErrors?.email[0] : userErrors?.email) ||
+                                                        ''
+                                                    }
                                                 />
                                                 </Tooltip>
                                                
@@ -327,17 +333,18 @@ export function AddUsers() {
                                                         onChange={handleChange}
                                                         required
                                                         style={{ width: '70%' }}
-                                                        size="small"
-                                                        error={
-                                                            !!profileErrors?.phone ||
-                                                            !!userErrors?.phone ||
-                                                            (!!formData.phone && !validateInternationalPhoneNumber(formData.phone))
+                                                        size="small"                                                        error={
+                                                            Boolean(
+                                                                (Array.isArray(profileErrors?.phone) ? profileErrors?.phone[0] : profileErrors?.phone) ||
+                                                                (Array.isArray(userErrors?.phone) ? userErrors?.phone[0] : userErrors?.phone) ||
+                                                                (formData.phone && !validateInternationalPhoneNumber(formData.phone))
+                                                            )
                                                         }
                                                         helperText={
-                                                            profileErrors?.phone||
-                                                            userErrors?.phone ||
+                                                            (Array.isArray(profileErrors?.phone) ? profileErrors?.phone[0] : profileErrors?.phone) ||
+                                                            (Array.isArray(userErrors?.phone) ? userErrors?.phone[0] : userErrors?.phone) ||
                                                             (formData.phone && !validateInternationalPhoneNumber(formData.phone)
-                                                                ? 'Please enter a valid international phone number (e.g. +14155552671)'
+                                                                ? 'Please enter a valid(12 digits) international phone number (e.g. +14155552671)'
                                                                 : '')
                                                         }
                                                     />
@@ -352,9 +359,15 @@ export function AddUsers() {
                                                         value={formData.alternate_phone}
                                                         onChange={handleChange}
                                                         style={{ width: '70%' }}
-                                                        size='small'
-                                                        error={!!profileErrors?.alternate_phone?.[0] || !!userErrors?.alternate_phone?.[0]}
-                                                        helperText={profileErrors?.alternate_phone?.[0] || userErrors?.alternate_phone?.[0] || ''}
+                                                        size='small'                                                        error={Boolean(
+                                                            (Array.isArray(profileErrors?.alternate_phone) ? profileErrors?.alternate_phone[0] : profileErrors?.alternate_phone) ||
+                                                            (Array.isArray(userErrors?.alternate_phone) ? userErrors?.alternate_phone[0] : userErrors?.alternate_phone)
+                                                        )}
+                                                        helperText={
+                                                            (Array.isArray(profileErrors?.alternate_phone) ? profileErrors?.alternate_phone[0] : profileErrors?.alternate_phone) ||
+                                                            (Array.isArray(userErrors?.alternate_phone) ? userErrors?.alternate_phone[0] : userErrors?.alternate_phone) ||
+                                                            ''
+                                                        }
                                                     />
                                                 </Tooltip>
                                             </div>
@@ -492,14 +505,13 @@ export function AddUsers() {
                           value={formData.address_line}
                           onChange={handleChange}
                           style={{ width: '70%' }}
-                          size="small"
-                          error={
-                            !!profileErrors?.address_line?.[0] ||
-                            !!userErrors?.address_line?.[0]
-                          }
+                          size="small"                          error={Boolean(
+                            (Array.isArray(profileErrors?.address_line) ? profileErrors?.address_line[0] : profileErrors?.address_line) ||
+                            (Array.isArray(userErrors?.address_line) ? userErrors?.address_line[0] : userErrors?.address_line)
+                          )}
                           helperText={
-                            profileErrors?.address_line?.[0] ||
-                            userErrors?.address_line?.[0] ||
+                            (Array.isArray(profileErrors?.address_line) ? profileErrors?.address_line[0] : profileErrors?.address_line) ||
+                            (Array.isArray(userErrors?.address_line) ? userErrors?.address_line[0] : userErrors?.address_line) ||
                             ''
                           }
                         />
@@ -512,14 +524,13 @@ export function AddUsers() {
                           value={formData.street}
                           onChange={handleChange}
                           style={{ width: '70%' }}
-                          size="small"
-                          error={
-                            !!profileErrors?.street?.[0] ||
-                            !!userErrors?.street?.[0]
-                          }
+                          size="small"                          error={Boolean(
+                            (Array.isArray(profileErrors?.street) ? profileErrors?.street[0] : profileErrors?.street) ||
+                            (Array.isArray(userErrors?.street) ? userErrors?.street[0] : userErrors?.street)
+                          )}
                           helperText={
-                            profileErrors?.street?.[0] ||
-                            userErrors?.street?.[0] ||
+                            (Array.isArray(profileErrors?.street) ? profileErrors?.street[0] : profileErrors?.street) ||
+                            (Array.isArray(userErrors?.street) ? userErrors?.street[0] : userErrors?.street) ||
                             ''
                           }
                         />
@@ -534,14 +545,13 @@ export function AddUsers() {
                           value={formData.city}
                           onChange={handleChange}
                           style={{ width: '70%' }}
-                          size="small"
-                          error={
-                            !!profileErrors?.city?.[0] ||
-                            !!userErrors?.city?.[0]
-                          }
+                          size="small"                          error={Boolean(
+                            (Array.isArray(profileErrors?.city) ? profileErrors?.city[0] : profileErrors?.city) ||
+                            (Array.isArray(userErrors?.city) ? userErrors?.city[0] : userErrors?.city)
+                          )}
                           helperText={
-                            profileErrors?.city?.[0] ||
-                            userErrors?.city?.[0] ||
+                            (Array.isArray(profileErrors?.city) ? profileErrors?.city[0] : profileErrors?.city) ||
+                            (Array.isArray(userErrors?.city) ? userErrors?.city[0] : userErrors?.city) ||
                             ''
                           }
                         />
@@ -554,14 +564,13 @@ export function AddUsers() {
                           value={formData.state}
                           onChange={handleChange}
                           style={{ width: '70%' }}
-                          size="small"
-                          error={
-                            !!profileErrors?.state?.[0] ||
-                            !!userErrors?.state?.[0]
-                          }
+                          size="small"                          error={Boolean(
+                            (Array.isArray(profileErrors?.state) ? profileErrors?.state[0] : profileErrors?.state) ||
+                            (Array.isArray(userErrors?.state) ? userErrors?.state[0] : userErrors?.state)
+                          )}
                           helperText={
-                            profileErrors?.state?.[0] ||
-                            userErrors?.state?.[0] ||
+                            (Array.isArray(profileErrors?.state) ? profileErrors?.state[0] : profileErrors?.state) ||
+                            (Array.isArray(userErrors?.state) ? userErrors?.state[0] : userErrors?.state) ||
                             ''
                           }
                         />
@@ -576,14 +585,13 @@ export function AddUsers() {
                           value={formData.pincode}
                           onChange={handleChange}
                           style={{ width: '70%' }}
-                          size="small"
-                          error={
-                            !!profileErrors?.pincode?.[0] ||
-                            !!userErrors?.pincode?.[0]
-                          }
+                          size="small"                          error={Boolean(
+                            (Array.isArray(profileErrors?.pincode) ? profileErrors?.pincode[0] : profileErrors?.pincode) ||
+                            (Array.isArray(userErrors?.pincode) ? userErrors?.pincode[0] : userErrors?.pincode)
+                          )}
                           helperText={
-                            profileErrors?.pincode?.[0] ||
-                            userErrors?.pincode?.[0] ||
+                            (Array.isArray(profileErrors?.pincode) ? profileErrors?.pincode[0] : profileErrors?.pincode) ||
+                            (Array.isArray(userErrors?.pincode) ? userErrors?.pincode[0] : userErrors?.pincode) ||
                             ''
                           }
                         />
@@ -612,9 +620,11 @@ export function AddUsers() {
                                 )}
                               </div>
                             )}
-                            className={'select'}
-                            onChange={handleChange}
-                            error={!!profileErrors?.country?.[0]}
+                            className={'select'}                            onChange={handleChange}
+                            error={Boolean(
+                              (Array.isArray(profileErrors?.country) ? profileErrors?.country[0] : profileErrors?.country) ||
+                              (Array.isArray(userErrors?.country) ? userErrors?.country[0] : userErrors?.country)
+                            )}
                           >
                             {state?.countries?.length &&
                               state?.countries.map((option: any) => (
@@ -624,9 +634,9 @@ export function AddUsers() {
                               ))}
                           </Select>
                           <FormHelperText>
-                            {profileErrors?.country?.[0]
-                              ? profileErrors?.country?.[0]
-                              : ''}
+                            {(Array.isArray(profileErrors?.country) ? profileErrors?.country[0] : profileErrors?.country) ||
+                             (Array.isArray(userErrors?.country) ? userErrors?.country[0] : userErrors?.country) ||
+                             ''}
                           </FormHelperText>
                         </FormControl>
                       </div>
