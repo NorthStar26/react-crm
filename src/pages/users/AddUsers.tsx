@@ -236,7 +236,7 @@ export function AddUsers() {
     // console.log(formData.profile_pic, 'formData.profile_pic')
     const validateInternationalPhoneNumber = (phone: string) => {
         // E.164 international phone number format (starts with + and up to 15 digits)
-        const internationalPhoneRegex = /^\+?[1-9]\d{1,14}$/;
+        const internationalPhoneRegex = /^\+[1-9]\d{11}$/;
         return internationalPhoneRegex.test(phone);
     };
     // return (
@@ -337,7 +337,7 @@ export function AddUsers() {
                                                             profileErrors?.phone||
                                                             userErrors?.phone ||
                                                             (formData.phone && !validateInternationalPhoneNumber(formData.phone)
-                                                                ? 'Please enter a valid international phone number (e.g. +14155552671)'
+                                                                ? 'Please enter a valid(12 digits) international phone number (e.g. +14155552671)'
                                                                 : '')
                                                         }
                                                     />
