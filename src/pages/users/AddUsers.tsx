@@ -22,6 +22,7 @@ import {
 } from '@mui/material';
 // import { makeStyles } from '@mui/styles'
 // import isEmail from 'validator/lib/isEmail'
+import {  isValidPhoneNumber } from 'libphonenumber-js';
 
 import '../../styles/style.css';
 import { UsersUrl } from '../../services/ApiUrls';
@@ -234,15 +235,38 @@ export function AddUsers() {
   const crntPage = 'Add Users';
   const backBtn = 'Back To Users';
 
-    // console.log(formData.profile_pic, 'formData.profile_pic')
-    const validateInternationalPhoneNumber = (phone: string) => {
-        // E.164 international phone number format (starts with + and up to 15 digits)
-        const internationalPhoneRegex = /^\+[1-9]\d{11}$/;
-        return internationalPhoneRegex.test(phone);
+    
+    const validatePhoneNumber = (phoneNumber: string, countryCode?: string) => {
+      try {
+        // If no country code provided, try to validate as international format
+        if (!countryCode) {
+          return isValidPhoneNumber(phoneNumber);
+        }
+        // Validate with specific country code if provided
+        return isValidPhoneNumber(phoneNumber, countryCode as any);
+      } catch (error) {
+        return false;
+      }
     };
-    // return (
-    //     <>sdfsfdsfdf</>
-    // )
+
+    // Alternative: More strict validation to match Django
+    const validatePhoneNumberStrict = (phoneNumber: string) => {
+      try {
+        // Ensure the number starts with + (international format)
+        if (!phoneNumber.startsWith('+')) {
+          return false;
+        }
+        
+        // Use parsePhoneNumber for more detailed validation
+        const { parsePhoneNumber } = require('libphonenumber-js');
+        const parsed = parsePhoneNumber(phoneNumber);
+        
+        return parsed && parsed.isValid();
+      } catch (error) {
+        return false;
+      }
+    };
+
     return (
         <Box sx={{ mt: '60px' }}>
             <CustomAppBar backbtnHandle={backbtnHandle} module={module} backBtn={backBtn} crntPage={crntPage} onCancel={onCancel} onSubmit={handleSubmit} />
@@ -269,10 +293,12 @@ export function AddUsers() {
                                                      <RequiredTextField
                                                     required
                                                     name='email'
+                                                    
                                                     value={formData.email}
                                                     onChange={handleChange}
                                                     style={{ width: '70%' }}
-                                                    size='small'                                                    error={Boolean(
+                                                    size='small'                                                    
+                                                    error={Boolean(
                                                         (Array.isArray(profileErrors?.email) ? profileErrors?.email[0] : profileErrors?.email) ||
                                                         (Array.isArray(userErrors?.email) ? userErrors?.email[0] : userErrors?.email)
                                                     )}
@@ -334,18 +360,19 @@ export function AddUsers() {
                                                         onChange={handleChange}
                                                         required
                                                         style={{ width: '70%' }}
-                                                        size="small"                                                        error={
+                                                        size="small"
+                                                        error={
                                                             Boolean(
                                                                 (Array.isArray(profileErrors?.phone) ? profileErrors?.phone[0] : profileErrors?.phone) ||
                                                                 (Array.isArray(userErrors?.phone) ? userErrors?.phone[0] : userErrors?.phone) ||
-                                                                (formData.phone && !validateInternationalPhoneNumber(formData.phone))
+                                                                (formData.phone && !validatePhoneNumber(formData.phone))
                                                             )
                                                         }
                                                         helperText={
                                                             (Array.isArray(profileErrors?.phone) ? profileErrors?.phone[0] : profileErrors?.phone) ||
                                                             (Array.isArray(userErrors?.phone) ? userErrors?.phone[0] : userErrors?.phone) ||
-                                                            (formData.phone && !validateInternationalPhoneNumber(formData.phone)
-                                                                ? 'Please enter a valid(12 digits) international phone number (e.g. +14155552671)'
+                                                            (formData.phone && !validatePhoneNumber(formData.phone)
+                                                                ? 'Please enter a valid international phone number (e.g. +14155552671)'
                                                                 : '')
                                                         }
                                                     />
@@ -362,11 +389,15 @@ export function AddUsers() {
                                                         style={{ width: '70%' }}
                                                         size='small'                                                        error={Boolean(
                                                             (Array.isArray(profileErrors?.alternate_phone) ? profileErrors?.alternate_phone[0] : profileErrors?.alternate_phone) ||
-                                                            (Array.isArray(userErrors?.alternate_phone) ? userErrors?.alternate_phone[0] : userErrors?.alternate_phone)
+                                                            (Array.isArray(userErrors?.alternate_phone) ? userErrors?.alternate_phone[0] : userErrors?.alternate_phone) ||
+                                                            (formData.alternate_phone && !validatePhoneNumber(formData.alternate_phone))
                                                         )}
                                                         helperText={
                                                             (Array.isArray(profileErrors?.alternate_phone) ? profileErrors?.alternate_phone[0] : profileErrors?.alternate_phone) ||
                                                             (Array.isArray(userErrors?.alternate_phone) ? userErrors?.alternate_phone[0] : userErrors?.alternate_phone) ||
+                                                            (formData.alternate_phone && !validatePhoneNumber(formData.alternate_phone)
+                                                                ? 'Please enter a valid international phone number (e.g. +14155552671)'
+                                                                : '') ||
                                                             ''
                                                         }
                                                     />
