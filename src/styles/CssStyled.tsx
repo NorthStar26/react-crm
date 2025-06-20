@@ -1,12 +1,28 @@
-import styled from "@emotion/styled";
-import { Button, css, Fab, IconButton, ListItem, ListItemButton, ListItemText, Select, Switch, Tab, TableCell, tableCellClasses, TableRow, TextField, Toolbar } from "@mui/material";
+import styled from '@emotion/styled';
+import {
+  Button,
+  css,
+  Fab,
+  IconButton,
+  ListItem,
+  ListItemButton,
+  ListItemText,
+  Select,
+  Switch,
+  Tab,
+  TableCell,
+  tableCellClasses,
+  TableRow,
+  TextField,
+  Toolbar,
+} from '@mui/material';
 // import css from "styled-jsx/css";
 
 export const GoogleButton = styled(Button)`
   text-decoration: none;
   text-transform: none;
   color: black;
-  border: 1px solid #80808073
+  border: 1px solid #80808073;
 `;
 
 export const CustomToolbar = styled(Toolbar)`
@@ -26,38 +42,38 @@ export const CustomTab = styled(Tab)`
   font-size: 15px;
   padding: 0px 15px;
   border-radius: 5px 5px 0px 0px;
-    /* ---------- when the tab is selected ---------- */
+  /* ---------- when the tab is selected ---------- */
   &.Mui-selected {
-    background-color: #D6E4FF;   /* ← your softer, slightly darker blue */
-    color: #3f51b5;              /* indigo text (keeps contrast) */
+    background-color: #284871; /* ← your softer, slightly darker blue */
+    color: rgb(246, 246, 246); /* indigo text (keeps contrast) */
   }
 
   /* ---------- when the tab is NOT selected ---------- */
   &:not(.Mui-selected) {
-    background-color: #284871;   /* dark navy you already had */
-    color: #fff;
+    background-color: #d6e4ff; /* dark navy you already had */
+    color: #284871;
   }
 `;
 
 export const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
     backgroundColor: 'white',
-    color: '#1A3353'
+    color: '#1A3353',
   },
   [`&.${tableCellClasses.body}`]: {
-    fontSize: 14
-  }
-}))
+    fontSize: 14,
+  },
+}));
 
 export const StyledTableRow = styled(TableRow)(({ theme }) => ({
   '&:nth-of-type(even)': {
-    backgroundColor: '#F2F2F7'
+    backgroundColor: '#F2F2F7',
   },
   color: '#1A3353',
   '&:last-child td, &:last-child th': {
-    border: 0
-  }
-}))
+    border: 0,
+  },
+}));
 
 export const AntSwitch = styled(Switch)(({ theme }) => ({
   width: 28,
@@ -66,11 +82,11 @@ export const AntSwitch = styled(Switch)(({ theme }) => ({
   display: 'flex',
   '&:active': {
     '& .MuiSwitch-thumb': {
-      width: 15
+      width: 15,
     },
     '& .MuiSwitch-switchBase.Mui-checked': {
-      transform: 'translateX(9px)'
-    }
+      transform: 'translateX(9px)',
+    },
   },
   '& .MuiSwitch-switchBase': {
     padding: 2,
@@ -81,15 +97,15 @@ export const AntSwitch = styled(Switch)(({ theme }) => ({
         opacity: 1,
         backgroundColor:
           //  theme.palette.mode === 'dark' ? '#177ddc' :
-          '#1890ff'
-      }
-    }
+          '#1890ff',
+      },
+    },
   },
   '& .MuiSwitch-thumb': {
     boxShadow: '0 2px 4px 0 rgb(0 35 11 / 20%)',
     width: 12,
     height: 12,
-    borderRadius: 6
+    borderRadius: 6,
   },
   '& .MuiSwitch-track': {
     borderRadius: 16 / 2,
@@ -97,12 +113,10 @@ export const AntSwitch = styled(Switch)(({ theme }) => ({
     backgroundColor:
       // theme.palette.mode === 'dark' ? 'rgba(255,255,255,.35)' :
       'rgba(0,0,0,.25)',
-    boxSizing: 'border-box'
-  }
-}))
-export const StyledListItem = styled(ListItem)`
-  
-`;
+    boxSizing: 'border-box',
+  },
+}));
+export const StyledListItem = styled(ListItem)``;
 
 export const StyledListItemButton = styled(ListItemButton)`
   &.Mui-selected {
@@ -131,17 +145,17 @@ export const textFieldStyledc = css`
   }
 `;
 export const TextFieldStyled = styled.div`
-.root {
-  border-left: 2px solid red;
-  height: 40px;
-}
-.fieldHeight {
-  height: 40px;
-}
-.rootBox {
-  border-left: 2px solid red;
-  height: 38px;
-}
+  .root {
+    border-left: 2px solid red;
+    height: 40px;
+  }
+  .fieldHeight {
+    height: 40px;
+  }
+  .rootBox {
+    border-left: 2px solid red;
+    height: 38px;
+  }
 `;
 
 export const RequiredTextField = styled(TextField)`
@@ -193,24 +207,24 @@ export const CustomSelectTextField = styled(TextField)`
   }
 `;
 export const CustomSelectField = styled(TextField)`
-.MuiSelect-icon {
-  background-color: #d3d3d34a;
-  width: 46px;
-  height: 38px;
-  margin-top: -7px;
-  margin-right: -7px;
-}
+  .MuiSelect-icon {
+    background-color: #d3d3d34a;
+    width: 46px;
+    height: 38px;
+    margin-top: -7px;
+    margin-right: -7px;
+  }
 `;
 export const CustomSelectField1 = styled(TextField)`
-.MuiSelect-icon {
-  background-color: #d3d3d34a;
-  width: 30px;
-  height: 30px;
-  margin-top: -3px;
-  margin-right: -7px;
-  border-top-right-radius: 10px;
-  border-bottom-right-radius: 10px;
-}
+  .MuiSelect-icon {
+    background-color: #d3d3d34a;
+    width: 30px;
+    height: 30px;
+    margin-top: -3px;
+    margin-right: -7px;
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+  }
 `;
 export const StyledSelect = styled(Select)`
   & .MuiSelect-icon {
@@ -259,8 +273,8 @@ export const FabLeft = styled(Fab)({
   minWidth: '20px',
   borderRadius: '7px 0px 0px 7px',
   backgroundColor: 'whitesmoke',
-  marginRight:'7px',
-  boxShadow:`0px 1px 1px -1px rgba(0,0,0,0.2), 0px 0px 3px 0px rgba(0,0,0,0.14), 0px 1px 0px 0px rgba(0,0,0,0.12)`
+  marginRight: '7px',
+  boxShadow: `0px 1px 1px -1px rgba(0,0,0,0.2), 0px 0px 3px 0px rgba(0,0,0,0.14), 0px 1px 0px 0px rgba(0,0,0,0.12)`,
 });
 export const FabRight = styled(Fab)({
   height: '40px',
@@ -269,8 +283,8 @@ export const FabRight = styled(Fab)({
   minWidth: '20px',
   borderRadius: '0px 7px 7px 0px',
   backgroundColor: 'whitesmoke',
-  marginLeft:'7px',
-  boxShadow:`0px 1px 1px -1px rgba(0,0,0,0.2), 0px 0px 3px 0px rgba(0,0,0,0.14), 0px 1px 0px 0px rgba(0,0,0,0.12)`
+  marginLeft: '7px',
+  boxShadow: `0px 1px 1px -1px rgba(0,0,0,0.2), 0px 0px 3px 0px rgba(0,0,0,0.14), 0px 1px 0px 0px rgba(0,0,0,0.12)`,
 });
 export const CustomPopupIcon = styled(IconButton)`
   cursor: pointer !important;
@@ -280,7 +294,9 @@ export const CustomPopupIcon = styled(IconButton)`
   height: 40px;
   border-radius: 0;
   background-color: #d3d3d34a;
-  .MuiTouchRipple-root, .Mui-focusVisible, .MuiRipple-root {
+  .MuiTouchRipple-root,
+  .Mui-focusVisible,
+  .MuiRipple-root {
     display: none;
   }
   &:hover {
@@ -290,10 +306,10 @@ export const CustomPopupIcon = styled(IconButton)`
 `;
 export const CustomInputBoxWrapper = styled('div')({
   // width: '200px',
-  borderBottom:'none',
+  borderBottom: 'none',
   height: '150px',
-  borderTopLeftRadius:'10px',
-  borderTopRightRadius:'10px',
+  borderTopLeftRadius: '10px',
+  borderTopRightRadius: '10px',
   border: '1px solid #ccc',
   overflowY: 'auto',
   padding: '8px',
