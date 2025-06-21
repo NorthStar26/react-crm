@@ -141,10 +141,12 @@ export default function Users() {
     try {
       const activeOffset = (activeCurrentPage - 1) * activeRecordsPerPage;
       const inactiveOffset = (inactiveCurrentPage - 1) * inactiveRecordsPerPage;
+      console.log("activeOffset, activeRecordsPerPage", activeOffset, activeRecordsPerPage)
       await fetchData(`${UsersUrl}/?offset=${tab === "active" ? activeOffset : inactiveOffset}&limit=${tab === "active" ? activeRecordsPerPage : inactiveRecordsPerPage}`, 'GET', null as any, Header)
         .then((res: any) => {
           if (!res.error) {
             setActiveUsersCount(res.active_users.active_users_count)
+            //console.log("res?.active_users?.active_users", res?.active_users?.active_users)
             setActiveUsers(res?.active_users?.active_users)
             setInactiveUsersCount(res.inactive_users.inactive_users_count)
             setActiveTotalPages(Math.ceil(res?.active_users?.active_users_count / activeRecordsPerPage));
@@ -253,41 +255,41 @@ export default function Users() {
     setDeleteRowModal(true)
   }
 
-    const getUserDetail = (id: any) => {
-        const Header = {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-            Authorization: localStorage.getItem('Token'),
-            org: localStorage.getItem('org')
-        }
-        fetchData(`${UserUrl}/${id}/`, 'GET', null as any, Header)
-            .then((res) => {
-                console.log(res, 'res');
-                if (!res.error) {
-                    const data = res?.data?.profile_obj
-                    navigate('/app/users/edit-user', {
-                        state: {
-                            value: {
-                                email: data?.user_details?.email,
-                                role: data?.role,
-                                phone: data?.phone,
-                                alternate_phone: data?.alternate_phone,
-                                address_line: data?.address?.address_line,
-                                street: data?.address?.street,
-                                city: data?.address?.city,
-                                state: data?.address?.state,
-                                postcode: data?.address?.postcode,
-                                country: data?.address?.country,
-                                profile_pic: data?.user_details?.profile_pic,
-                                has_sales_access: data?.has_sales_access,
-                                has_marketing_access: data?.has_marketing_access,
-                                is_organization_admin: data?.is_organization_admin,
-                            }, id: id, edit: true
-                        }
-                    })
-                }
-            })
+  const getUserDetail = (id: any) => {
+    const Header = {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      Authorization: localStorage.getItem('Token'),
+      org: localStorage.getItem('org')
     }
+    fetchData(`${UserUrl}/${id}/`, 'GET', null as any, Header)
+      .then((res) => {
+        console.log(res, 'res');
+        if (!res.error) {
+          const data = res?.data?.profile_obj
+          navigate('/app/users/edit-user', {
+            state: {
+              value: {
+                email: data?.user_details?.email,
+                role: data?.role,
+                phone: data?.phone,
+                alternate_phone: data?.alternate_phone,
+                address_line: data?.address?.address_line,
+                street: data?.address?.street,
+                city: data?.address?.city,
+                state: data?.address?.state,
+                postcode: data?.address?.postcode,
+                country: data?.address?.country,
+                profile_pic: data?.user_details?.profile_pic,
+                has_sales_access: data?.has_sales_access,
+                has_marketing_access: data?.has_marketing_access,
+                is_organization_admin: data?.is_organization_admin,
+              }, id: id, edit: true
+            }
+          })
+        }
+      })
+  }
 
   const EditItem = (userId: any) => {
     getUserDetail(userId)

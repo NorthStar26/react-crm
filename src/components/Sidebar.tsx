@@ -27,7 +27,7 @@ import {
   FaTachometerAlt,
   FaUserFriends,
   FaUsers,
-  FaUser 
+  FaUser
 } from 'react-icons/fa';
 import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { fetchData } from './FetchData';
@@ -66,6 +66,7 @@ import logo from '../assets/images/auth/img_logo.png';
 import { StyledListItemButton, StyledListItemText } from '../styles/CssStyled';
 import MyContext from '../context/Context';
 import { logout } from '../services/AuthService';
+import ProfileComponent from "../pages/profile/Profile";
 
 export default function Sidebar(props: any) {
   const navigate = useNavigate();
@@ -197,6 +198,9 @@ export default function Sidebar(props: any) {
   const open = Boolean(anchorEl);
   const id = open ? 'simple-popover' : undefined;
   const context = { drawerWidth: drawerWidth, screen: screen };
+  const clickProfileHandeler = () => {
+    navigate("/app/profile");
+  };
   return (
     <>
       <Box>
@@ -303,7 +307,7 @@ export default function Sidebar(props: any) {
                 </ListItem>
                 <ListItem disablePadding>
                   <StyledListItemButton
-                    onClick={() => setOrganizationModal(!organizationModal)}
+                    onClick={clickProfileHandeler}
                   >
                     <ListItemIcon>
                       <FaUser fill="#3e79f7" />
@@ -429,6 +433,7 @@ export default function Sidebar(props: any) {
               <Route path="/app/cases/add-case" element={<AddCase />} />
               <Route path="/app/cases/edit-case" element={<EditCase />} />
               <Route path="/app/cases/case-details" element={<CaseDetails />} />
+              <Route path="/app/profile" element={<ProfileComponent />} />
             </Routes>
           </Box>
         </MyContext.Provider>
