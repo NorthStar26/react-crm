@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import { Grid, Stack, Typography, TextField, Button, Box } from '@mui/material';
 import { PasswordResetUrl } from '../../services/ApiUrls';
 import { fetchData } from '../../components/FetchData';
@@ -9,6 +10,16 @@ const RequestPasswordReset: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => {
+        navigate('/login');
+      }, 4000); // 4 seconds delay
+      return () => clearTimeout(timer);
+    }
+  }, [success, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
