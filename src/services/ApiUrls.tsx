@@ -11,6 +11,8 @@ export const LoginUrl = 'auth/login';
 export const RegisterUrl = 'auth/register';
 export const ActivateAccountUrl = 'auth/set-password';
 export const ForgotPasswordUrl = 'auth/forgot-password';
+export const PasswordResetUrl = '/auth/password-reset';
+export const PasswordResetConfirmUrl = '/auth/password-reset-confirm';
 
 export const AuthUrl = 'auth/google';
 // org
