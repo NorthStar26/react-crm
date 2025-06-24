@@ -1,20 +1,52 @@
 // @ts-nocheck
-import React, { SyntheticEvent, useEffect, useState, useRef } from 'react'
+import React, { SyntheticEvent, useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Button, Card, Stack, Tab, Table, TableBody, TableContainer, TableHead, TablePagination, TableRow, Tabs, Toolbar, Typography, Paper, TableCell, IconButton, Checkbox, Tooltip, TableSortLabel, alpha, Select, MenuItem, Container, Pagination, Avatar } from '@mui/material'
+import {
+  Box,
+  Button,
+  Card,
+  Stack,
+  Tab,
+  Table,
+  TableBody,
+  TableContainer,
+  TableHead,
+  TablePagination,
+  TableRow,
+  Tabs,
+  Toolbar,
+  Typography,
+  Paper,
+  TableCell,
+  IconButton,
+  Checkbox,
+  Tooltip,
+  TableSortLabel,
+  alpha,
+  Select,
+  MenuItem,
+  Container,
+  Pagination,
+  Avatar,
+} from '@mui/material';
 import { EnhancedTableHead } from '../../components/EnchancedTableHead';
 import { getComparator, stableSort } from '../../components/Sorting';
 import { DeleteModal } from '../../components/DeleteModal';
 import { Spinner } from '../../components/Spinner';
-import { FiPlus } from "@react-icons/all-files/fi/FiPlus";
-import { FiChevronLeft } from "@react-icons/all-files/fi/FiChevronLeft";
-import { FiChevronRight } from "@react-icons/all-files/fi/FiChevronRight";
+import { FiPlus } from '@react-icons/all-files/fi/FiPlus';
+import { FiChevronLeft } from '@react-icons/all-files/fi/FiChevronLeft';
+import { FiChevronRight } from '@react-icons/all-files/fi/FiChevronRight';
 import { FiChevronUp } from '@react-icons/all-files/fi/FiChevronUp';
 import { FiChevronDown } from '@react-icons/all-files/fi/FiChevronDown';
 import { FaAd, FaEdit, FaTrashAlt } from 'react-icons/fa';
 import { fetchData } from '../../components/FetchData';
 import { UsersUrl, UserUrl } from '../../services/ApiUrls';
-import { CustomTab, CustomToolbar, FabLeft, FabRight } from '../../styles/CssStyled';
+import {
+  CustomTab,
+  CustomToolbar,
+  FabLeft,
+  FabRight,
+} from '../../styles/CssStyled';
 import { FiDownload } from 'react-icons/fi';
 import * as XLSX from 'xlsx';
 
@@ -26,8 +58,6 @@ import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 import { ICellRendererParams } from 'ag-grid-community';
 import { Grid } from '@mui/material';
-
-
 
 ModuleRegistry.registerModules([ClientSideRowModelModule]);
 
@@ -43,26 +73,27 @@ const headCells: readonly HeadCell[] = [
     id: 'email',
     numeric: true,
     disablePadding: false,
-    label: 'Email Address'
-  }, {
+    label: 'Email Address',
+  },
+  {
     id: 'phone',
     numeric: true,
     disablePadding: false,
-    label: 'Mobile Number'
+    label: 'Mobile Number',
   },
   {
     id: 'role',
     numeric: true,
     disablePadding: false,
-    label: 'Role'
+    label: 'Role',
   },
   {
     id: 'actions',
     numeric: true,
     disablePadding: false,
-    label: 'Actions'
-  }
-]
+    label: 'Actions',
+  },
+];
 
 type Item = {
   id: string;
@@ -73,28 +104,27 @@ type Item = {
   role?: string;
 };
 export default function Users() {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   const [tab, setTab] = useState('active');
   const [loading, setLoading] = useState(true);
-  const [order, setOrder] = useState('asc')
-  const [orderBy, setOrderBy] = useState('Website')
-  const [deleteItems, setDeleteItems] = useState([])
-  const [page, setPage] = useState(0)
-  const [values, setValues] = useState(10)
-  const [dense] = useState(false)
-  const [rowsPerPage, setRowsPerPage] = useState(10)
-  const [usersData, setUsersData] = useState([])
-  const [deleteItemId, setDeleteItemId] = useState('')
-  const [loader, setLoader] = useState(true)
-  const [isDelete, setIsDelete] = useState(false)
-  const [activeUsers, setActiveUsers] = useState<Item[]>([])
-  const [activeUsersCount, setActiveUsersCount] = useState(0)
-  const [activeUsersOffset, setActiveUsersOffset] = useState(0)
-  const [inactiveUsers, setInactiveUsers] = useState([])
-  const [inactiveUsersCount, setInactiveUsersCount] = useState(0)
-  const [inactiveUsersOffset, setInactiveUsersOffset] = useState(0)
-  const [deleteRowModal, setDeleteRowModal] = useState(false)
-
+  const [order, setOrder] = useState('asc');
+  const [orderBy, setOrderBy] = useState('Website');
+  const [deleteItems, setDeleteItems] = useState([]);
+  const [page, setPage] = useState(0);
+  const [values, setValues] = useState(10);
+  const [dense] = useState(false);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [usersData, setUsersData] = useState([]);
+  const [deleteItemId, setDeleteItemId] = useState('');
+  const [loader, setLoader] = useState(true);
+  const [isDelete, setIsDelete] = useState(false);
+  const [activeUsers, setActiveUsers] = useState<Item[]>([]);
+  const [activeUsersCount, setActiveUsersCount] = useState(0);
+  const [activeUsersOffset, setActiveUsersOffset] = useState(0);
+  const [inactiveUsers, setInactiveUsers] = useState([]);
+  const [inactiveUsersCount, setInactiveUsersCount] = useState(0);
+  const [inactiveUsersOffset, setInactiveUsersOffset] = useState(0);
+  const [deleteRowModal, setDeleteRowModal] = useState(false);
 
   const [selectOpen, setSelectOpen] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
@@ -107,37 +137,40 @@ export default function Users() {
   const [activeTotalPages, setActiveTotalPages] = useState<number>(0);
   const [activeLoading, setActiveLoading] = useState(true);
 
-
   const [inactiveCurrentPage, setInactiveCurrentPage] = useState<number>(1);
-  const [inactiveRecordsPerPage, setInactiveRecordsPerPage] = useState<number>(10);
+  const [inactiveRecordsPerPage, setInactiveRecordsPerPage] =
+    useState<number>(10);
   const [inactiveTotalPages, setInactiveTotalPages] = useState<number>(0);
   const [inactiveLoading, setInactiveLoading] = useState(true);
 
-
-  const gridRef = useRef<AgGridReact>(null)
-  const [gridApi, setGridApi] = useState<any>(null)
-
+  const gridRef = useRef<AgGridReact>(null);
+  const [gridApi, setGridApi] = useState<any>(null);
 
   useEffect(() => {
-    getUsers()
-  }, [tab, activeCurrentPage, activeRecordsPerPage, inactiveCurrentPage, inactiveRecordsPerPage]);
+    getUsers();
+  }, [
+    tab,
+    activeCurrentPage,
+    activeRecordsPerPage,
+    inactiveCurrentPage,
+    inactiveRecordsPerPage,
+  ]);
 
   const handleChangeTab = (e: SyntheticEvent, val: any) => {
-    setTab(val)
-  }
+    setTab(val);
+  };
 
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
   };
-
 
   const getUsers = async () => {
     const Header = {
       Accept: 'application/json',
       'Content-Type': 'application/json',
       Authorization: localStorage.getItem('Token'),
-      org: localStorage.getItem('org')
-    }
+      org: localStorage.getItem('org'),
+    };
     try {
       const activeOffset = (activeCurrentPage - 1) * activeRecordsPerPage;
       const inactiveOffset = (inactiveCurrentPage - 1) * inactiveRecordsPerPage;
@@ -162,98 +195,97 @@ export default function Users() {
     catch (error) {
       console.error('Error fetching data:', error);
     }
-  }
+  };
 
   const userDetail = (userId: any) => {
-    navigate(`/app/users/user-details`, { state: { userId, detail: true } })
-  }
-  const handleRecordsPerPage = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    navigate(`/app/users/user-details`, { state: { userId, detail: true } });
+  };
+  const handleRecordsPerPage = (
+    event: React.ChangeEvent<HTMLSelectElement>
+  ) => {
     if (tab == 'active') {
-      setActiveLoading(true)
+      setActiveLoading(true);
       setActiveRecordsPerPage(parseInt(event.target.value));
       setActiveCurrentPage(1);
     } else {
-      setInactiveLoading(true)
+      setInactiveLoading(true);
       setInactiveRecordsPerPage(parseInt(event.target.value));
       setInactiveCurrentPage(1);
     }
-
   };
   const handlePreviousPage = () => {
     if (tab == 'active') {
-      setActiveLoading(true)
+      setActiveLoading(true);
       setActiveCurrentPage((prevPage) => Math.max(prevPage - 1, 1));
     } else {
-      setInactiveLoading(true)
+      setInactiveLoading(true);
       setInactiveCurrentPage((prevPage) => Math.max(prevPage - 1, 1));
     }
   };
 
   const handleNextPage = () => {
     if (tab == 'active') {
-      setActiveLoading(true)
-      setActiveCurrentPage((prevPage) => Math.min(prevPage + 1, activeTotalPages));
+      setActiveLoading(true);
+      setActiveCurrentPage((prevPage) =>
+        Math.min(prevPage + 1, activeTotalPages)
+      );
     } else {
-      setInactiveLoading(true)
-      setInactiveCurrentPage((prevPage) => Math.min(prevPage + 1, inactiveTotalPages));
+      setInactiveLoading(true);
+      setInactiveCurrentPage((prevPage) =>
+        Math.min(prevPage + 1, inactiveTotalPages)
+      );
     }
   };
   const handleRequestSort = (event: any, property: any) => {
-    const isAsc = orderBy === property && order === 'asc'
-    setOrder(isAsc ? 'desc' : 'asc')
-    setOrderBy(property)
-  }
-
-  const handleClick = (event: React.MouseEvent<unknown>, name: any) => {
+    const isAsc = orderBy === property && order === 'asc';
+    setOrder(isAsc ? 'desc' : 'asc');
+    setOrderBy(property);
   };
+
+  const handleClick = (event: React.MouseEvent<unknown>, name: any) => {};
 
   type SelectedItem = string[];
   const isSelected = (name: string, selected: SelectedItem): boolean => {
     return selected.indexOf(name) !== -1;
   };
 
-
-
   const deleteItemBox = (deleteId: any) => {
-    setDeleteItemId(deleteId)
-    setIsDelete(!isDelete)
-  }
+    setDeleteItemId(deleteId);
+    setIsDelete(!isDelete);
+  };
 
   const onclose = () => {
-    setIsDelete(!isDelete)
-  }
+    setIsDelete(!isDelete);
+  };
 
   const onDelete = (id: any) => {
     const Header = {
       Accept: 'application/json',
       'Content-Type': 'application/json',
       Authorization: localStorage.getItem('Token'),
-      org: localStorage.getItem('org')
-    }
+      org: localStorage.getItem('org'),
+    };
     fetchData(`${UsersUrl}/${id}/`, 'delete', null as any, Header)
       .then((data) => {
         if (!data.error) {
-          getUsers()
-          setIsDelete(false)
+          getUsers();
+          setIsDelete(false);
         }
       })
-      .catch(() => {
-      })
-  }
+      .catch(() => {});
+  };
 
-  const emptyRows =
-    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - 7) : 0
+  const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - 7) : 0;
 
   const onAddUser = () => {
     if (!loading) {
-      navigate('/app/users/add-users')
+      navigate('/app/users/add-users');
     }
-
-  }
+  };
   const deleteRow = (id: any) => {
-    setSelectedId(id)
-    setDeleteRowModal(true)
-  }
+    setSelectedId(id);
+    setDeleteRowModal(true);
+  };
 
   const getUserDetail = (id: any) => {
     const Header = {
@@ -292,32 +324,30 @@ export default function Users() {
   }
 
   const EditItem = (userId: any) => {
-    getUserDetail(userId)
-  }
+    getUserDetail(userId);
+  };
 
   const deleteRowModalClose = () => {
-    setDeleteRowModal(false)
-    setSelectedId([])
-  }
+    setDeleteRowModal(false);
+    setSelectedId([]);
+  };
   const DeleteItem = () => {
     const Header = {
       Accept: 'application/json',
       'Content-Type': 'application/json',
       Authorization: localStorage.getItem('Token'),
-      org: localStorage.getItem('org')
-    }
+      org: localStorage.getItem('org'),
+    };
     fetchData(`${UserUrl}/${selectedId}/`, 'DELETE', null as any, Header)
       .then((res: any) => {
         console.log('delete:', res);
         if (!res.error) {
-          deleteRowModalClose()
-          getUsers()
+          deleteRowModalClose();
+          getUsers();
         }
       })
-      .catch(() => {
-      })
-  }
-
+      .catch(() => {});
+  };
 
   const handleSelectAllClick = () => {
     if (selected.length === activeUsers.length) {
@@ -353,12 +383,18 @@ export default function Users() {
     setIsSelectedId(newIsSelectedId);
   };
   const handleDelete = (id: any) => {
-    console.log(id, 's;ected')
-  }
-  const modalDialog = 'Are You Sure You want to delete this User?'
-  const modalTitle = 'Delete User'
+    console.log(id, 's;ected');
+  };
+  const modalDialog = 'Are You Sure You want to delete this User?';
+  const modalTitle = 'Delete User';
 
-  const recordsList = [[10, '10 Records per page'], [20, '20 Records per page'], [30, '30 Records per page'], [40, '40 Records per page'], [50, '50 Records per page']]
+  const recordsList = [
+    [10, '10 Records per page'],
+    [20, '20 Records per page'],
+    [30, '30 Records per page'],
+    [40, '40 Records per page'],
+    [50, '50 Records per page'],
+  ];
   // console.log(!!(selectedId?.length === 0), 'asd');
   const columnDefs = [
     {
@@ -368,7 +404,12 @@ export default function Users() {
       sortable: true,
       filter: true,
       domLayout: 'normal',
-      cellStyle: { display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' },
+      cellStyle: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100%',
+      },
       cellRenderer: (params: any) => (
         <Stack direction="row" alignItems="center" spacing={1}>
           <Avatar
@@ -383,16 +424,27 @@ export default function Users() {
             {params.value}
           </Typography>
         </Stack>
-      )
+      ),
     },
     {
-      headerName: 'Mobile Number', field: 'phone', flex: 1, sortable: true, filter: true, cellStyle: {
+      headerName: 'Mobile Number',
+      field: 'phone',
+      flex: 1,
+      sortable: true,
+      filter: true,
+      cellStyle: {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
       },
     },
-    { headerName: 'Role', field: 'role', flex: 1, sortable: true, filter: true },
+    {
+      headerName: 'Role',
+      field: 'role',
+      flex: 1,
+      sortable: true,
+      filter: true,
+    },
     {
       headerName: 'Actions',
       field: 'id',
@@ -403,36 +455,35 @@ export default function Users() {
         <Stack direction="row" spacing={1}>
           <IconButton
             size="small"
-            onClick={e => {
-              e.stopPropagation()
-              EditItem(params.value)
+            onClick={(e) => {
+              e.stopPropagation();
+              EditItem(params.value);
             }}
-            sx={{ color: '#0F2A55' }}             // dark-blue edit icon
+            sx={{ color: '#0F2A55' }} // dark-blue edit icon
           >
             <FaEdit />
           </IconButton>
 
           <IconButton
             size="small"
-            onClick={e => {
-              e.stopPropagation()
-              deleteRow(params.value)
+            onClick={(e) => {
+              e.stopPropagation();
+              deleteRow(params.value);
             }}
-            sx={{ color: '#D32F2F' }}            // red trash icon
+            sx={{ color: '#D32F2F' }} // red trash icon
           >
             <FaTrashAlt />
           </IconButton>
         </Stack>
-      )
-    }
-  ]
-  const rowData = (tab === 'active' ? activeUsers : inactiveUsers).map(u => ({
+      ),
+    },
+  ];
+  const rowData = (tab === 'active' ? activeUsers : inactiveUsers).map((u) => ({
     email: u.user_details?.email || '—',
     phone: u.phone || '—',
     role: u.role || '—',
     id: u.id,
-  }))
-
+  }));
 
   // Export all users to Excel
   const exportExcel = async () => {
@@ -469,7 +520,7 @@ export default function Users() {
         ? res.active_users.active_users
         : res.inactive_users.inactive_users;
 
-    const rows = list.map(u => ({
+    const rows = list.map((u) => ({
       Email: u.user_details?.email ?? '',
       Mobile:
         u.phone ||
@@ -513,9 +564,6 @@ export default function Users() {
     },
   };
 
-
-
-
   return (
     <Box sx={{ mt: '60px' }}>
       {/* ---------- top toolbar ---------- */}
@@ -525,20 +573,13 @@ export default function Users() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          p: '8px 16px'
+          p: '8px 16px',
         }}
       >
         {/* LEFT: Tabs */}
         <Tabs value={tab} onChange={handleChangeTab} sx={{ mt: 0 }}>
-          <CustomTab
-            value="active"
-            label="Active"
-          />
-          <CustomTab
-            value="inactive"
-            label="Inactive"
-            sx={{ ml: 1 }}
-          />
+          <CustomTab value="active" label="Active" />
+          <CustomTab value="inactive" label="Inactive" sx={{ ml: 1 }} />
         </Tabs>
 
         {/* RIGHT: Export + Add User */}
@@ -583,11 +624,12 @@ export default function Users() {
       <Container maxWidth={false} disableGutters sx={{ px: 2 }}>
         <Grid container spacing={0}>
           <Grid item xs={12}>
-            <Paper sx={{ width: '100%', mb: 2, p: 0 }}
+            <Paper
+              sx={{ width: '100%', mb: 2, p: 0 }}
               elevation={0}
               square
-              variant="outlined">
-
+              variant="outlined"
+            >
               {/* 1) ag-Grid wrapper (unchanged) */}
               <Box
                 className="ag-theme-alpine"
@@ -595,14 +637,16 @@ export default function Users() {
                   width: '100%',
                   ...gridTheme,
                   '--ag-icon-color': '#FFFFFF',
-                  '& .ag-header-cell-label .ag-icon, & .ag-header-cell-label .ag-icon-wrapper svg': {
-                    fill: '#FFFFFF',
-                    color: '#FFFFFF',
-                  },
-                  '& .ag-sort-ascending-icon, & .ag-sort-descending-icon, & .ag-sort-none-icon': {
-                    fill: '#FFFFFF',
-                    color: '#FFFFFF',
-                  },
+                  '& .ag-header-cell-label .ag-icon, & .ag-header-cell-label .ag-icon-wrapper svg':
+                    {
+                      fill: '#FFFFFF',
+                      color: '#FFFFFF',
+                    },
+                  '& .ag-sort-ascending-icon, & .ag-sort-descending-icon, & .ag-sort-none-icon':
+                    {
+                      fill: '#FFFFFF',
+                      color: '#FFFFFF',
+                    },
                   '& .ag-row': {
                     display: 'flex',
                     alignItems: 'center',
@@ -627,9 +671,9 @@ export default function Users() {
                   rowHeight={56}
                   // onFirstDataRendered={params => params.api.sizeColumnsToFit()}
                   // onGridSizeChanged={params => params.api.sizeColumnsToFit()}
-                  onGridReady={params => {
-                    setGridApi(params.api)
-                    params.api.sizeColumnsToFit()
+                  onGridReady={(params) => {
+                    setGridApi(params.api);
+                    params.api.sizeColumnsToFit();
                   }}
                 />
               </Box>
@@ -649,35 +693,50 @@ export default function Users() {
                   <Typography>Rows&nbsp;per&nbsp;page:</Typography>
                   <Select
                     size="small"
-                    value={tab === 'active' ? activeRecordsPerPage : inactiveRecordsPerPage}
-                    onChange={e => {
-                      const v = parseInt((e.target as HTMLSelectElement).value, 10)
+                    value={
+                      tab === 'active'
+                        ? activeRecordsPerPage
+                        : inactiveRecordsPerPage
+                    }
+                    onChange={(e) => {
+                      const v = parseInt(
+                        (e.target as HTMLSelectElement).value,
+                        10
+                      );
                       if (tab === 'active') {
-                        setActiveRecordsPerPage(v)
-                        setActiveCurrentPage(1)
+                        setActiveRecordsPerPage(v);
+                        setActiveCurrentPage(1);
                       } else {
-                        setInactiveRecordsPerPage(v)
-                        setInactiveCurrentPage(1)
+                        setInactiveRecordsPerPage(v);
+                        setInactiveCurrentPage(1);
                       }
                     }}
                     sx={{ height: 32 }}
                   >
-                    {[10, 20, 30, 40, 50].map(n => (
-                      <MenuItem key={n} value={n}>{n}</MenuItem>
+                    {[10, 20, 30, 40, 50].map((n) => (
+                      <MenuItem key={n} value={n}>
+                        {n}
+                      </MenuItem>
                     ))}
                   </Select>
                   <Typography sx={{ ml: 1 }}>
-                    {`of ${tab === 'active' ? activeUsersCount : inactiveUsersCount} rows`}
+                    {`of ${
+                      tab === 'active' ? activeUsersCount : inactiveUsersCount
+                    } rows`}
                   </Typography>
                 </Stack>
 
                 {/* PAGE PILL NAV */}
                 <Pagination
-                  page={tab === 'active' ? activeCurrentPage : inactiveCurrentPage}
-                  count={tab === 'active' ? activeTotalPages : inactiveTotalPages}
+                  page={
+                    tab === 'active' ? activeCurrentPage : inactiveCurrentPage
+                  }
+                  count={
+                    tab === 'active' ? activeTotalPages : inactiveTotalPages
+                  }
                   onChange={(_e, page) => {
-                    if (tab === 'active') setActiveCurrentPage(page)
-                    else setInactiveCurrentPage(page)
+                    if (tab === 'active') setActiveCurrentPage(page);
+                    else setInactiveCurrentPage(page);
                   }}
                   variant="outlined"
                   shape="rounded"
@@ -719,10 +778,6 @@ export default function Users() {
         modalTitle={modalTitle}
         DeleteItem={DeleteItem}
       />
-    </Box >
-  )
+    </Box>
+  );
 }
-
-
-
-

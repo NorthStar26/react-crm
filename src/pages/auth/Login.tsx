@@ -7,6 +7,7 @@ import {
   Button,
   Box,
   Divider,
+  Link,
 } from '@mui/material';
 import { useGoogleLogin } from '@react-oauth/google';
 import { useNavigate } from 'react-router-dom';
@@ -121,6 +122,7 @@ export default function Login() {
       };
       fetchData(`${AuthUrl}/`, 'POST', JSON.stringify(apiToken), head)
         .then((res: any) => {
+          localStorage.setItem('res', JSON.stringify(res));
           localStorage.setItem('Token', `Bearer ${res.access_token}`);
           setToken(true);
         })
@@ -270,10 +272,24 @@ export default function Login() {
                 sx={{
                   mt: 1,
                   textAlign: 'left',
-                  cursor: 'pointer',
                 }}
               >
-                Forgot your <span style={{ color: 'blue' }}>Password</span>?
+                Forgot your{' '}
+                <Link
+                  component="span"
+                  onClick={() => navigate('/auth/reset-password')}
+                  sx={{
+                    color: 'blue',
+                    cursor: 'pointer',
+                    textDecoration: 'none',
+                    '&:hover': {
+                      textDecoration: 'underline',
+                    },
+                  }}
+                >
+                  Password
+                </Link>
+                ?
               </Typography>
 
               <Button

@@ -1,6 +1,6 @@
 import React, { SyntheticEvent, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom';
-import { Avatar, AvatarGroup, Box, Button, Card, List, Stack, Tab, TablePagination, Tabs, Toolbar, Typography, Link, MenuItem, Select } from '@mui/material'
+import { Avatar, AvatarGroup, Box, Button, Card, List, Stack, Tab, TablePagination, Tabs, Toolbar, Typography, Link, MenuItem, Select, dividerClasses } from '@mui/material'
 import styled from '@emotion/styled';
 import { LeadUrl } from '../../services/ApiUrls';
 import { DeleteModal } from '../../components/DeleteModal';
@@ -382,7 +382,8 @@ export default function Leads(props: any) {
             // leads.open && leads.open
             //   ? stableSort(leads.open && leads.open, getComparator(order, orderBy)).slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((item, index) => (
             // stableSort(openLeads, getComparator(order, orderBy)).slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((item: any, index: any) => (
-            openLeads?.length ? openLeads.map((item: any, index: any) => (
+            //openLeads?.length ? openLeads.map((item: any, index: any) => (
+            openLeads?.length>0 ? openLeads.map((item: any, index: any) => (  
               <Box key={index}>
                 <Box className='lead-box'>
                   <Box className='lead-box1'>
@@ -464,7 +465,8 @@ export default function Leads(props: any) {
                   </Box>
                 </Box>
               </Box>
-            )) : <Spinner />
+           // )) : <Spinner />
+            )) : (<div>No Records</div>)
           }
         </Box>
         : <Box sx={{ p: '10px', mt: '5px' }}>
