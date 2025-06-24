@@ -121,6 +121,7 @@ export default function Login() {
       };
       fetchData(`${AuthUrl}/`, 'POST', JSON.stringify(apiToken), head)
         .then((res: any) => {
+          localStorage.setItem('res', JSON.stringify(res));
           localStorage.setItem('Token', `Bearer ${res.access_token}`);
           setToken(true);
         })

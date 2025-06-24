@@ -19,16 +19,32 @@ import {
   Select,
   FormControl,
   FormHelperText,
+  ButtonBase,
+  styled,
+  Alert,
+  Snackbar,
+  Modal,
+  Slider,
 } from '@mui/material';
 import { UserUrl } from '../../services/ApiUrls';
 import { fetchData } from '../../components/FetchData';
 import { CustomAppBar } from '../../components/CustomAppBar';
-import { FaArrowDown, FaTimes, FaUpload } from 'react-icons/fa';
+import {
+  FaArrowDown,
+  FaCheckCircle,
+  FaTimes,
+  FaTimesCircle,
+  FaUpload,
+} from 'react-icons/fa';
+import { MdOutlineMonochromePhotos } from 'react-icons/md';
 import { AntSwitch, RequiredTextField } from '../../styles/CssStyled';
 import { FiChevronDown } from '@react-icons/all-files/fi/FiChevronDown';
 import { FiChevronUp } from '@react-icons/all-files/fi/FiChevronUp';
 import { COUNTRIES } from '../../data/countries';
 import '../../styles/style.css';
+import { Badge } from '@mui/material';
+import { uploadImageToCloudinary } from '../../utils/uploadImageToCloudinary';
+// import Slider from 'material-ui/Slider';
 
 type FormErrors = {
   email?: string[];
@@ -41,7 +57,10 @@ type FormErrors = {
   state?: string[];
   postcode?: string[];
   country?: string[];
-  // profile_pic?: string[];
+  profile_pic?: string[];
+  first_name?: string[];
+  last_name?: string[];
+  password?: string[];
   // has_sales_access?: string[];
   // has_marketing_access?: string[];
   // is_organization_admin?: string[];
@@ -57,7 +76,9 @@ interface FormData {
   state: string;
   postcode: string;
   country: string;
-  // profile_pic: string | null,
+  profile_pic: string | null;
+  first_name: string;
+  last_name: string;
   // has_sales_access: boolean,
   // has_marketing_access: boolean,
   // is_organization_admin: boolean
@@ -84,14 +105,25 @@ export function EditUser() {
     state: '',
     postcode: '',
     country: '',
-    // profile_pic: null,
+    profile_pic: '',
+    first_name: '',
+    last_name: '',
     // has_sales_access: false,
     // has_marketing_access: false,
     // is_organization_admin: false
   });
+  const [successMessage, setSuccessMessage] = useState(false);
+  const [open, setOpen] = useState(false);
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [info_message, setInfoMessage] = useState(
+    'Profile picture updated successfully!'
+  );
   useEffect(() => {
     setFormData(state?.value);
-    
   }, [state?.id]);
 
   useEffect(() => {
@@ -177,7 +209,23 @@ export function EditUser() {
       Authorization: localStorage.getItem('Token'),
       org: localStorage.getItem('org'),
     };
-    // console.log('Form data:', data);
+
+    // validate the form
+    const errors: FormErrors = {};
+    if (!formData.email || formData.email.trim() === '') {
+      errors.email = ['Email is required'];
+    }
+    if (!formData.first_name || formData.first_name.trim() === '') {
+      errors.first_name = ['First name is required'];
+    }
+    if (!formData.last_name || formData.last_name.trim() === '') {
+      errors.last_name = ['Last name is required'];
+    }
+    if (!formData.phone || formData.phone.trim() === '') {
+      errors.phone = ['Phone number is required'];
+    }
+    setProfileErrors(errors);
+
     const data = {
       email: formData.email,
       role: formData.role,
@@ -189,6 +237,8 @@ export function EditUser() {
       state: formData.state,
       postcode: formData.postcode,
       country: formData.country,
+      first_name: formData.first_name,
+      last_name: formData.last_name,
       // profile_pic: formData.profile_pic,
       // has_sales_access: formData.has_sales_access,
       // has_marketing_access: formData.has_marketing_access,
@@ -224,7 +274,9 @@ export function EditUser() {
       state: '',
       postcode: '',
       country: '',
-      // profile_pic: null,
+      profile_pic: '',
+      first_name: '',
+      last_name: '',
       // has_sales_access: false,
       // has_marketing_access: false,
       // is_organization_admin: false
@@ -244,7 +296,125 @@ export function EditUser() {
     display: 'none',
   };
   // console.log(state, 'edit',profileErrors)
-  // console.log(formData, 'as', state?.value);
+  // console.log(formData, 'as', state);
+
+  const StyledBadge = styled(Badge)(({ theme }) => ({
+    '& .MuiBadge-badge': {
+      backgroundColor: '#44b700',
+      color: '#44b700',
+      boxShadow: `0 0 0 2px ${theme.palette.background.paper}`,
+      '&::after': {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        borderRadius: '50%',
+        animation: 'ripple 1.2s infinite ease-in-out',
+        border: '1px solid currentColor',
+        content: '""',
+      },
+    },
+    '@keyframes ripple': {
+      '0%': {
+        transform: 'scale(.8)',
+        opacity: 1,
+      },
+      '100%': {
+        transform: 'scale(2.4)',
+        opacity: 0,
+      },
+    },
+  }));
+
+  const SmallAvatar = styled(Avatar)(({ theme }) => ({
+    width: 28,
+    height: 28,
+    border: `2px solid ${theme.palette.background.paper}`,
+  }));
+
+  // handle avatar change
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    const { url } = await uploadImageToCloudinary(file as File);
+    if (url) {
+      fetchData(
+        `${UserUrl}/${state?.id}/image/`,
+        'PUT',
+        JSON.stringify({ profile_pic: url, email: formData.email }),
+        {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          Authorization: localStorage.getItem('Token'),
+          org: localStorage.getItem('org'),
+        }
+      )
+        .then((res: any) => {
+          if (!res.error) {
+            setFormData({ ...formData, profile_pic: url });
+            setInfoMessage('Profile picture updated successfully!');
+            setSuccessMessage(true);
+            setTimeout(() => {
+              setSuccessMessage(false);
+            }, 3000);
+          } else {
+            setProfileErrors(
+              res?.errors?.profile_errors || res?.profile_errors[0]
+            );
+          }
+        })
+        .catch((err) => {
+          console.error('Error updating profile picture:', err);
+          setProfileErrors({
+            profile_pic: ['Failed to update profile picture'],
+          });
+        });
+    }
+  };
+
+  const changePassword = async () => {
+    if (newPassword !== confirmPassword) {
+      setProfileErrors({ password: ['Passwords do not match'] });
+      return;
+    }
+    const headers = {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      Authorization: localStorage.getItem('Token'),
+      org: localStorage.getItem('org'),
+    };
+    const body = JSON.stringify({
+      current_password: currentPassword,
+      new_password: newPassword,
+      confirm_password: confirmPassword,
+      email: formData.email,
+    });
+    fetchData(`auth/reset-password/`, 'PUT', body, headers)
+      .then((res: any) => {
+        if (!res.error) {
+          setOpen(false);
+          setCurrentPassword('');
+          setNewPassword('');
+          setConfirmPassword('');
+          setInfoMessage('Password changed successfully!');
+          setSuccessMessage(true);
+        } else {
+          setProfileErrors(
+            res?.errors?.profile_errors || res?.profile_errors[0]
+          );
+        }
+      })
+      .catch((err) => {
+        if (err?.data?.current_password) {
+          setProfileErrors({ password: err.data.current_password });
+        } else {
+          console.error('Error changing password:', err);
+          setProfileErrors({ password: ['Failed to change password'] });
+        }
+      });
+  };
+
+  console.log(formData, 'formData');
   return (
     <Box sx={{ mt: '60px' }}>
       <CustomAppBar
@@ -255,8 +425,24 @@ export function EditUser() {
         onCancel={onCancel}
         onSubmit={handleSubmit}
       />
+
       <Box sx={{ mt: '120px' }}>
         <form onSubmit={handleSubmit}>
+          <Snackbar
+            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+            autoHideDuration={5000}
+            onClose={() => setSuccessMessage(false)}
+            open={successMessage}
+            message={info_message}
+            key={'top' + 'center'}
+            // set color to green
+            sx={{
+              '& .MuiSnackbarContent-root': {
+                backgroundColor: '#4caf50', // Green color for success
+                color: '#fff',
+              },
+            }}
+          />
           <div style={{ padding: '10px' }}>
             <div className="leadContainer">
               <Accordion defaultExpanded style={{ width: '98%' }}>
@@ -269,12 +455,122 @@ export function EditUser() {
                 </AccordionSummary>
                 <Divider className="divider" />
                 <AccordionDetails>
+                  {/* Display user avatar */}
+                  <Box
+                    sx={{
+                      width: '98%',
+                      mb: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexDirection: 'column',
+                    }}
+                    component="form"
+                    noValidate
+                    autoComplete="off"
+                  >
+                    <ButtonBase
+                      component="label"
+                      role={undefined}
+                      tabIndex={-1} // prevent label from tab focus
+                      aria-label="Avatar image"
+                      sx={{
+                        borderRadius: '40px',
+                        '&:has(:focus-visible)': {
+                          outline: '2px solid',
+                          outlineOffset: '2px',
+                        },
+                      }}
+                    >
+                      <Badge
+                        overlap="circular"
+                        anchorOrigin={{
+                          vertical: 'bottom',
+                          horizontal: 'right',
+                        }}
+                        badgeContent={
+                          <MdOutlineMonochromePhotos color="green" size={24} />
+                        }
+                      >
+                        <Avatar
+                          alt="profile image"
+                          src={formData.profile_pic || ''}
+                          sx={{
+                            width: 100,
+                            height: 100,
+                            border: '2px solid #FCDDEC',
+                            p: 0.5,
+                          }}
+                        />
+                      </Badge>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        style={{
+                          border: 0,
+                          clip: 'rect(0 0 0 0)',
+                          height: '1px',
+                          margin: '-1px',
+                          overflow: 'hidden',
+                          padding: 0,
+                          position: 'absolute',
+                          whiteSpace: 'nowrap',
+                          width: '1px',
+                        }}
+                        onChange={handleAvatarChange}
+                      />
+                    </ButtonBase>
+                  </Box>
                   <Box
                     sx={{ width: '98%', color: '#1A3353', mb: 1 }}
                     component="form"
                     noValidate
                     autoComplete="off"
                   >
+                    <div className="fieldContainer2">
+                      <div className="fieldSubContainer">
+                        <div className="fieldTitle">First Name</div>
+
+                        <RequiredTextField
+                          required
+                          name="first_name"
+                          value={formData.first_name}
+                          onChange={handleChange}
+                          style={{ width: '70%' }}
+                          size="small"
+                          error={
+                            !!profileErrors?.first_name?.[0] ||
+                            !!userErrors?.first_name?.[0]
+                          }
+                          helperText={
+                            profileErrors?.first_name?.[0] ||
+                            userErrors?.first_name?.[0] ||
+                            ''
+                          }
+                        />
+                      </div>
+                      <div className="fieldSubContainer">
+                        <div className="fieldTitle">Last Name</div>
+
+                        <RequiredTextField
+                          required
+                          name="last_name"
+                          value={formData.last_name}
+                          onChange={handleChange}
+                          style={{ width: '70%' }}
+                          size="small"
+                          error={
+                            !!profileErrors?.last_name?.[0] ||
+                            !!userErrors?.last_name?.[0]
+                          }
+                          helperText={
+                            profileErrors?.last_name?.[0] ||
+                            userErrors?.last_name?.[0] ||
+                            ''
+                          }
+                        />
+                      </div>
+                    </div>
                     <div className="fieldContainer">
                       <div className="fieldSubContainer">
                         <div className="fieldTitle">Email</div>
@@ -283,7 +579,11 @@ export function EditUser() {
                           name="email"
                           value={formData.email}
                           onChange={handleChange}
-                          style={{ width: '70%' }}
+                          style={{
+                            width: '70%',
+                            outline: 'none',
+                            border: 'none',
+                          }}
                           size="small"
                           InputProps={{ readOnly: true }}
                           error={
@@ -298,39 +598,186 @@ export function EditUser() {
                         />
                       </div>
                       <div className="fieldSubContainer">
-                        <div className="fieldTitle">Role</div>
-                        <FormControl sx={{ width: '70%' }}>
-                          <Select
-                            name="role"
-                            value={formData.role}
-                            open={roleSelectOpen}
-                            onClick={() => setRoleSelectOpen(!roleSelectOpen)}
-                            IconComponent={() => (
-                              <div
-                                onClick={() =>
-                                  setRoleSelectOpen(!roleSelectOpen)
-                                }
-                                className="select-icon-background"
-                              >
-                                {roleSelectOpen ? (
-                                  <FiChevronUp className="select-icon" />
-                                ) : (
-                                  <FiChevronDown className="select-icon" />
-                                )}
-                              </div>
-                            )}
-                            className={'select'}
-                            onChange={handleChange}
-                            error={!!errors?.role?.[0]}
+                        <div className="fieldTitle">Password</div>
+                        {/* add change password button */}
+                        <Button
+                          variant="contained"
+                          onClick={() => handleOpen()}
+                        >
+                          Change Password
+                        </Button>
+                        <Modal
+                          open={open}
+                          onClose={handleClose}
+                          aria-labelledby="modal-modal-title"
+                          aria-describedby="modal-modal-description"
+                        >
+                          <Box
+                            sx={{
+                              p: 4,
+                              bgcolor: 'background.paper',
+                              borderRadius: 2,
+                              boxShadow: 24,
+                              position: 'absolute',
+                              top: '50%',
+                              left: '50%',
+                              transform: 'translate(-50%, -50%)',
+                              width: '530px',
+                              maxHeight: '80vh',
+                            }}
                           >
-                            {['ADMIN', 'USER'].map((option) => (
-                              <MenuItem key={option} value={option}>
-                                {option}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                          {/* <FormHelperText>{errors?.[0] ? errors[0] : ''}</FormHelperText> */}
-                        </FormControl>
+                            <Typography sx={{ fontWeight: 'bold' }}>
+                              Change Password
+                            </Typography>
+                            <Divider sx={{ my: 2 }} />
+
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                flexDirection: 'row',
+                                gap: 2,
+                                alignItems: 'center',
+                                justifyContent: 'end',
+                                mb: 2,
+                              }}
+                            >
+                              <Typography>Current Password</Typography>
+
+                              <RequiredTextField
+                                variant="outlined"
+                                name="current_password"
+                                value={currentPassword}
+                                onChange={(e) =>
+                                  setCurrentPassword(e.target.value)
+                                }
+                                required
+                                style={{ width: '70%' }}
+                                size="small"
+                                type="password"
+                                label="Current Password"
+                              />
+                            </Box>
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                flexDirection: 'row',
+                                gap: 2,
+                                alignItems: 'center',
+                                justifyContent: 'end',
+                                mb: 2,
+                              }}
+                            >
+                              <Typography>New Password</Typography>
+
+                              <RequiredTextField
+                                variant="outlined"
+                                name="new_password"
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                                required
+                                style={{ width: '70%' }}
+                                size="small"
+                                type="password"
+                                label="New Password"
+                              />
+                            </Box>
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                flexDirection: 'row',
+                                gap: 2,
+                                alignItems: 'center',
+                                justifyContent: 'end',
+                                mb: 2,
+                              }}
+                            >
+                              <Typography>Confirm Password</Typography>
+
+                              <RequiredTextField
+                                variant="outlined"
+                                name="confirm_password"
+                                value={confirmPassword}
+                                onChange={(e) =>
+                                  setConfirmPassword(e.target.value)
+                                }
+                                required
+                                style={{ width: '70%' }}
+                                size="small"
+                                type="password"
+                                label="Confirm Password"
+                              />
+                            </Box>
+                            <Typography
+                              sx={{
+                                color: '#d32f2f',
+                                fontSize: '12px',
+                                mb: 2,
+                                textAlign: 'center',
+                              }}
+                            >
+                              {profileErrors.password && (
+                                <FormHelperText
+                                  sx={{ textAlign: 'center' }}
+                                  error
+                                >
+                                  {profileErrors.password.join(', ')}
+                                </FormHelperText>
+                              )}
+                            </Typography>
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                flexDirection: 'row',
+                                gap: 2,
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                mb: 2,
+                                mt: 3,
+                              }}
+                            >
+                              <Button
+                                className="header-button"
+                                onClick={() => setOpen(false)}
+                                size="small"
+                                variant="contained"
+                                startIcon={
+                                  <FaTimesCircle
+                                    style={{
+                                      fill: 'white',
+                                      width: '16px',
+                                      marginLeft: '2px',
+                                    }}
+                                  />
+                                }
+                                sx={{
+                                  backgroundColor: '#2b5075',
+                                  ':hover': { backgroundColor: '#1e3750' },
+                                }}
+                              >
+                                Cancel
+                              </Button>
+
+                              <Button
+                                // type='submit'
+                                className="header-button"
+                                onClick={changePassword}
+                                variant="contained"
+                                size="small"
+                                startIcon={
+                                  <FaCheckCircle
+                                    style={{
+                                      fill: 'white',
+                                      width: '16px',
+                                      marginLeft: '2px',
+                                    }}
+                                  />
+                                }
+                              >
+                                Save
+                              </Button>
+                            </Box>
+                          </Box>
+                        </Modal>
                       </div>
                     </div>
                     <div className="fieldContainer2">
@@ -592,15 +1039,16 @@ export function EditUser() {
                                   <FiChevronDown className="select-icon" />
                                 )}
                               </div>
-                            )}                            className={'select'}
+                            )}
+                            className={'select'}
                             onChange={handleChange}
                             error={!!profileErrors?.country?.[0]}
                           >
                             {COUNTRIES.map((option) => (
-                                <MenuItem key={option[0]} value={option[0]}>
-                                  {option[1]}
-                                </MenuItem>
-                              ))}
+                              <MenuItem key={option[0]} value={option[0]}>
+                                {option[1]}
+                              </MenuItem>
+                            ))}
                           </Select>
                           <FormHelperText>
                             {profileErrors?.country?.[0]
@@ -656,7 +1104,7 @@ export function EditUser() {
                           <MenuItem key={option[1]} value={option[0]}>
                             {option[0]}
                           </MenuItem>
-                        ))} 
+                        ))}
                                                 </TextField>
                                             </div>
                                         </div>
@@ -706,7 +1154,7 @@ export function EditUser() {
                           <MenuItem key={option[1]} value={option[0]}>
                             {option[0]}
                           </MenuItem>
-                        ))} 
+                        ))}
                                                 </TextField>
                                             </div>
                                             <div className='fieldSubContainer'>
@@ -727,7 +1175,7 @@ export function EditUser() {
                           <MenuItem key={option[1]} value={option[0]}>
                             {option[0]}
                           </MenuItem>
-                        ))} 
+                        ))}
                                                 </TextField>
                                             </div>
                                         </div>
@@ -750,7 +1198,7 @@ export function EditUser() {
                           <MenuItem key={option[1]} value={option[0]}>
                             {option[0]}
                           </MenuItem>
-                        ))} 
+                        ))}
                                                 </TextField>
                                             </div>
                                             <div className='fieldSubContainer'>
@@ -771,7 +1219,7 @@ export function EditUser() {
                           <MenuItem key={option[1]} value={option[0]}>
                             {option[0]}
                           </MenuItem>
-                        ))} 
+                        ))}
                                                 </TextField>
                                             </div>
                                         </div>
@@ -794,7 +1242,7 @@ export function EditUser() {
                           <MenuItem key={option[1]} value={option[0]}>
                             {option[0]}
                           </MenuItem>
-                        ))} 
+                        ))}
                                                 </TextField>
                                             </div>
                                             <div className='fieldSubContainer'>
@@ -815,7 +1263,7 @@ export function EditUser() {
                           <MenuItem key={option[1]} value={option[0]}>
                             {option[0]}
                           </MenuItem>
-                        ))} 
+                        ))}
                                                 </TextField>
                                             </div>
                                         </div>
@@ -850,7 +1298,7 @@ export function EditUser() {
                                                     name='description'
                                                     minRows={8}
                                                     // defaultValue={state.editData && state.editData.description ? state.editData.description : ''}
-                                                    // onChange={onChange} 
+                                                    // onChange={onChange}
                                                     style={{ width: '70%', padding: '5px' }}
                                                     placeholder='Add Description'
                                                 />
