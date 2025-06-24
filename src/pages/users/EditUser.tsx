@@ -336,7 +336,7 @@ export function EditUser() {
                     <div className="fieldContainer2">
                       <div className="fieldSubContainer">
                         <div className="fieldTitle">Phone Number</div>
-                        <Tooltip title="Number must starts with +91">
+                        <Tooltip title="Please enter a valid international phone number (e.g. +14155552671)">
                           <RequiredTextField
                             name="phone"
                             value={formData.phone}
@@ -356,9 +356,10 @@ export function EditUser() {
                           />
                         </Tooltip>
                       </div>
+
                       <div className="fieldSubContainer">
                         <div className="fieldTitle">Alternate Phone</div>
-                        <Tooltip title="Number must starts with +91">
+                        <Tooltip title="Please enter a valid international phone number (e.g. +14155552671)">
                           <RequiredTextField
                             required
                             name="alternate_phone"
@@ -368,12 +369,17 @@ export function EditUser() {
                             size="small"
                             error={
                               !!profileErrors?.alternate_phone?.[0] ||
-                              !!userErrors?.alternate_phone?.[0]
+                              !!userErrors?.alternate_phone?.[0] ||
+                              (formData.phone === formData.alternate_phone &&
+                                formData.alternate_phone !== '') // Check if both numbers are same
                             }
                             helperText={
                               profileErrors?.alternate_phone?.[0] ||
                               userErrors?.alternate_phone?.[0] ||
-                              ''
+                              (formData.phone === formData.alternate_phone &&
+                              formData.alternate_phone !== ''
+                                ? 'Phone number and alternate phone number cannot be the same.' // Warning message
+                                : '')
                             }
                           />
                         </Tooltip>
@@ -592,15 +598,16 @@ export function EditUser() {
                                   <FiChevronDown className="select-icon" />
                                 )}
                               </div>
-                            )}                            className={'select'}
+                            )}
+                            className={'select'}
                             onChange={handleChange}
                             error={!!profileErrors?.country?.[0]}
                           >
                             {COUNTRIES.map((option) => (
-                                <MenuItem key={option[0]} value={option[0]}>
-                                  {option[1]}
-                                </MenuItem>
-                              ))}
+                              <MenuItem key={option[0]} value={option[0]}>
+                                {option[1]}
+                              </MenuItem>
+                            ))}
                           </Select>
                           <FormHelperText>
                             {profileErrors?.country?.[0]

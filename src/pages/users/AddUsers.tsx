@@ -268,81 +268,107 @@ export function AddUsers() {
     };
 
     return (
-        <Box sx={{ mt: '60px' }}>
-            <CustomAppBar backbtnHandle={backbtnHandle} module={module} backBtn={backBtn} crntPage={crntPage} onCancel={onCancel} onSubmit={handleSubmit} />
-            <Box sx={{ mt: "120px" }}>
-                <form onSubmit={handleSubmit}>
-                    <div style={{ padding: '10px' }}>
-                        <div className='leadContainer'>
-                            <Accordion defaultExpanded style={{ width: '98%' }}>
-                                <AccordionSummary expandIcon={<FiChevronDown style={{ fontSize: '25px' }} />}>
-                                    <Typography className='accordion-header'>User Information</Typography>
-                                </AccordionSummary>
-                                <Divider className='divider' />
-                                <AccordionDetails>
-                                    <Box
-                                        sx={{ width: '98%', color: '#1A3353', mb: 1 }}
-                                        component='form'
-                                        noValidate
-                                        autoComplete='off'
-                                    >
-                                        <div className='fieldContainer'>
-                                            <div className='fieldSubContainer'>
-                                                <div className='fieldTitle'>Email</div>
-                                                <Tooltip title = 'Enter an email' >
-                                                     <RequiredTextField
-                                                    required
-                                                    name='email'
-                                                    
-                                                    value={formData.email}
-                                                    onChange={handleChange}
-                                                    style={{ width: '70%' }}
-                                                    size='small'                                                    
-                                                    error={Boolean(
-                                                        (Array.isArray(profileErrors?.email) ? profileErrors?.email[0] : profileErrors?.email) ||
-                                                        (Array.isArray(userErrors?.email) ? userErrors?.email[0] : userErrors?.email)
-                                                    )}
-                                                    helperText={
-                                                        (Array.isArray(profileErrors?.email) ? profileErrors?.email[0] : profileErrors?.email) ||
-                                                        (Array.isArray(userErrors?.email) ? userErrors?.email[0] : userErrors?.email) ||
-                                                        ''
-                                                    }
-                                                />
-                                                </Tooltip>
-                                               
-                                            </div>
-                                            <div className='fieldSubContainer'>
-                                                <div className='fieldTitle'>Role</div>
-                                                <FormControl sx={{ width: '70%' }}>
-                                                    <Select
-                                                        name='role'
-                                                        value={formData.role}
-                                                        open={roleSelectOpen}
-                                                        onClick={() => setRoleSelectOpen(!roleSelectOpen)}
-                                                        IconComponent={() => (
-                                                            <div onClick={() => setRoleSelectOpen(!roleSelectOpen)} className="select-icon-background">
-                                                                {roleSelectOpen ? <FiChevronUp className='select-icon' /> : <FiChevronDown className='select-icon' />}
-                                                            </div>
-                                                        )}
-                                                        className={'select'}
-                                                        onChange={handleChange}
-                                                        error={!!errors?.role?.[0]}
-                                                    >
-                                                        {['ADMIN', 'USER'].map((option) => (
-                                                            <MenuItem key={option} value={option}>
-                                                                {option}
-                                                            </MenuItem>
-                                                        ))}
-                                                    </Select>
-                                                    {/* <FormHelperText>{errors?.[0] ? errors[0] : ''}</FormHelperText> */}
-                                                </FormControl>
-                                            </div>
-                                        </div>
-                                        <div className='fieldContainer2'>
-                                            <div className='fieldSubContainer'>
-                                                <div className='fieldTitle'>Phone Number</div>
-                                                <Tooltip title="Enter a phone number">
-                                                    {/* <RequiredTextField
+      <Box sx={{ mt: '60px' }}>
+        <CustomAppBar
+          backbtnHandle={backbtnHandle}
+          module={module}
+          backBtn={backBtn}
+          crntPage={crntPage}
+          onCancel={onCancel}
+          onSubmit={handleSubmit}
+        />
+        <Box sx={{ mt: '120px' }}>
+          <form onSubmit={handleSubmit}>
+            <div style={{ padding: '10px' }}>
+              <div className="leadContainer">
+                <Accordion defaultExpanded style={{ width: '98%' }}>
+                  <AccordionSummary
+                    expandIcon={<FiChevronDown style={{ fontSize: '25px' }} />}
+                  >
+                    <Typography className="accordion-header">
+                      User Information
+                    </Typography>
+                  </AccordionSummary>
+                  <Divider className="divider" />
+                  <AccordionDetails>
+                    <Box
+                      sx={{ width: '98%', color: '#1A3353', mb: 1 }}
+                      component="form"
+                      noValidate
+                      autoComplete="off"
+                    >
+                      <div className="fieldContainer">
+                        <div className="fieldSubContainer">
+                          <div className="fieldTitle">Email</div>
+                          <Tooltip title="Enter an email">
+                            <RequiredTextField
+                              required
+                              name="email"
+                              value={formData.email}
+                              onChange={handleChange}
+                              style={{ width: '70%' }}
+                              size="small"
+                              error={Boolean(
+                                (Array.isArray(profileErrors?.email)
+                                  ? profileErrors?.email[0]
+                                  : profileErrors?.email) ||
+                                  (Array.isArray(userErrors?.email)
+                                    ? userErrors?.email[0]
+                                    : userErrors?.email)
+                              )}
+                              helperText={
+                                (Array.isArray(profileErrors?.email)
+                                  ? profileErrors?.email[0]
+                                  : profileErrors?.email) ||
+                                (Array.isArray(userErrors?.email)
+                                  ? userErrors?.email[0]
+                                  : userErrors?.email) ||
+                                ''
+                              }
+                            />
+                          </Tooltip>
+                        </div>
+                        <div className="fieldSubContainer">
+                          <div className="fieldTitle">Role</div>
+                          <FormControl sx={{ width: '70%' }}>
+                            <Select
+                              name="role"
+                              value={formData.role}
+                              open={roleSelectOpen}
+                              onClick={() => setRoleSelectOpen(!roleSelectOpen)}
+                              IconComponent={() => (
+                                <div
+                                  onClick={() =>
+                                    setRoleSelectOpen(!roleSelectOpen)
+                                  }
+                                  className="select-icon-background"
+                                >
+                                  {roleSelectOpen ? (
+                                    <FiChevronUp className="select-icon" />
+                                  ) : (
+                                    <FiChevronDown className="select-icon" />
+                                  )}
+                                </div>
+                              )}
+                              className={'select'}
+                              onChange={handleChange}
+                              error={!!errors?.role?.[0]}
+                            >
+                              {['ADMIN', 'USER'].map((option) => (
+                                <MenuItem key={option} value={option}>
+                                  {option}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                            {/* <FormHelperText>{errors?.[0] ? errors[0] : ''}</FormHelperText> */}
+                          </FormControl>
+                        </div>
+                      </div>
+                      <div className="fieldContainer2">
+                        <div className="fieldSubContainer">
+                          <div className="fieldTitle">Phone Number</div>
+                          <Tooltip title="Enter a phone number">
+                            {/* <RequiredTextField
                                                         name='phone'
                                                         id='outlined-error-helper-text'
                                                         value={formData.phone}
@@ -353,58 +379,85 @@ export function AddUsers() {
                                                         error={!!profileErrors?.phone?.[0] || !!userErrors?.phone?.[0]}
                                                         helperText={profileErrors?.phone?.[0] || userErrors?.phone?.[0] || ''}
                                                     /> */}
-                                                    <RequiredTextField
-                                                        name="phone"
-                                                        id="outlined-error-helper-text"
-                                                        value={formData.phone}
-                                                        onChange={handleChange}
-                                                        required
-                                                        style={{ width: '70%' }}
-                                                        size="small"
-                                                        error={
-                                                            Boolean(
-                                                                (Array.isArray(profileErrors?.phone) ? profileErrors?.phone[0] : profileErrors?.phone) ||
-                                                                (Array.isArray(userErrors?.phone) ? userErrors?.phone[0] : userErrors?.phone) ||
-                                                                (formData.phone && !validatePhoneNumber(formData.phone))
-                                                            )
-                                                        }
-                                                        helperText={
-                                                            (Array.isArray(profileErrors?.phone) ? profileErrors?.phone[0] : profileErrors?.phone) ||
-                                                            (Array.isArray(userErrors?.phone) ? userErrors?.phone[0] : userErrors?.phone) ||
-                                                            (formData.phone && !validatePhoneNumber(formData.phone)
-                                                                ? 'Please enter a valid international phone number (e.g. +14155552671)'
-                                                                : '')
-                                                        }
-                                                    />
-                                                </Tooltip>
-                                            </div>
-                                            <div className='fieldSubContainer'>
-                                                <div className='fieldTitle'>Alternate Phone</div>
-                                                <Tooltip title="Enter a phone number">
-                                                    <RequiredTextField
-                                                        required
-                                                        name='alternate_phone'
-                                                        value={formData.alternate_phone}
-                                                        onChange={handleChange}
-                                                        style={{ width: '70%' }}
-                                                        size='small'                                                        error={Boolean(
-                                                            (Array.isArray(profileErrors?.alternate_phone) ? profileErrors?.alternate_phone[0] : profileErrors?.alternate_phone) ||
-                                                            (Array.isArray(userErrors?.alternate_phone) ? userErrors?.alternate_phone[0] : userErrors?.alternate_phone) ||
-                                                            (formData.alternate_phone && !validatePhoneNumber(formData.alternate_phone))
-                                                        )}
-                                                        helperText={
-                                                            (Array.isArray(profileErrors?.alternate_phone) ? profileErrors?.alternate_phone[0] : profileErrors?.alternate_phone) ||
-                                                            (Array.isArray(userErrors?.alternate_phone) ? userErrors?.alternate_phone[0] : userErrors?.alternate_phone) ||
-                                                            (formData.alternate_phone && !validatePhoneNumber(formData.alternate_phone)
-                                                                ? 'Please enter a valid international phone number (e.g. +14155552671)'
-                                                                : '') ||
-                                                            ''
-                                                        }
-                                                    />
-                                                </Tooltip>
-                                            </div>
-                                        </div>
-                                        {/* <div className='fieldContainer2'>
+                            <RequiredTextField
+                              name="phone"
+                              id="outlined-error-helper-text"
+                              value={formData.phone}
+                              onChange={handleChange}
+                              required
+                              style={{ width: '70%' }}
+                              size="small"
+                              error={Boolean(
+                                (Array.isArray(profileErrors?.phone)
+                                  ? profileErrors?.phone[0]
+                                  : profileErrors?.phone) ||
+                                  (Array.isArray(userErrors?.phone)
+                                    ? userErrors?.phone[0]
+                                    : userErrors?.phone) ||
+                                  (formData.phone &&
+                                    !validatePhoneNumber(formData.phone))
+                              )}
+                              helperText={
+                                (Array.isArray(profileErrors?.phone)
+                                  ? profileErrors?.phone[0]
+                                  : profileErrors?.phone) ||
+                                (Array.isArray(userErrors?.phone)
+                                  ? userErrors?.phone[0]
+                                  : userErrors?.phone) ||
+                                (formData.phone &&
+                                !validatePhoneNumber(formData.phone)
+                                  ? 'Please enter a valid international phone number (e.g. +14155552671)'
+                                  : '')
+                              }
+                            />
+                          </Tooltip>
+                        </div>
+                        <div className="fieldSubContainer">
+                          <div className="fieldTitle">Alternate Phone</div>
+                          <Tooltip title="Enter a phone number">
+                            <RequiredTextField
+                              required
+                              name="alternate_phone"
+                              value={formData.alternate_phone}
+                              onChange={handleChange}
+                              style={{ width: '70%' }}
+                              size="small"
+                              error={Boolean(
+                                (Array.isArray(profileErrors?.alternate_phone)
+                                  ? profileErrors?.alternate_phone[0]
+                                  : profileErrors?.alternate_phone) ||
+                                  (Array.isArray(userErrors?.alternate_phone)
+                                    ? userErrors?.alternate_phone[0]
+                                    : userErrors?.alternate_phone) ||
+                                  (formData.alternate_phone &&
+                                    !validatePhoneNumber(
+                                      formData.alternate_phone
+                                    )) ||
+                                  (formData.phone ===
+                                    formData.alternate_phone &&
+                                    formData.alternate_phone !== '') //checks if the alternate is the same
+                              )}
+                              helperText={
+                                (Array.isArray(profileErrors?.alternate_phone)
+                                  ? profileErrors?.alternate_phone[0]
+                                  : profileErrors?.alternate_phone) ||
+                                (Array.isArray(userErrors?.alternate_phone)
+                                  ? userErrors?.alternate_phone[0]
+                                  : userErrors?.alternate_phone) ||
+                                (formData.alternate_phone &&
+                                !validatePhoneNumber(formData.alternate_phone)
+                                  ? 'Please enter a valid international phone number (e.g. +14155552671)'
+                                  : '') ||
+                                (formData.phone === formData.alternate_phone &&
+                                formData.alternate_phone !== ''
+                                  ? 'Phone number and alternate phone number cannot be the same.' // Warning message
+                                  : '')
+                              }
+                            />
+                          </Tooltip>
+                        </div>
+                      </div>
+                      {/* <div className='fieldContainer2'>
                                             <div className='fieldSubContainer'>
                                                 <div className='fieldTitle'>Profile picture</div>
                                                 <Stack sx={{ display: 'flex', flexDirection: 'column' }}>
@@ -508,175 +561,226 @@ export function AddUsers() {
                                                 />
                                             </div>
                                         </div> */}
-                  </Box>
-                </AccordionDetails>
-              </Accordion>
-            </div>
-            {/* Address Details */}
-            <div className="leadContainer">
-              <Accordion defaultExpanded style={{ width: '98%' }}>
-                <AccordionSummary
-                  expandIcon={<FiChevronDown style={{ fontSize: '25px' }} />}
-                >
-                  <Typography className="accordion-header">Address</Typography>
-                </AccordionSummary>
-                <Divider className="divider" />
-                <AccordionDetails>
-                  <Box
-                    sx={{ width: '98%', color: '#1A3353', mb: 1 }}
-                    component="form"
-                    noValidate
-                    autoComplete="off"
+                    </Box>
+                  </AccordionDetails>
+                </Accordion>
+              </div>
+              {/* Address Details */}
+              <div className="leadContainer">
+                <Accordion defaultExpanded style={{ width: '98%' }}>
+                  <AccordionSummary
+                    expandIcon={<FiChevronDown style={{ fontSize: '25px' }} />}
                   >
-                    <div className="fieldContainer">
-                      <div className="fieldSubContainer">
-                        <div className="fieldTitle">Address Lane</div>
-                        <TextField
-                          required
-                          name="address_line"
-                          value={formData.address_line}
-                          onChange={handleChange}
-                          style={{ width: '70%' }}
-                          size="small"                          error={Boolean(
-                            (Array.isArray(profileErrors?.address_line) ? profileErrors?.address_line[0] : profileErrors?.address_line) ||
-                            (Array.isArray(userErrors?.address_line) ? userErrors?.address_line[0] : userErrors?.address_line)
-                          )}
-                          helperText={
-                            (Array.isArray(profileErrors?.address_line) ? profileErrors?.address_line[0] : profileErrors?.address_line) ||
-                            (Array.isArray(userErrors?.address_line) ? userErrors?.address_line[0] : userErrors?.address_line) ||
-                            ''
-                          }
-                        />
-                      </div>
-                      <div className="fieldSubContainer">
-                        <div className="fieldTitle">Street</div>
-                        <TextField
-                          required
-                          name="street"
-                          value={formData.street}
-                          onChange={handleChange}
-                          style={{ width: '70%' }}
-                          size="small"                          error={Boolean(
-                            (Array.isArray(profileErrors?.street) ? profileErrors?.street[0] : profileErrors?.street) ||
-                            (Array.isArray(userErrors?.street) ? userErrors?.street[0] : userErrors?.street)
-                          )}
-                          helperText={
-                            (Array.isArray(profileErrors?.street) ? profileErrors?.street[0] : profileErrors?.street) ||
-                            (Array.isArray(userErrors?.street) ? userErrors?.street[0] : userErrors?.street) ||
-                            ''
-                          }
-                        />
-                      </div>
-                    </div>
-                    <div className="fieldContainer2">
-                      <div className="fieldSubContainer">
-                        <div className="fieldTitle">City</div>
-                        <TextField
-                          required
-                          name="city"
-                          value={formData.city}
-                          onChange={handleChange}
-                          style={{ width: '70%' }}
-                          size="small"                          error={Boolean(
-                            (Array.isArray(profileErrors?.city) ? profileErrors?.city[0] : profileErrors?.city) ||
-                            (Array.isArray(userErrors?.city) ? userErrors?.city[0] : userErrors?.city)
-                          )}
-                          helperText={
-                            (Array.isArray(profileErrors?.city) ? profileErrors?.city[0] : profileErrors?.city) ||
-                            (Array.isArray(userErrors?.city) ? userErrors?.city[0] : userErrors?.city) ||
-                            ''
-                          }
-                        />
-                      </div>
-                      <div className="fieldSubContainer">
-                        <div className="fieldTitle">State</div>
-                        <TextField
-                          required
-                          name="state"
-                          value={formData.state}
-                          onChange={handleChange}
-                          style={{ width: '70%' }}
-                          size="small"                          error={Boolean(
-                            (Array.isArray(profileErrors?.state) ? profileErrors?.state[0] : profileErrors?.state) ||
-                            (Array.isArray(userErrors?.state) ? userErrors?.state[0] : userErrors?.state)
-                          )}
-                          helperText={
-                            (Array.isArray(profileErrors?.state) ? profileErrors?.state[0] : profileErrors?.state) ||
-                            (Array.isArray(userErrors?.state) ? userErrors?.state[0] : userErrors?.state) ||
-                            ''
-                          }
-                        />
-                      </div>
-                    </div>
-                    <div className="fieldContainer2">
-                      <div className="fieldSubContainer">
-                        <div className="fieldTitle">Postcode</div>
-                        <TextField
-                          required
-                          name="postcode"
-                          value={formData.postcode}
-                          onChange={handleChange}
-                          style={{ width: '70%' }}
-
-                          size="small"
-                          error={Boolean(
-                            (Array.isArray(profileErrors?.postcode) ? profileErrors?.postcode[0] : profileErrors?.postcode) ||
-                            (Array.isArray(userErrors?.postcode) ? userErrors?.postcode[0] : userErrors?.postcode)
-                          )}
-                          helperText={
-                            (Array.isArray(profileErrors?.postcode) ? profileErrors?.postcode[0] : profileErrors?.postcode) ||
-                            (Array.isArray(userErrors?.postcode) ? userErrors?.postcode[0] : userErrors?.postcode) ||
-                            ''
-                          }
-                        />
-                      </div>
-                      <div className="fieldSubContainer">
-                        <div className="fieldTitle">Country</div>
-                        <FormControl sx={{ width: '70%' }}>                          <Select
-                            name="country"
-                            value={formData.country}
-                            open={countrySelectOpen}
-                            onClick={() =>
-                              setCountrySelectOpen(!countrySelectOpen)
-                            }
-                            IconComponent={() => (
-                              <div
-                                onClick={() =>
-                                  setCountrySelectOpen(!countrySelectOpen)
-                                }
-                                className="select-icon-background"
-                              >
-                                {countrySelectOpen ? (
-                                  <FiChevronUp className="select-icon" />
-                                ) : (
-                                  <FiChevronDown className="select-icon" />
-                                )}
-                              </div>
-                            )}
-                            className={'select'}
+                    <Typography className="accordion-header">
+                      Address
+                    </Typography>
+                  </AccordionSummary>
+                  <Divider className="divider" />
+                  <AccordionDetails>
+                    <Box
+                      sx={{ width: '98%', color: '#1A3353', mb: 1 }}
+                      component="form"
+                      noValidate
+                      autoComplete="off"
+                    >
+                      <div className="fieldContainer">
+                        <div className="fieldSubContainer">
+                          <div className="fieldTitle">Address Lane</div>
+                          <TextField
+                            required
+                            name="address_line"
+                            value={formData.address_line}
                             onChange={handleChange}
-                            error={!!profileErrors?.country?.[0]}
-                          >
-                            {COUNTRIES.map((option) => (
+                            style={{ width: '70%' }}
+                            size="small"
+                            error={Boolean(
+                              (Array.isArray(profileErrors?.address_line)
+                                ? profileErrors?.address_line[0]
+                                : profileErrors?.address_line) ||
+                                (Array.isArray(userErrors?.address_line)
+                                  ? userErrors?.address_line[0]
+                                  : userErrors?.address_line)
+                            )}
+                            helperText={
+                              (Array.isArray(profileErrors?.address_line)
+                                ? profileErrors?.address_line[0]
+                                : profileErrors?.address_line) ||
+                              (Array.isArray(userErrors?.address_line)
+                                ? userErrors?.address_line[0]
+                                : userErrors?.address_line) ||
+                              ''
+                            }
+                          />
+                        </div>
+                        <div className="fieldSubContainer">
+                          <div className="fieldTitle">Street</div>
+                          <TextField
+                            required
+                            name="street"
+                            value={formData.street}
+                            onChange={handleChange}
+                            style={{ width: '70%' }}
+                            size="small"
+                            error={Boolean(
+                              (Array.isArray(profileErrors?.street)
+                                ? profileErrors?.street[0]
+                                : profileErrors?.street) ||
+                                (Array.isArray(userErrors?.street)
+                                  ? userErrors?.street[0]
+                                  : userErrors?.street)
+                            )}
+                            helperText={
+                              (Array.isArray(profileErrors?.street)
+                                ? profileErrors?.street[0]
+                                : profileErrors?.street) ||
+                              (Array.isArray(userErrors?.street)
+                                ? userErrors?.street[0]
+                                : userErrors?.street) ||
+                              ''
+                            }
+                          />
+                        </div>
+                      </div>
+                      <div className="fieldContainer2">
+                        <div className="fieldSubContainer">
+                          <div className="fieldTitle">City</div>
+                          <TextField
+                            required
+                            name="city"
+                            value={formData.city}
+                            onChange={handleChange}
+                            style={{ width: '70%' }}
+                            size="small"
+                            error={Boolean(
+                              (Array.isArray(profileErrors?.city)
+                                ? profileErrors?.city[0]
+                                : profileErrors?.city) ||
+                                (Array.isArray(userErrors?.city)
+                                  ? userErrors?.city[0]
+                                  : userErrors?.city)
+                            )}
+                            helperText={
+                              (Array.isArray(profileErrors?.city)
+                                ? profileErrors?.city[0]
+                                : profileErrors?.city) ||
+                              (Array.isArray(userErrors?.city)
+                                ? userErrors?.city[0]
+                                : userErrors?.city) ||
+                              ''
+                            }
+                          />
+                        </div>
+                        <div className="fieldSubContainer">
+                          <div className="fieldTitle">State</div>
+                          <TextField
+                            required
+                            name="state"
+                            value={formData.state}
+                            onChange={handleChange}
+                            style={{ width: '70%' }}
+                            size="small"
+                            error={Boolean(
+                              (Array.isArray(profileErrors?.state)
+                                ? profileErrors?.state[0]
+                                : profileErrors?.state) ||
+                                (Array.isArray(userErrors?.state)
+                                  ? userErrors?.state[0]
+                                  : userErrors?.state)
+                            )}
+                            helperText={
+                              (Array.isArray(profileErrors?.state)
+                                ? profileErrors?.state[0]
+                                : profileErrors?.state) ||
+                              (Array.isArray(userErrors?.state)
+                                ? userErrors?.state[0]
+                                : userErrors?.state) ||
+                              ''
+                            }
+                          />
+                        </div>
+                      </div>
+                      <div className="fieldContainer2">
+                        <div className="fieldSubContainer">
+                          <div className="fieldTitle">Postcode</div>
+                          <TextField
+                            required
+                            name="postcode"
+                            value={formData.postcode}
+                            onChange={handleChange}
+                            style={{ width: '70%' }}
+                            size="small"
+                            error={Boolean(
+                              (Array.isArray(profileErrors?.postcode)
+                                ? profileErrors?.postcode[0]
+                                : profileErrors?.postcode) ||
+                                (Array.isArray(userErrors?.postcode)
+                                  ? userErrors?.postcode[0]
+                                  : userErrors?.postcode)
+                            )}
+                            helperText={
+                              (Array.isArray(profileErrors?.postcode)
+                                ? profileErrors?.postcode[0]
+                                : profileErrors?.postcode) ||
+                              (Array.isArray(userErrors?.postcode)
+                                ? userErrors?.postcode[0]
+                                : userErrors?.postcode) ||
+                              ''
+                            }
+                          />
+                        </div>
+                        <div className="fieldSubContainer">
+                          <div className="fieldTitle">Country</div>
+                          <FormControl sx={{ width: '70%' }}>
+                            {' '}
+                            <Select
+                              name="country"
+                              value={formData.country}
+                              open={countrySelectOpen}
+                              onClick={() =>
+                                setCountrySelectOpen(!countrySelectOpen)
+                              }
+                              IconComponent={() => (
+                                <div
+                                  onClick={() =>
+                                    setCountrySelectOpen(!countrySelectOpen)
+                                  }
+                                  className="select-icon-background"
+                                >
+                                  {countrySelectOpen ? (
+                                    <FiChevronUp className="select-icon" />
+                                  ) : (
+                                    <FiChevronDown className="select-icon" />
+                                  )}
+                                </div>
+                              )}
+                              className={'select'}
+                              onChange={handleChange}
+                              error={!!profileErrors?.country?.[0]}
+                            >
+                              {COUNTRIES.map((option) => (
                                 <MenuItem key={option[0]} value={option[0]}>
                                   {option[1]}
                                 </MenuItem>
                               ))}
-                          </Select>
-                          <FormHelperText>
-                            {(Array.isArray(profileErrors?.country) ? profileErrors?.country[0] : profileErrors?.country) ||
-                             (Array.isArray(userErrors?.country) ? userErrors?.country[0] : userErrors?.country) ||
-                             ''}
-                          </FormHelperText>
-                        </FormControl>
+                            </Select>
+                            <FormHelperText>
+                              {(Array.isArray(profileErrors?.country)
+                                ? profileErrors?.country[0]
+                                : profileErrors?.country) ||
+                                (Array.isArray(userErrors?.country)
+                                  ? userErrors?.country[0]
+                                  : userErrors?.country) ||
+                                ''}
+                            </FormHelperText>
+                          </FormControl>
+                        </div>
                       </div>
-                    </div>
-                  </Box>
-                </AccordionDetails>
-              </Accordion>
-            </div>
-            {/* Business Hours */}
-            {/* <div className='leadContainer'>
+                    </Box>
+                  </AccordionDetails>
+                </Accordion>
+              </div>
+              {/* Business Hours */}
+              {/* <div className='leadContainer'>
                             <Accordion defaultExpanded style={{ width: '98%' }}>
                         <AccordionSummary expandIcon={<FiChevronDown style={{ fontSize: '25px' }} />}>
                                     <Typography className='accordion-header'>Account Information</Typography>
@@ -716,8 +820,8 @@ export function AddUsers() {
                                 </AccordionDetails>
                             </Accordion>
                         </div> */}
-            {/* Preferences */}
-            {/* <div className='leadContainer'>
+              {/* Preferences */}
+              {/* <div className='leadContainer'>
                             <Accordion defaultExpanded style={{ width: '98%' }}>
                        <AccordionSummary expandIcon={<FiChevronDown style={{ fontSize: '25px' }} />}>
                                     <Typography className='accordion-header'>Account Information</Typography>
@@ -866,8 +970,8 @@ export function AddUsers() {
                                 </AccordionDetails>
                             </Accordion>
                         </div> */}
-            {/* Signature Block */}
-            {/* <div className='leadContainer'>
+              {/* Signature Block */}
+              {/* <div className='leadContainer'>
                             <Accordion defaultExpanded style={{ width: '98%' }}>
                               <AccordionSummary expandIcon={<FiChevronDown style={{ fontSize: '25px' }} />}>
                                     <Typography className='accordion-header'>Account Information</Typography>
@@ -898,9 +1002,9 @@ export function AddUsers() {
                                 </AccordionDetails>
                             </Accordion>
                         </div> */}
-          </div>
-        </form>
+            </div>
+          </form>
+        </Box>
       </Box>
-    </Box>
-  );
+    );
 }
