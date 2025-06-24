@@ -67,9 +67,6 @@ export default function UserDetails() {
   useEffect(() => {
     getUserDetail(state.userId);
   }, [state.userId]);
-  // useEffect(() => {
-  //     getContactDetail(state.contactId.id)
-  // }, [state.contactId.id])
 
   const getUserDetail = (id: any) => {
     const Header = {
