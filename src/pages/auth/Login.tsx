@@ -59,12 +59,12 @@ export default function Login() {
       try {
         const res = await fetchData('auth/login/', 'POST', body, head);
 
-        localStorage.setItem('Token', `Bearer ${res.access}`);
-        localStorage.setItem('refresh_token', res.refresh);
-
+        localStorage.setItem('Token', `Bearer ${res.access_token}`);
+        localStorage.setItem('refresh_token', res.refresh_token);
+        localStorage.setItem('res', JSON.stringify(res));
         // 2. Get org from profile
         const profile = await fetchData('profile/', 'GET', null as any, {
-          Authorization: `Bearer ${res.access}`,
+          Authorization: `Bearer ${res.access_token}`,
         });
 
         if (profile.org) {
