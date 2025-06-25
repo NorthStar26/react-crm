@@ -178,6 +178,7 @@ export default function Users() {
       await fetchData(`${UsersUrl}/?offset=${tab === "active" ? activeOffset : inactiveOffset}&limit=${tab === "active" ? activeRecordsPerPage : inactiveRecordsPerPage}`, 'GET', null as any, Header)
         .then((res: any) => {
           if (!res.error) {
+            console.log("res", res)
             setActiveUsersCount(res.active_users.active_users_count)
             //console.log("res?.active_users?.active_users", res?.active_users?.active_users)
             setActiveUsers(res?.active_users?.active_users)
