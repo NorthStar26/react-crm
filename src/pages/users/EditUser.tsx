@@ -38,6 +38,7 @@ import {
 } from 'react-icons/fa';
 import { MdOutlineMonochromePhotos } from 'react-icons/md';
 import { AntSwitch, RequiredTextField } from '../../styles/CssStyled';
+import { useUser } from '../../context/UserContext';
 import { FiChevronDown } from '@react-icons/all-files/fi/FiChevronDown';
 import { FiChevronUp } from '@react-icons/all-files/fi/FiChevronUp';
 import { COUNTRIES } from '../../data/countries';
@@ -86,6 +87,7 @@ interface FormData {
 export function EditUser() {
   const { state } = useLocation();
   const navigate = useNavigate();
+  const { user, loadUserProfile } = useUser();
 
   const [reset, setReset] = useState(false);
   const [error, setError] = useState(false);
@@ -246,10 +248,27 @@ export function EditUser() {
     };
 
     fetchData(`${UserUrl}/${state?.id}/`, 'PUT', JSON.stringify(data), Header)
-      .then((res: any) => {
+      .then(async (res: any) => {
         // console.log('editsubmit:', res);
         if (!res.error) {
           resetForm();
+          
+          // If the user being edited is the current logged-in user, refresh the context
+          // Convert both IDs to strings for comparison to avoid type mismatch
+          const currentUserId = user?.user_details?.id?.toString();
+          const editedUserId = state?.id?.toString();
+          
+          console.log('Current user ID:', currentUserId);
+          console.log('Edited user ID:', editedUserId);
+          console.log('IDs match:', currentUserId === editedUserId);
+          
+          if (user && currentUserId && editedUserId && currentUserId === editedUserId) {
+            console.log('User edited their own profile - refreshing page to update all components...');
+            // When user edits their own profile, refresh the page to ensure all components update
+            window.location.href = '/app/users';
+            return; // Exit early since we're doing a page refresh
+          }
+          
           navigate('/app/users');
         }
         if (res.error) {

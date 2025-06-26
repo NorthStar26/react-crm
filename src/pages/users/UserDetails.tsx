@@ -246,8 +246,14 @@ export default function UserDetails() {
                 <div style={{ width: '32%' }}>
                   <div className="title2">Profile pic</div>
                   <div className="title3">
-                    <Avatar alt={'sdf'}>
-                      {userDetails?.user_details?.profile_pic}
+                    <Avatar 
+                      alt={`${userDetails?.user_details?.first_name} ${userDetails?.user_details?.last_name}`}
+                      src={userDetails?.user_details?.profile_pic}
+                      sx={{ width: 60, height: 60 }}
+                    >
+                      {!userDetails?.user_details?.profile_pic && 
+                        `${userDetails?.user_details?.first_name?.[0] || ''}${userDetails?.user_details?.last_name?.[0] || ''}`
+                      }
                     </Avatar>
                   </div>
                 </div>

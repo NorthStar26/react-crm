@@ -321,6 +321,8 @@ export default function Users() {
                 postcode: data?.address?.postcode,
                 country: data?.address?.country,
                 profile_pic: data?.user_details?.profile_pic,
+                first_name: data?.user_details?.first_name,
+                last_name: data?.user_details?.last_name,
                 has_sales_access: data?.has_sales_access,
                 has_marketing_access: data?.has_marketing_access,
                 is_organization_admin: data?.is_organization_admin,
