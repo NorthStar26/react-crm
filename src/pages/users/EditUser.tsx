@@ -124,6 +124,7 @@ export function EditUser() {
   );
   useEffect(() => {
     setFormData(state?.value);
+    getEditDetail(state?.id);
   }, [state?.id]);
 
   useEffect(() => {
@@ -172,36 +173,35 @@ export function EditUser() {
   //     }
   // };
 
-  // const getEditDetail = (id: any) => {
-  //     fetchData(`${UserUrl}/${id}/`, 'GET', null as any, headers)
-  //         .then((res: any) => {
-  //             console.log('edit detail Form data:', res);
-  //             if (!res.error) {
-  //                 const data = res?.data?.profile_obj
-  //                 setFormData({
-  //                     email: data?.user_details?.email || '',
-  //                     role: data.role || 'ADMIN',
-  //                     phone: data.phone || '',
-  //                     alternate_phone: data.alternate_phone || '',
-  //                     address_line: data?.address?.address_line || '',
-  //                     street: data?.address?.street || '',
-  //                     city: data?.address?.city || '',
-  //                     state: data?.address?.state || '',
-  //                     postcode: data?.address?.postcode || '',
-  //                     country: data?.address?.country || '',
-  //                     profile_pic: data?.user_details?.profile_pic || null,
-  //                     has_sales_access: data.has_sales_access || false,
-  //                     has_marketing_access: data.has_marketing_access || false,
-  //                     is_organization_admin: data.is_organization_admin || false
-  //                 })
-  //             }
-  //             if (res.error) {
-  //                 setError(true)
-  //             }
-  //         })
-  //         .catch(() => {
-  //         })
-  // }
+  const getEditDetail = (id: any) => {
+      fetchData(`${UserUrl}/${id}/`, 'GET', null as any, Headers)
+          .then((res: any) => {
+              console.log('edit detail Form data:', res);
+              if (!res.error) {
+                  const data = res?.data?.profile_obj
+                  setFormData({
+                      email: data?.user_details?.email || '',
+                      role: data.role || 'ADMIN',
+                      phone: data.phone || '',
+                      alternate_phone: data.alternate_phone || '',
+                      address_line: data?.address?.address_line || '',
+                      street: data?.address?.street || '',
+                      city: data?.address?.city || '',
+                      state: data?.address?.state || '',
+                      postcode: data?.address?.postcode || '',
+                      country: data?.address?.country || '',
+                      profile_pic: data?.user_details?.profile_pic || null,
+                      first_name: data?.user_details?.first_name || '',
+                      last_name: data?.user_details?.last_name || '',
+                  })
+              }
+              if (res.error) {
+                  setError(true)
+              }
+          })
+          .catch(() => {
+          })
+  }
   const submitForm = () => {
     const Header = {
       Accept: 'application/json',
