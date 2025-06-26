@@ -3,50 +3,45 @@ import { useNavigate } from 'react-router-dom';
 import { Box } from '@mui/material';
 import Sidebar from '../../components/Sidebar';
 import Organization from '../organization/Organization';
+import { useUser } from '../../context/UserContext';
+import { Spinner } from '../../components/Spinner';
 
 export const Home = (props: any) => {
   const navigate = useNavigate();
-
+  const { isAuthenticated, isLoading, user, hasToken } = useUser();
   const [open, setOpen] = useState(true);
   const [org, setOrg] = useState(false);
 
-  // const [localStorageChange, setLocalStorageChange] = useState(false);
-
-  // useEffect(() => {
-  //   const handleStorageChange = () => {
-  //     setLocalStorageChange(true);
-  //   };
-
-  //   window.addEventListener('storage', handleStorageChange);
-
-  //   return () => {
-  //     window.removeEventListener('storage', handleStorageChange);
-  //   };
-  // }, []);
   useEffect(() => {
-    if (!localStorage.getItem('Token')) {
+    const token = localStorage.getItem('Token');
+    const orgId = localStorage.getItem('org');
+    
+    if (!token) {
       navigate('/login');
-    } else if (!localStorage.getItem('org')) {
-      // navigate('/organization')
+      return;
+    }
+    
+    if (!orgId) {
       setOrg(false);
-    } else if (localStorage.getItem('Token') && localStorage.getItem('org')) {
+    } else {
       setOrg(true);
     }
-  }, [navigate]);
-  // useEffect(() => {
-  //   const token = localStorage.getItem('Token');
-  //   const organization = localStorage.getItem('org');
-  //   if (!token || !organization) {
-  //     navigate('/login');
-  //   } else if(!organization){
-  //     navigate('/organization')
-  //   }
-  // }, [navigate]);
+  }, [navigate, isAuthenticated]);
+
+  // Show loading only if we have both token and org and are loading profile
+  if (isLoading && hasToken() && localStorage.getItem('org')) {
+    return <Spinner />;
+  }
+
+  // If no token at all, redirect to login
+  if (!hasToken()) {
+    navigate('/login');
+    return null;
+  }
   return (
     <Box sx={{}}>
       {org ? (
         <Sidebar
-          // handleDrawerClose={() => handleDrawerClose}
           open={open}
         />
       ) : (

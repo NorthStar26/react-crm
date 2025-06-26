@@ -18,6 +18,7 @@ import {
   StyledListItemButton,
   StyledListItemText,
 } from '../../styles/CssStyled';
+import { useUser } from '../../context/UserContext';
 
 interface Item {
   org: {
@@ -29,7 +30,8 @@ interface Item {
 export default function OrganizationModal(props: any) {
   const navigate = useNavigate();
   const { open, handleClose } = props;
-
+  const { loadUserProfile } = useUser();
+  
   const [organization, setOrganization] = useState<Item[]>([]);
   const [newOrganization, setNewOrganization] = useState('');
   const [error, setError] = useState('');
@@ -85,19 +87,16 @@ export default function OrganizationModal(props: any) {
     setError('');
     setNewOrganization('');
   };
-  const selectedOrganization = (id: any) => {
-    // if(localStorage.getItem('org')){
-    //     localStorage.setItem('org', id)
-    //     handleClose()
-    // }else{
+  const selectedOrganization = async (id: any) => {
     localStorage.setItem('org', id);
-    // navigate('/')
+    
+    // Reload user profile with new organization
+    await loadUserProfile();
+    
     onHandleClose();
     if (localStorage.getItem('org')) {
-      // navigate('/app/leads')
-      navigate('/');
+      navigate('/app');
     }
-    // }
   };
 
   // const handleBackdropClick = (event: React.MouseEvent<HTMLElement>) => {

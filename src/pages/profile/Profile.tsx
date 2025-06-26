@@ -21,6 +21,7 @@ import { FiChevronDown } from '@react-icons/all-files/fi/FiChevronDown';
 import { fetchData } from '../../components/FetchData';
 import { UserUrl } from '../../services/ApiUrls';
 import { COUNTRIES } from '../../data/countries';
+import { useUser } from '../../context/UserContext';
 
 type Response = {
   user_details: {
@@ -41,25 +42,8 @@ type Response = {
 };
 
 export default function Profile() {
-  const [user, setUser] = useState<Response | null>(null);
+  const { user, updateProfile, isLoading } = useUser();
   const [countrySelectOpen, setCountrySelectOpen] = useState(false);
-
-  useEffect(() => {
-    const userId = localStorage.getItem('userId');
-    if (!userId) return console.error('User ID not found');
-
-    const headers = {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      Authorization: localStorage.getItem('Token') || '',
-      org: localStorage.getItem('org') || ''
-    };
-
-    fetchData(`${UserUrl}/${userId}/`, 'GET', null as any, headers).then((res) => {
-      console.log('API response:', res);
-      if (!res.error) setUser(res.data.user_obj);
-    });
-  }, []);
 
   const inputStyles = {
     width: '313px',
@@ -95,6 +79,10 @@ export default function Profile() {
     boxShadow:
       '0px 1px 5px 0px #0000001F, 0px 2px 2px 0px #00000024, 0px 3px 1px -2px #00000033'
   };
+
+  if (isLoading || !user) {
+    return <Box sx={{ mt: 8, px: 2 }}>Loading...</Box>;
+  }
 
   return (
     <Box sx={{ mt: 8, px: 2 }}>
@@ -157,7 +145,7 @@ export default function Profile() {
                 <Box display="flex" flexDirection="column" gap={2}>
                   <Box display="flex" alignItems="center">
                     <Typography sx={labelStyles}>First Name</Typography>
-                    <TextField value={''} InputProps={{ readOnly: true }} placeholder="—" sx={inputStyles} />
+                    <TextField value={user?.user_details.first_name || ''} InputProps={{ readOnly: true }} placeholder="—" sx={inputStyles} />
                   </Box>
                   <Box display="flex" alignItems="center" sx={{ minHeight: 40 }}>
                     <Typography sx={labelStyles}>Email</Typography>
@@ -178,7 +166,7 @@ export default function Profile() {
                 <Box display="flex" flexDirection="column" gap={2}>
                   <Box display="flex" alignItems="center">
                     <Typography sx={labelStyles}>Last Name</Typography>
-                    <TextField value={''} InputProps={{ readOnly: true }} placeholder="—" sx={inputStyles} />
+                    <TextField value={user?.user_details.last_name || ''} InputProps={{ readOnly: true }} placeholder="—" sx={inputStyles} />
                   </Box>
                   <Box display="flex" alignItems="center" sx={{ minHeight: 40 }}>
                     <Typography sx={labelStyles}>Password</Typography>
@@ -264,9 +252,9 @@ export default function Profile() {
               <Grid item xs={12} sm={6}>
                 <Box display="flex" flexDirection="column" gap={2}>
                   <Box display="flex" alignItems="center">
-                    <Typography sx={labelStyles}>Number</Typography>
+                    <Typography sx={labelStyles}>Street</Typography>
                     <TextField
-                      value={user?.address.number || ''}
+                      value={user?.address.street || ''}
                       InputProps={{ readOnly: true }}
                       placeholder="—"
                       sx={inputStyles}
