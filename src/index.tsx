@@ -4,6 +4,10 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { GoogleOAuthProvider } from '@react-oauth/google'
+import '@fontsource/roboto/400.css';
+import '@fontsource/roboto/600.css';
+import '@fontsource/roboto/700.css';
+
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
