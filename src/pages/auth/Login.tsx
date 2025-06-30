@@ -17,6 +17,7 @@ import imgLogin from '../../assets/images/auth/img_login.png';
 import { GoogleButton } from '../../styles/CssStyled';
 import { fetchData } from '../../components/FetchData';
 import { AuthUrl } from '../../services/ApiUrls';
+import { useUser } from '../../context/UserContext';
 import '../../styles/style.css';
 
 declare global {
@@ -28,6 +29,7 @@ declare global {
 
 export default function Login() {
   const navigate = useNavigate();
+  const { loadUserProfile } = useUser();
   const [token, setToken] = useState(false);
 
   // Add states for the login form
@@ -59,19 +61,26 @@ export default function Login() {
       try {
         const res = await fetchData('auth/login/', 'POST', body, head);
 
-        localStorage.setItem('Token', `Bearer ${res.access}`);
-        localStorage.setItem('refresh_token', res.refresh);
+        localStorage.setItem('Token', `Bearer ${res.access_token}`);
+        localStorage.setItem('refresh_token', res.refresh_token);
+        localStorage.setItem('res', JSON.stringify(res));
+        
+        // Try to get org from profile, but don't fail if it's not available
+        try {
+          const profile = await fetchData('profile/', 'GET', null as any, {
+            Authorization: `Bearer ${res.access_token}`,
+          });
 
-        // 2. Get org from profile
-        const profile = await fetchData('profile/', 'GET', null as any, {
-          Authorization: `Bearer ${res.access}`,
-        });
-
-        if (profile.org) {
-          localStorage.setItem('org', profile.org);
+          if (profile.org) {
+            localStorage.setItem('org', profile.org);
+            // Load user profile into context
+            await loadUserProfile();
+          }
+        } catch (profileError) {
+          console.log('No existing org found, user will need to select one');
         }
 
-        // 3. Set the token to the state
+        // Set the token to trigger navigation
         setToken(true);
       } catch (error: any) {
         console.error('Login failed:', error);
@@ -121,9 +130,17 @@ export default function Login() {
         'Content-Type': 'application/json',
       };
       fetchData(`${AuthUrl}/`, 'POST', JSON.stringify(apiToken), head)
-        .then((res: any) => {
+        .then(async (res: any) => {
           localStorage.setItem('res', JSON.stringify(res));
           localStorage.setItem('Token', `Bearer ${res.access_token}`);
+          
+          // Try to load user profile into context if org exists
+          try {
+            await loadUserProfile();
+          } catch (error) {
+            console.log('Profile loading will happen after org selection');
+          }
+          
           setToken(true);
         })
         .catch((error: any) => {

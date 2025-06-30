@@ -289,12 +289,19 @@ export default function Users() {
   };
 
   const getUserDetail = (id: any) => {
+    console.log('getUserDetail called with ID:', id);
+    console.log('Current localStorage Token:', localStorage.getItem('Token'));
+    console.log('Current localStorage org:', localStorage.getItem('org'));
+    
     const Header = {
       Accept: 'application/json',
       'Content-Type': 'application/json',
       Authorization: localStorage.getItem('Token'),
       org: localStorage.getItem('org')
     }
+    console.log('Headers being sent:', Header);
+    console.log('API URL being called:', `${UserUrl}/${id}/`);
+    
     fetchData(`${UserUrl}/${id}/`, 'GET', null as any, Header)
       .then((res) => {
         console.log(res, 'res');
@@ -314,14 +321,21 @@ export default function Users() {
                 postcode: data?.address?.postcode,
                 country: data?.address?.country,
                 profile_pic: data?.user_details?.profile_pic,
+                first_name: data?.user_details?.first_name,
+                last_name: data?.user_details?.last_name,
                 has_sales_access: data?.has_sales_access,
                 has_marketing_access: data?.has_marketing_access,
                 is_organization_admin: data?.is_organization_admin,
               }, id: id, edit: true
             }
           })
+        } else {
+          console.error('Error response from getUserDetail API:', res);
         }
       })
+      .catch((error) => {
+        console.error('Network/fetch error in getUserDetail:', error);
+      });
   }
 
   const EditItem = (userId: any) => {
@@ -483,7 +497,8 @@ export default function Users() {
     email: u.user_details?.email || '—',
     phone: u.phone || '—',
     role: u.role || '—',
-    id: u.id,
+    id: u.user_details?.id, // Use the actual user ID, not the profile ID
+    profileId: u.id, // Keep the profile ID for reference if needed
   }));
 
   // Export all users to Excel

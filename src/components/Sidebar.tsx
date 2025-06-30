@@ -62,15 +62,18 @@ import { OpportunityDetails } from '../pages/opportunities/OpportunityDetails';
 import { AddCase } from '../pages/cases/AddCase';
 import { EditCase } from '../pages/cases/EditCase';
 import { CaseDetails } from '../pages/cases/CaseDetails';
+import ButtonDemo from '../pages/demo/ButtonDemo';
 import logo from '../assets/images/auth/img_logo.png';
 import { StyledListItemButton, StyledListItemText } from '../styles/CssStyled';
 import MyContext from '../context/Context';
 import { logout } from '../services/AuthService';
 import ProfileComponent from "../pages/profile/Profile";
+import { useUser } from '../context/UserContext';
 
 export default function Sidebar(props: any) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, logout: contextLogout } = useUser();
   const [screen, setScreen] = useState('contacts');
   const [drawerWidth, setDrawerWidth] = useState(200);
   const [headerWidth, setHeaderWidth] = useState(drawerWidth);
@@ -187,12 +190,16 @@ export default function Sidebar(props: any) {
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    userProfile();
     setAnchorEl(event.currentTarget);
   };
 
   const handleClose = () => {
     setAnchorEl(null);
+  };
+
+  const handleLogout = () => {
+    contextLogout();
+    navigate('/login');
   };
 
   const open = Boolean(anchorEl);
@@ -264,7 +271,12 @@ export default function Sidebar(props: any) {
             }}
           >
             <IconButton onClick={handleClick} sx={{ mr: 3 }}>
-              <Avatar sx={{ height: '27px', width: '27px' }} />
+              <Avatar 
+                src={user?.user_details?.profile_pic}
+                sx={{ height: '27px', width: '27px' }}
+              >
+                {user?.user_details?.first_name?.[0] || user?.user_details?.email?.[0]?.toUpperCase()}
+              </Avatar>
             </IconButton>
             <Popover
               anchorOrigin={{
@@ -282,7 +294,7 @@ export default function Sidebar(props: any) {
             >
               <List disablePadding>
                 <ListItem disablePadding>
-                  <StyledListItemButton onClick={logout}>
+                  <StyledListItemButton onClick={handleLogout}>
                     <ListItemIcon>
                       <FaSignOutAlt fill="#3e79f7" />
                     </ListItemIcon>
@@ -433,6 +445,7 @@ export default function Sidebar(props: any) {
               <Route path="/app/cases/add-case" element={<AddCase />} />
               <Route path="/app/cases/edit-case" element={<EditCase />} />
               <Route path="/app/cases/case-details" element={<CaseDetails />} />
+              <Route path="/app/demo/buttons" element={<ButtonDemo />} />
               <Route path="/app/profile" element={<ProfileComponent />} />
             </Routes>
           </Box>
