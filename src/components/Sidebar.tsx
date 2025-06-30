@@ -62,6 +62,7 @@ import { OpportunityDetails } from '../pages/opportunities/OpportunityDetails';
 import { AddCase } from '../pages/cases/AddCase';
 import { EditCase } from '../pages/cases/EditCase';
 import { CaseDetails } from '../pages/cases/CaseDetails';
+import ButtonDemo from '../pages/demo/ButtonDemo';
 import logo from '../assets/images/auth/img_logo.png';
 import { StyledListItemButton, StyledListItemText } from '../styles/CssStyled';
 import MyContext from '../context/Context';
@@ -444,6 +445,7 @@ export default function Sidebar(props: any) {
               <Route path="/app/cases/add-case" element={<AddCase />} />
               <Route path="/app/cases/edit-case" element={<EditCase />} />
               <Route path="/app/cases/case-details" element={<CaseDetails />} />
+              <Route path="/app/demo/buttons" element={<ButtonDemo />} />
               <Route path="/app/profile" element={<ProfileComponent />} />
             </Routes>
           </Box>
