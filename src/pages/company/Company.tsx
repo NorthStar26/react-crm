@@ -14,7 +14,10 @@ import {
   IconButton,
   InputBase,
   FormControl,
+  //   Snackbar,
+  //   Alert,
 } from '@mui/material';
+import { SuccessAlert, ErrorAlert } from '../../components/Button/SuccessAlert';
 import { Spinner } from '../../components/Spinner';
 import { FiPlus } from '@react-icons/all-files/fi/FiPlus';
 import { FiSearch } from '@react-icons/all-files/fi/FiSearch';
@@ -44,9 +47,12 @@ ModuleRegistry.registerModules([ClientSideRowModelModule]);
 export default function Company() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [companyList, setCompanyList] = useState([]);
   const [deleteRowModal, setDeleteRowModal] = useState(false);
   const [selectedId, setSelectedId] = useState('');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -122,6 +128,7 @@ export default function Company() {
   };
 
   const deleteRow = (deleteId: any) => {
+    console.log('Preparing to delete company ID:', deleteId);
     setDeleteRowModal(true);
     setSelectedId(deleteId);
   };
@@ -131,25 +138,63 @@ export default function Company() {
     setSelectedId('');
   };
 
-  const DeleteItem = () => {
-    const token = localStorage.getItem('Token');
-    const cleanToken = token ? token.replace(/^Bearer\s+/, '') : '';
-    const Header = {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      Authorization: cleanToken ? `Bearer ${cleanToken}` : '',
-      org: localStorage.getItem('org'),
-    };
+  // Improved DeleteItem function with proper error handling
+  const DeleteItem = async () => {
+    console.log('DeleteItem function called for ID:', selectedId);
+    setDeleteLoading(true);
 
-    fetchData(`${CompaniesUrl}${selectedId}`, 'DELETE', null as any, Header)
-      .then((res: any) => {
-        console.log('delete:', res);
-        if (!res.error) {
-          deleteRowModalClose();
-          getCompanies();
-        }
-      })
-      .catch(() => {});
+    try {
+      const token = localStorage.getItem('Token');
+      const cleanToken = token ? token.replace(/^Bearer\s+/, '') : '';
+
+      if (!cleanToken || !selectedId) {
+        console.error('Missing token or company ID');
+        setErrorMessage('Authentication error. Please login again.');
+        setDeleteLoading(false);
+        return;
+      }
+
+      const Header = {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        Authorization: cleanToken ? `Bearer ${cleanToken}` : '',
+        org: localStorage.getItem('org'),
+      };
+
+      // Make sure the URL is properly formatted with trailing slash
+      const deleteUrl = `${CompaniesUrl}${selectedId}/`;
+      console.log('Delete URL:', deleteUrl);
+
+      const res = await fetchData(deleteUrl, 'DELETE', null as any, Header);
+      console.log('Delete response:', res);
+
+      if (res && !res.error) {
+        // Success case
+        setSuccessMessage('Company successfully deleted');
+        deleteRowModalClose();
+        getCompanies(); // Refresh the companies list
+      } else {
+        // Error from API
+        console.error('API Error:', res?.error || 'Unknown error');
+        setErrorMessage(
+          res?.error || 'Failed to delete company. Please try again.'
+        );
+      }
+    } catch (error) {
+      console.error('Exception during delete:', error);
+      setErrorMessage('An error occurred during deletion. Please try again.');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  // Clear error and success messages
+  const handleCloseError = () => {
+    setErrorMessage(null);
+  };
+
+  const handleCloseSuccess = () => {
+    setSuccessMessage(null);
   };
 
   const formatDate = (dateString: string) => {
@@ -634,6 +679,19 @@ export default function Company() {
         modalDialog={modalDialog}
         modalTitle={modalTitle}
         DeleteItem={DeleteItem}
+      />
+
+      {/* Error Snackbar */}
+      <ErrorAlert
+        open={!!errorMessage}
+        message={errorMessage || ''}
+        onClose={handleCloseError}
+      />
+
+      <SuccessAlert
+        open={!!successMessage}
+        message={successMessage || ''}
+        onClose={handleCloseSuccess}
       />
     </Box>
   );
