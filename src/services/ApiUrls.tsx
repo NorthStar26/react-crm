@@ -20,8 +20,9 @@ export const OrgUrl = 'org';
 // export const OrgUrl = 'auth/create-org'
 // company
 
-export const CompanyUrl = 'leads/company';
-export const CompaniesUrl = 'leads/companies';
+// export const CompanyUrl = 'leads/company';
+export const CompaniesUrl = 'companies/';
+
 // Lead
 export const LeadUrl = 'leads';
 // Contact
