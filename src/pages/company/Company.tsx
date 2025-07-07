@@ -1,302 +1,640 @@
-import { Box, Button, Card, Stack, Tab, Table, TableBody, TableContainer, TableHead, TablePagination, TableRow, Tabs, Toolbar, Typography, Paper, Select, MenuItem, MenuProps, FormControl, InputLabel, InputBase, styled, TableCell, TableSortLabel, Container } from '@mui/material'
-import React, { SyntheticEvent, useEffect, useState } from 'react'
-import { FiPlus } from "@react-icons/all-files/fi/FiPlus";
-import { FiChevronLeft } from "@react-icons/all-files/fi/FiChevronLeft";
-import { FiChevronRight } from "@react-icons/all-files/fi/FiChevronRight";
-import { getComparator, stableSort } from '../../components/Sorting';
-import { Spinner } from '../../components/Spinner';
-import { fetchData } from '../../components/FetchData';
-import { CompaniesUrl, CompanyUrl, ContactUrl } from '../../services/ApiUrls';
-import { AntSwitch, CustomTab, CustomToolbar, FabLeft, FabRight, StyledTableCell, StyledTableRow } from '../../styles/CssStyled';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaTrashAlt } from 'react-icons/fa';
-import { DeleteModal } from '../../components/DeleteModal';
+import {
+  Box,
+  Button,
+  Stack,
+  Typography,
+  Paper,
+  Select,
+  MenuItem,
+  Container,
+  Pagination,
+  Avatar,
+  IconButton,
+  InputBase,
+  FormControl,
+} from '@mui/material';
+import { Spinner } from '../../components/Spinner';
+import { FiPlus } from '@react-icons/all-files/fi/FiPlus';
+import { FiSearch } from '@react-icons/all-files/fi/FiSearch';
+import { FaDownload } from 'react-icons/fa';
 import { FiChevronUp } from '@react-icons/all-files/fi/FiChevronUp';
 import { FiChevronDown } from '@react-icons/all-files/fi/FiChevronDown';
-import { EnhancedTableHead } from '../../components/EnchancedTableHead';
-// import { DeleteModal } from './DeleteModal';
+import { FaEdit, FaTrashAlt } from 'react-icons/fa';
+import { fetchData } from '../../components/FetchData';
+import { CompaniesUrl } from '../../services/ApiUrls';
+import { CustomToolbar } from '../../styles/CssStyled';
+import { DeleteModal } from '../../components/DeleteModal';
+import COUNTRIES from '../../data/countries';
+import INDCHOICES from '../../data/INDCHOICES';
+import * as XLSX from 'xlsx';
+import { CustomButton } from '../../components/Button';
 
-interface HeadCell {
-    disablePadding: boolean;
-    id: any;
-    label: string;
-    numeric: boolean;
-}
+// AG Grid imports
+import { ModuleRegistry, ClientSideRowModelModule } from 'ag-grid-community';
+import { AgGridReact } from 'ag-grid-react';
+import 'ag-grid-community/styles/ag-grid.css';
+import 'ag-grid-community/styles/ag-theme-alpine.css';
+import { ICellRendererParams } from 'ag-grid-community';
+import { Grid } from '@mui/material';
 
-const headCells: readonly HeadCell[] = [
-    {
-        id: '',
-        numeric: false,
-        disablePadding: false,
-        label: ''
-    },
-    {
-        id: 'name',
-        numeric: false,
-        disablePadding: false,
-        label: 'Company'
-    },
-    {
-        id: '',
-        numeric: true,
-        disablePadding: false,
-        label: 'Action'
-    }
-]
+ModuleRegistry.registerModules([ClientSideRowModelModule]);
 
 export default function Company() {
-    const navigate = useNavigate()
-    const [loading, setLoading] = useState(true);
-    const [companyList, setCompanyList] = useState([]);
-    const [page, setPage] = useState(0)
-    const [rowsPerPage, setRowsPerPage] = useState(10)
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [companyList, setCompanyList] = useState([]);
+  const [deleteRowModal, setDeleteRowModal] = useState(false);
+  const [selectedId, setSelectedId] = useState('');
 
-    const [deleteRowModal, setDeleteRowModal] = useState(false)
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [recordsPerPage, setRecordsPerPage] = useState<number>(10);
+  const [totalPages, setTotalPages] = useState<number>(0);
+  const [totalCompanies, setTotalCompanies] = useState<number>(0);
 
-    const [selected, setSelected] = useState<string[]>([]);
-    const [selectedId, setSelectedId] = useState('')
-    const [isSelectedId, setIsSelectedId] = useState([])
-    const [order, setOrder] = useState('asc')
-    const [orderBy, setOrderBy] = useState('name')
+  // Filter states
+  const [search, setSearch] = useState('');
+  const [industryFilter, setIndustryFilter] = useState('');
+  const [countryFilter, setCountryFilter] = useState('');
+  const [industrySelectOpen, setIndustrySelectOpen] = useState(false);
+  const [countrySelectOpen, setCountrySelectOpen] = useState(false);
 
-    const [selectOpen, setSelectOpen] = useState(false);
-    const [currentPage, setCurrentPage] = useState<number>(1);
-    const [recordsPerPage, setRecordsPerPage] = useState<number>(10);
-    const [totalPages, setTotalPages] = useState<number>(0);
+  const gridRef = useRef<AgGridReact>(null);
+  const [gridApi, setGridApi] = useState<any>(null);
 
+  // Automatically call getCompanies when any filter changes
+  useEffect(() => {
+    getCompanies();
+  }, [currentPage, recordsPerPage, industryFilter, countryFilter, search]);
 
-    useEffect(() => {
-        getCompany()
-    }, [])
-
-    const handleChangePage = (event: any, newPage: any) => {
-        setPage(newPage)
-    }
-
-    const handleChangeRowsPerPage = (event: any) => {
-        setRowsPerPage(parseInt(event.target.value, 10))
-        setPage(0)
-    }
-
-    const getCompany = () => {
-        const Header = {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-            Authorization: localStorage.getItem('Token'),
-            org: localStorage.getItem('org')
-          }
-        fetchData(`${CompaniesUrl}`, 'GET', null as any, Header)
-            .then((data) => {
-                if (!data.error) {
-                    console.log(data);
-
-                    setCompanyList(data.data);
-                    setLoading(false)
-                }
-            })
-    }
-
-    const handleRequestSort = (event: any, property: any) => {
-        const isAsc = orderBy === property && order === 'asc'
-        setOrder(isAsc ? 'desc' : 'asc')
-        setOrderBy(property)
-    }
-
-    const DeleteItem = () => {
-        const Header = {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-            Authorization: localStorage.getItem('Token'),
-            org: localStorage.getItem('org')
-          }
-        fetchData(`${CompanyUrl}/${selectedId}`, 'DELETE', null as any, Header)
-            .then((res: any) => {
-                console.log('delete:', res);
-                if (!res.error) {
-                    deleteRowModalClose()
-                    getCompany()
-                }
-            })
-            .catch(() => {
-            })
-    }
-
-    const handlePreviousPage = () => {
-        setCurrentPage((prevPage) => Math.max(prevPage - 1, 1));
+  const getCompanies = async () => {
+    const token = localStorage.getItem('Token');
+    const cleanToken = token ? token.replace(/^Bearer\s+/, '') : '';
+    const Header = {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      Authorization: cleanToken ? `Bearer ${cleanToken}` : '',
+      org: localStorage.getItem('org'),
     };
 
-    const handleNextPage = () => {
-        setCurrentPage((prevPage) => Math.min(prevPage + 1, totalPages));
+    try {
+      const offset = (currentPage - 1) * recordsPerPage;
+
+      // Build request parameters
+      let url = `${CompaniesUrl}?offset=${offset}&limit=${recordsPerPage}`;
+      if (search) url += `&name=${search}`;
+      if (industryFilter) url += `&industry=${industryFilter}`;
+      if (countryFilter) url += `&billing_country=${countryFilter}`;
+
+      const data = await fetchData(url, 'GET', null as any, Header);
+
+      if (!data.error) {
+        console.log('Companies data:', data);
+        setCompanyList(data.data || []);
+        setTotalCompanies(data.total || data.data?.length || 0);
+        setTotalPages(
+          Math.ceil((data.total || data.data?.length || 0) / recordsPerPage)
+        );
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Error fetching companies:', error);
+      setLoading(false);
+    }
+  };
+
+  const addCompany = () => {
+    if (!loading) {
+      navigate('/app/companies/add-company');
+    }
+  };
+
+  const companyDetail = (companyId: any) => {
+    navigate(`/app/companies/company-details`, {
+      state: { companyId: { id: companyId }, detail: true },
+    });
+  };
+
+  const editCompany = (companyId: any) => {
+    navigate(`/app/companies/edit-company/${companyId}`);
+  };
+
+  const deleteRow = (deleteId: any) => {
+    setDeleteRowModal(true);
+    setSelectedId(deleteId);
+  };
+
+  const deleteRowModalClose = () => {
+    setDeleteRowModal(false);
+    setSelectedId('');
+  };
+
+  const DeleteItem = () => {
+    const token = localStorage.getItem('Token');
+    const cleanToken = token ? token.replace(/^Bearer\s+/, '') : '';
+    const Header = {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      Authorization: cleanToken ? `Bearer ${cleanToken}` : '',
+      org: localStorage.getItem('org'),
     };
 
-    const handleRecordsPerPageChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-        setRecordsPerPage(parseInt(event.target.value));
-        setCurrentPage(1);
-    };
-    const renderPageNumbers = () => {
-        const pageNumbers = [];
-        if (totalPages <= 1) return null;
-        for (let i = 1; i <= totalPages; i++) {
-            if (
-                i === 1 ||
-                i === totalPages ||
-                (i >= currentPage - 1 && i <= currentPage + 1) ||
-                (i <= 2 && currentPage <= 4) ||
-                (i >= totalPages - 1 && currentPage >= totalPages - 3)
-            ) {
-                pageNumbers.push(
-                    <button
-                        key={i}
-                        onClick={() => setCurrentPage(i)}
-                        className={i === currentPage ? 'active' : ''}
-                    >
-                        {i}
-                    </button>
-                );
-            } else if ((i === 3 && currentPage > 4) || (i === totalPages - 2 && currentPage < totalPages - 3)) {
-                pageNumbers.push(<span key={-i}>...</span>);
-            }
+    fetchData(`${CompaniesUrl}${selectedId}`, 'DELETE', null as any, Header)
+      .then((res: any) => {
+        console.log('delete:', res);
+        if (!res.error) {
+          deleteRowModalClose();
+          getCompanies();
         }
-        return pageNumbers;
+      })
+      .catch(() => {});
+  };
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
+
+  const getIndustryName = (industryCode: string) => {
+    const industry = INDCHOICES.find(([code]) => code === industryCode);
+    return industry ? industry[1] : industryCode;
+  };
+
+  const getCountryName = (countryCode: string) => {
+    const country = COUNTRIES.find(([code]) => code === countryCode);
+    return country ? country[1] : countryCode;
+  };
+
+  // Export all companies to Excel
+  const exportExcel = async () => {
+    if (totalCompanies === 0) {
+      console.warn('No companies to export.');
+      return;
+    }
+
+    const Header = {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      Authorization: localStorage.getItem('Token'),
+      org: localStorage.getItem('org'),
     };
 
-    const addCompany = () => {
-        if (!loading) {
-            navigate('/app/companies/add-company')
-        }
+    const res: any = await fetchData(
+      `${CompaniesUrl}?limit=${totalCompanies}`,
+      'GET',
+      '',
+      Header
+    );
+
+    if (res?.error) {
+      console.error('Failed to fetch all companies for export');
+      return;
     }
 
-    const companyDetail = (companyId: any) => {
-        navigate(`/app/companies/company-details`, { state: { companyId, detail: true } })
-    }
+    const rows = (res.data || []).map((company: any) => ({
+      'Company Name': company.name || '',
+      Email: company.email || '',
+      Phone: company.phone || '',
+      Website: company.website || '',
+      Industry: getIndustryName(company.industry),
+      Country: getCountryName(company.billing_country),
+      'Creation Date': formatDate(company.created_at),
+    }));
 
-    const deleteRow = (deleteId: any) => {
-        setDeleteRowModal(true)
-        setSelectedId(deleteId)
-    }
-    const deleteRowModalClose = () => {
-        setDeleteRowModal(false)
-        setSelectedId('')
-    }
-    const modalDialog = 'Are You Sure you want to delete this company?'
-    const modalTitle = 'Delete Company'
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Companies');
 
-    const recordsList = [[10, '10 Records per page'], [20, '20 Records per page'], [30, '30 Records per page'], [40, '40 Records per page'], [50, '50 Records per page']]
-    // console.log(contactList, 'cccc')
+    const today = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(wb, `companies_${today}.xlsx`);
+  };
 
-    return (
-        <Box sx={{ mt: '60px' }}>
-            <CustomToolbar sx={{ flexDirection: 'row-reverse' }}>
-                <Stack sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-                    <Select
-                        value={recordsPerPage}
-                        onChange={(e: any) => setRecordsPerPage(e.target.value)}
-                        open={selectOpen}
-                        onOpen={() => setSelectOpen(true)}
-                        onClose={() => setSelectOpen(false)}
-                        className={`custom-select`}
-                        onClick={() => setSelectOpen(!selectOpen)}
-                        IconComponent={() => (
-                            <div onClick={() => setSelectOpen(!selectOpen)} className="custom-select-icon">
-                                {selectOpen ? <FiChevronUp style={{ marginTop: '12px' }} /> : <FiChevronDown style={{ marginTop: '12px' }} />}
-                            </div>
-                        )}
-                        sx={{
-                            '& .MuiSelect-select': { overflow: 'visible !important' }
-                        }}
-                    >
-                        {recordsList?.length && recordsList.map((item: any, i: any) => (
-                            <MenuItem key={i} value={item[0]} >
-                                {item[1]}
-                            </MenuItem>
-                        ))}
-                    </Select>
-                    <Box sx={{ borderRadius: '7px', backgroundColor: 'white', height: '40px', minHeight: '40px', maxHeight: '40px', display: 'flex', flexDirection: 'row', alignItems: 'center', mr: 1, p: '0px' }}>
-                        <FabLeft>
-                            <FiChevronLeft
-                                //  onClick={previous}
-                                style={{ height: '15px' }}
-                            />
-                        </FabLeft>
-                        <Typography sx={{ mt: 0, textTransform: 'lowercase', fontSize: '15px', color: '#1A3353', textAlign: 'center' }}>
-                            0 to 1
-                        </Typography>
-                        <FabRight>
-                            <FiChevronRight
-                                style={{ height: '15px' }} />
-                        </FabRight>
-                    </Box>
-                    <Button
-                        variant='contained'
-                        startIcon={<FiPlus className='plus-icon' />}
-                        onClick={addCompany}
-                        className={'add-button'}
-                    >
-                        Add Company
-                    </Button>
-                </Stack>
-            </CustomToolbar>
-            <Container sx={{ width: '100%', maxWidth: '100%', minWidth: '100%' }}>
-                <Box sx={{ width: '100%', minWidth: '100%', m: '15px 0px 0px 0px' }}>
-                    <Paper sx={{ width: 'cal(100%-15px)', mb: 2, p: '0px 15px 15px 15px' }}>
-                        <TableContainer >
-                            <Table sx={{ minWidth: 600 }} aria-label='customized table'>
-                                <EnhancedTableHead
-                                    numSelected={selected.length}
-                                    order={order}
-                                    orderBy={orderBy}
-                                    // onSelectAllClick={tab === 0 ? handleSelectAllClick : ''}
-                                    // onSelectAllClick={''}
-                                    onRequestSort={handleRequestSort}
-                                    // rowCount={tab === 0 ? usersData.active_users_count : usersData.inactive_users_count}
-                                    numSelectedId={selectedId}
-                                    isSelectedId={isSelectedId}
-                                    headCells={headCells}
-                                />
-                                {/* <TableHead>
-                            <TableRow>
-                                <StyledTableCell style={{ fontWeight: 'bold', fontSize: '13p', color: '#1A3353' }}>Name</StyledTableCell>
-                                <StyledTableCell style={{ fontWeight: 'bold', fontSize: '13p', color: '#1A3353' }}>Email</StyledTableCell>
-                                <StyledTableCell style={{ fontWeight: 'bold', fontSize: '13p', color: '#1A3353' }}>Phone Number</StyledTableCell>
-                                 <StyledTableCell style={{ fontWeight: 'bold', fontSize: '13p', color: '#1A3353' }}>Do Not Call</StyledTableCell> 
-                        <StyledTableCell style={{ fontWeight: 'bold', fontSize: '13p', color: '#1A3353' }}>Action</StyledTableCell>
-                    </TableRow>
-                </TableHead> */}
-                                <TableBody>
-                                    {
-                                        companyList?.length
-                                            ? stableSort(companyList, getComparator(order, orderBy))
-                                                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((item: any, index: any) => (
-                                                    <TableRow
-                                                        tabIndex={-1}
-                                                        key={index}
-                                                        sx={{ border: 0, '&:nth-of-type(even)': { backgroundColor: 'whitesmoke' }, color: 'rgb(26, 51, 83)', textTransform: 'capitalize' }}>
-                                                        <TableCell align='left' sx={{ border: 0, color: 'rgb(26, 51, 83)' }}>{index + 1}</TableCell>
-                                                        <TableCell align='left' sx={{ cursor: 'pointer', color: '#3E79F7', textTransform: 'none', border: 0 }} onClick={() => companyDetail(item)}>{item.name}</TableCell>
-                                                        <TableCell align='left' sx={{ border: 0, color: 'rgb(26, 51, 83)' }}><FaTrashAlt style={{ cursor: 'pointer' }}
-                                                            onClick={() => deleteRow(item.id)}
-                                                        /></TableCell>
-                                                    </TableRow>
-                                                ))
-                                            : <TableRow> <TableCell colSpan={6} sx={{ border: 0 }}><Spinner /></TableCell></TableRow>
-                                    }
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
+  // AG Grid column definitions
+  const columnDefs = [
+    {
+      headerName: 'Company Name',
+      field: 'name',
+      flex: 2,
+      sortable: true,
+      filter: true,
+      cellRenderer: (params: any) => (
+        <Stack direction="row" alignItems="center" spacing={1}>
+          <Avatar
+            sx={{ bgcolor: '#284871', width: 32, height: 32, fontSize: 14 }}
+          >
+            {params.value?.charAt(0).toUpperCase() || 'C'}
+          </Avatar>
+          <Typography
+            sx={{ color: '#1a73e8', cursor: 'pointer', textTransform: 'none' }}
+            onClick={() => companyDetail(params.data.id)}
+          >
+            {params.value || '—'}
+          </Typography>
+        </Stack>
+      ),
+    },
+    {
+      headerName: 'Email',
+      field: 'email',
+      flex: 2,
+      sortable: true,
+      filter: true,
+      cellRenderer: (params: any) => params.value || '—',
+    },
+    {
+      headerName: 'Phone',
+      field: 'phone',
+      flex: 1.5,
+      sortable: true,
+      filter: true,
+      cellRenderer: (params: any) => params.value || '—',
+    },
+    {
+      headerName: 'Industry',
+      field: 'industry',
+      flex: 1.5,
+      sortable: true,
+      filter: true,
+      cellRenderer: (params: any) => getIndustryName(params.value) || '—',
+    },
+    {
+      headerName: 'Country',
+      field: 'billing_country',
+      flex: 1.5,
+      sortable: true,
+      filter: true,
+      cellRenderer: (params: any) => getCountryName(params.value) || '—',
+    },
+    {
+      headerName: 'Creation Date',
+      field: 'created_at',
+      flex: 1.5,
+      sortable: true,
+      filter: true,
+      cellRenderer: (params: any) => formatDate(params.value) || '—',
+    },
+    {
+      headerName: 'Actions',
+      field: 'id',
+      minWidth: 120,
+      sortable: false,
+      suppressClickEventBubbling: true,
+      cellRenderer: (params: ICellRendererParams) => (
+        <Stack direction="row" spacing={1}>
+          <IconButton
+            size="small"
+            onClick={(e) => {
+              e.stopPropagation();
+              editCompany(params.value);
+            }}
+            sx={{ color: '#0F2A55' }}
+          >
+            <FaEdit />
+          </IconButton>
+          <IconButton
+            size="small"
+            onClick={(e) => {
+              e.stopPropagation();
+              deleteRow(params.value);
+            }}
+            sx={{ color: '#D32F2F' }}
+          >
+            <FaTrashAlt />
+          </IconButton>
+        </Stack>
+      ),
+    },
+  ];
 
-                    </Paper>
+  const rowData = companyList;
+
+  const gridTheme = {
+    '--ag-header-background-color': '#2E4258',
+    '--ag-header-foreground-color': '#FFFFFF',
+    '--ag-header-border-color': '#0F2A55',
+    '--ag-odd-row-background-color': '#FFFFFF',
+    '--ag-even-row-background-color': '#F3F8FF',
+    '--ag-row-border-color': '#E0E0E0',
+  } as React.CSSProperties;
+
+  const defaultColDef = {
+    resizable: true,
+    sortable: true,
+    filter: true,
+    wrapText: true,
+    autoHeight: true,
+    unSortIcon: true,
+    cellStyle: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+      paddingLeft: '8px',
+    },
+  };
+
+  const modalDialog = 'Are You Sure you want to delete this company?';
+  const modalTitle = 'Delete Company';
+
+  return (
+    <Box sx={{ mt: '60px' }}>
+      {/* Top Toolbar with Filters */}
+      <CustomToolbar
+        sx={{
+          bgcolor: '#F3F8FF !important',
+          //   bgcolor: '#1A3353 !important',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          p: '2px 16px',
+          borderBottom: '1px solid #e0e0e0',
+          flexWrap: 'wrap',
+          gap: 2,
+          minHeight: '44px',
+        }}
+      >
+        {/* LEFT: Filters*/}
+        <Stack
+          direction="row"
+          spacing={2}
+          alignItems="center"
+          sx={{ flexWrap: 'wrap' }}
+        >
+          {/* Search */}
+          <Box
+            sx={{ position: 'relative', display: 'flex', alignItems: 'center' }}
+          >
+            <FiSearch
+              style={{
+                position: 'absolute',
+                left: 12,
+                zIndex: 1,
+                color: '#666',
+              }}
+            />
+            <InputBase
+              placeholder="Search companies..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setCurrentPage(1);
+              }}
+              sx={{
+                background: '#fff',
+                borderRadius: 2,
+                px: 2,
+                py: 0.5,
+                pl: 5,
+                border: '1px solid #D9D9D9',
+                minWidth: 200,
+                fontSize: 16,
+              }}
+            />
+          </Box>
+
+          {/* Industry Filter */}
+          <FormControl sx={{ minWidth: 160 }}>
+            <Select
+              displayEmpty
+              value={industryFilter}
+              onChange={(e) => {
+                setIndustryFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              onOpen={() => setIndustrySelectOpen(true)}
+              onClose={() => setIndustrySelectOpen(false)}
+              open={industrySelectOpen}
+              IconComponent={() => (
+                <div style={{ marginRight: 8 }}>
+                  {industrySelectOpen ? <FiChevronUp /> : <FiChevronDown />}
+                </div>
+              )}
+              sx={{
+                background: '#fff',
+                borderRadius: 2,
+                fontSize: 16,
+                height: 40,
+              }}
+            >
+              <MenuItem value="">
+                <em>Industry</em>
+              </MenuItem>
+              {INDCHOICES.map(([code, name]) => (
+                <MenuItem key={code} value={code}>
+                  {name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          {/* Country Filter */}
+          <FormControl sx={{ minWidth: 160 }}>
+            <Select
+              displayEmpty
+              value={countryFilter}
+              onChange={(e) => {
+                setCountryFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              onOpen={() => setCountrySelectOpen(true)}
+              onClose={() => setCountrySelectOpen(false)}
+              open={countrySelectOpen}
+              IconComponent={() => (
+                <div style={{ marginRight: 8 }}>
+                  {countrySelectOpen ? <FiChevronUp /> : <FiChevronDown />}
+                </div>
+              )}
+              sx={{
+                background: '#fff',
+                borderRadius: 2,
+                fontSize: 16,
+                height: 40,
+              }}
+            >
+              <MenuItem value="">
+                <em>Country</em>
+              </MenuItem>
+              {COUNTRIES.map(([code, name]) => (
+                <MenuItem key={code} value={code}>
+                  {name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Stack>
+
+        {/* RIGHT: Export + Add Company  */}
+        <Stack direction="row" spacing={2}>
+          <CustomButton
+            variant="outline"
+            shape="rounded"
+            startIcon={<FaDownload />}
+            onClick={exportExcel}
+          >
+            Export
+          </CustomButton>
+          <CustomButton
+            variant="primary"
+            shape="rounded"
+            startIcon={<FiPlus />}
+            onClick={addCompany}
+          >
+            Add Company
+          </CustomButton>
+        </Stack>
+      </CustomToolbar>
+
+      {/* Grid + Pagination */}
+      <Container maxWidth={false} disableGutters sx={{ px: 2, mt: 2 }}>
+        <Grid container spacing={0}>
+          <Grid item xs={12}>
+            <Paper
+              sx={{ width: '100%', mb: 2, p: 0 }}
+              elevation={0}
+              square
+              variant="outlined"
+            >
+              {loading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+                  <Spinner />
                 </Box>
-            </Container>
-            {
-                <DeleteModal
-                    onClose={deleteRowModalClose}
-                    open={deleteRowModal}
-                    id={selectedId}
-                    modalDialog={modalDialog}
-                    modalTitle={modalTitle}
-                    DeleteItem={DeleteItem}
-                />
-            }
-        </Box >
-    )
+              ) : (
+                <>
+                  {/* AG Grid */}
+                  <Box
+                    className="ag-theme-alpine"
+                    sx={{
+                      width: '100%',
+                      ...gridTheme,
+                      '--ag-icon-color': '#FFFFFF',
+                      '& .ag-header-cell-label .ag-icon, & .ag-header-cell-label .ag-icon-wrapper svg':
+                        {
+                          fill: '#FFFFFF',
+                          color: '#FFFFFF',
+                        },
+                      '& .ag-sort-ascending-icon, & .ag-sort-descending-icon, & .ag-sort-none-icon':
+                        {
+                          fill: '#FFFFFF',
+                          color: '#FFFFFF',
+                        },
+                      '& .ag-row': {
+                        display: 'flex',
+                        alignItems: 'center',
+                      },
+                      '& .ag-cell': {
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'flex-start',
+                        paddingLeft: '8px',
+                      },
+                    }}
+                  >
+                    <AgGridReact
+                      ref={gridRef}
+                      rowData={rowData}
+                      columnDefs={columnDefs}
+                      defaultColDef={defaultColDef}
+                      domLayout="autoHeight"
+                      suppressRowClickSelection
+                      suppressCellFocus
+                      rowHeight={56}
+                      onGridReady={(params) => {
+                        setGridApi(params.api);
+                        params.api.sizeColumnsToFit();
+                      }}
+                    />
+                  </Box>
+
+                  {/* Pagination Footer */}
+                  <Box
+                    sx={{
+                      mt: 1,
+                      px: 2,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                    }}
+                  >
+                    {/* Rows per page */}
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <Typography>Rows&nbsp;per&nbsp;page:</Typography>
+                      <Select
+                        size="small"
+                        value={recordsPerPage}
+                        onChange={(e) => {
+                          const v = parseInt(
+                            (e.target as HTMLInputElement).value,
+                            10
+                          );
+                          setRecordsPerPage(v);
+                          setCurrentPage(1);
+                        }}
+                        sx={{ height: 32 }}
+                      >
+                        {[10, 20, 30, 40, 50].map((n) => (
+                          <MenuItem key={n} value={n}>
+                            {n}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                      <Typography sx={{ ml: 1 }}>
+                        {`of ${totalCompanies} rows`}
+                      </Typography>
+                    </Stack>
+
+                    {/* Page Navigation */}
+                    <Pagination
+                      page={currentPage}
+                      count={totalPages}
+                      onChange={(_e, page) => setCurrentPage(page)}
+                      variant="outlined"
+                      shape="rounded"
+                      size="small"
+                      showFirstButton
+                      showLastButton
+                      sx={{
+                        '& .MuiPaginationItem-root': {
+                          borderRadius: '50%',
+                          width: 36,
+                          height: 36,
+                          border: '1px solid #CED4DA',
+                        },
+                        '& .MuiPaginationItem-root:not(.Mui-selected):hover': {
+                          backgroundColor: '#F0F7FF',
+                        },
+                        '& .MuiPaginationItem-root.Mui-selected': {
+                          backgroundColor: '#1E3A5F',
+                          color: '#fff',
+                          border: '1px solid #284871',
+                        },
+                        '& .MuiPaginationItem-root.Mui-selected:hover': {
+                          backgroundColor: '#1E3A5F',
+                        },
+                      }}
+                    />
+                  </Box>
+                </>
+              )}
+            </Paper>
+          </Grid>
+        </Grid>
+      </Container>
+
+      {/* Delete Modal */}
+      <DeleteModal
+        onClose={deleteRowModalClose}
+        open={deleteRowModal}
+        id={selectedId}
+        modalDialog={modalDialog}
+        modalTitle={modalTitle}
+        DeleteItem={DeleteItem}
+      />
+    </Box>
+  );
 }
