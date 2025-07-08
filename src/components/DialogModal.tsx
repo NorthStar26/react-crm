@@ -1,27 +1,34 @@
-import React from 'react'
+import React from 'react';
 import {
   Dialog,
   DialogTitle,
   DialogActions,
   Button,
   DialogContent,
-  DialogContentText
-} from '@mui/material'
+  DialogContentText,
+} from '@mui/material';
 
 export const DialogModal = (props: any) => {
-  const { onClose, isDelete, modalDialog } = props
+  const {
+    onClose,
+    isDelete,
+    modalDialog,
+    onConfirm, // Добавляем новый проп
+    confirmText = 'Yes', // Текст для кнопки подтверждения
+    cancelText = 'Cancel', // Текст для кнопки отмены
+  } = props;
+
   return (
-    <Dialog
-      onClose={() => onClose()}
-      open={isDelete}
-    >
+    <Dialog onClose={() => onClose()} open={isDelete}>
       <DialogTitle
         sx={{
           padding: '15px',
           width: '500px',
-          color: 'black'
+          color: 'black',
         }}
-      >{modalDialog}</DialogTitle>
+      >
+        {modalDialog}
+      </DialogTitle>
       <DialogContent>
         <DialogContentText style={{ fontSize: '14px' }}>
           {/* {props.lead.title} */}
@@ -32,15 +39,20 @@ export const DialogModal = (props: any) => {
           onClick={() => onClose()}
           style={{ textTransform: 'capitalize' }}
         >
-          Cancel
+          {cancelText}
         </Button>
         <Button
-          // onClick={() => props.onDelete(props.lead.id)}
-          style={{ textTransform: 'capitalize', backgroundColor: '#3E79F7', color: 'white', height: '30px' }}
+          onClick={() => (onConfirm ? onConfirm() : onClose())} // Используем onConfirm
+          style={{
+            textTransform: 'capitalize',
+            backgroundColor: '#3E79F7',
+            color: 'white',
+            height: '30px',
+          }}
         >
-          Yes
+          {confirmText}
         </Button>
       </DialogActions>
     </Dialog>
-  )
-}
+  );
+};
