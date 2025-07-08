@@ -432,7 +432,8 @@ export function EditLead() {
     //     }
     // };
     const backbtnHandle = () => {
-        navigate('/app/leads/lead-details', { state: { leadId: state?.id, detail: true } })
+        // Use the new path parameter based navigation
+        navigate(`/app/leads/${state?.id}`)
         // navigate('/app/leads')
     }
 

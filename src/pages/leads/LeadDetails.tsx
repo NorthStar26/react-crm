@@ -23,7 +23,7 @@ import {
 } from '@mui/material'
 import { FaEllipsisV, FaPaperclip, FaPlus, FaRegAddressCard, FaStar, FaTimes } from 'react-icons/fa'
 import { CustomAppBar } from '../../components/CustomAppBar'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { LeadUrl } from '../../services/ApiUrls'
 import { fetchData } from '../../components/FetchData'
 import { Label } from '../../components/Label'
@@ -88,6 +88,8 @@ type response = {
 function LeadDetails(props: any) {
     const { state } = useLocation()
     const navigate = useNavigate();
+    // Get leadId from URL parameters instead of state
+    const { leadId } = useParams<{ leadId: string }>();
     const [leadDetails, setLeadDetails] = useState<response | null>(null)
     const [usersDetails, setUsersDetails] = useState<Array<{
         user_details: {
@@ -115,10 +117,15 @@ function LeadDetails(props: any) {
     const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
 
     useEffect(() => {
-        getLeadDetails(state.leadId)
-    }, [state.leadId])
+        if (leadId) {
+            getLeadDetails(leadId)
+        } else if (state?.leadId) {
+            // Fallback for backward compatibility
+            getLeadDetails(state.leadId)
+        }
+    }, [leadId, state?.leadId])
 
-    const getLeadDetails = (id: any) => {
+    const getLeadDetails = (id: string) => {
         const Header = {
             Accept: 'application/json',
             'Content-Type': 'application/json',
@@ -169,12 +176,14 @@ function LeadDetails(props: any) {
         // const data = { comment: inputValue, attachedFiles }
         const data = { Comment: inputValue || note, lead_attachment: attachments }
         // fetchData(`${LeadUrl}/comment/${state.leadId}/`, 'PUT', JSON.stringify(data), Header)
-        fetchData(`${LeadUrl}/${state.leadId}/`, 'POST', JSON.stringify(data), Header)
+        const id = leadId || state?.leadId;
+        fetchData(`${LeadUrl}/${id}/`, 'POST', JSON.stringify(data), Header)
             .then((res: any) => {
                 // console.log('Form data:', res);
                 if (!res.error) {
                     resetForm()
-                    getLeadDetails(state?.leadId)
+                    const currentId = leadId || state?.leadId;
+                    getLeadDetails(currentId as string)
                 }
             })
             .catch(() => {
@@ -201,6 +210,7 @@ function LeadDetails(props: any) {
                 break;
             }
         }
+        const id = leadId || state?.leadId;
         navigate('/app/leads/edit-lead', {
             state: {
                 value: {
@@ -234,7 +244,7 @@ function LeadDetails(props: any) {
                     close_date: leadDetails?.close_date,
                     organization: leadDetails?.organization,
                     created_from_site: leadDetails?.created_from_site,
-                }, id: state?.leadId, tags, countries, source, status, industries, users, contacts, teams, comments
+                }, id: id, tags, countries, source, status, industries, users, contacts, teams, comments
             }
         }
         )

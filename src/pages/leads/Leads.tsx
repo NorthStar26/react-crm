@@ -245,7 +245,10 @@ export default function Leads(props: any) {
   }
 
   const selectLeadList = (leadId: any) => {
-    navigate(`/app/leads/lead-details`, { state: { leadId, detail: true, contacts: contacts || [], status: status || [], source: source || [], companies: companies || [], tags: tags || [], users: users || [], countries: countries || [], industries: industries || [] } })
+    // Use the new path parameter based navigation
+    navigate(`/app/leads/${leadId}`)
+    // Keep state for any additional data that might be needed
+    // navigate(`/app/leads/lead-details`, { state: { leadId, detail: true, contacts: contacts || [], status: status || [], source: source || [], companies: companies || [], tags: tags || [], users: users || [], countries: countries || [], industries: industries || [] } })
     // navigate('/app/leads/lead-details', { state: { leadId: leadItem.id, edit: storeData, value } })
   }
   const deleteLead = (deleteId: any) => {
