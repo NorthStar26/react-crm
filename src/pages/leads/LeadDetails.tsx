@@ -23,7 +23,7 @@ import {
 } from '@mui/material'
 import { FaEllipsisV, FaPaperclip, FaPlus, FaRegAddressCard, FaStar, FaTimes } from 'react-icons/fa'
 import { CustomAppBar } from '../../components/CustomAppBar'
-import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { LeadUrl } from '../../services/ApiUrls'
 import { fetchData } from '../../components/FetchData'
 import { Label } from '../../components/Label'
@@ -81,14 +81,17 @@ type response = {
     file: string;
 
     close_date: string;
-    organization: string;
+    organization: {
+        id: string;
+        name: string;
+        api_key: string;
+    };
     created_from_site: boolean;
     id: string;
 };
 function LeadDetails(props: any) {
-    const { state } = useLocation()
     const navigate = useNavigate();
-    // Get leadId from URL parameters instead of state
+    // Get leadId from URL parameters
     const { leadId } = useParams<{ leadId: string }>();
     const [leadDetails, setLeadDetails] = useState<response | null>(null)
     const [usersDetails, setUsersDetails] = useState<Array<{
@@ -119,11 +122,8 @@ function LeadDetails(props: any) {
     useEffect(() => {
         if (leadId) {
             getLeadDetails(leadId)
-        } else if (state?.leadId) {
-            // Fallback for backward compatibility
-            getLeadDetails(state.leadId)
         }
-    }, [leadId, state?.leadId])
+    }, [leadId])
 
     const getLeadDetails = (id: string) => {
         const Header = {
@@ -175,15 +175,11 @@ function LeadDetails(props: any) {
         // const data = { comment:  inputValue }
         // const data = { comment: inputValue, attachedFiles }
         const data = { Comment: inputValue || note, lead_attachment: attachments }
-        // fetchData(`${LeadUrl}/comment/${state.leadId}/`, 'PUT', JSON.stringify(data), Header)
-        const id = leadId || state?.leadId;
-        fetchData(`${LeadUrl}/${id}/`, 'POST', JSON.stringify(data), Header)
+        fetchData(`${LeadUrl}/${leadId}/`, 'POST', JSON.stringify(data), Header)
             .then((res: any) => {
-                // console.log('Form data:', res);
                 if (!res.error) {
                     resetForm()
-                    const currentId = leadId || state?.leadId;
-                    getLeadDetails(currentId as string)
+                    getLeadDetails(leadId as string)
                 }
             })
             .catch(() => {
@@ -210,7 +206,6 @@ function LeadDetails(props: any) {
                 break;
             }
         }
-        const id = leadId || state?.leadId;
         navigate('/app/leads/edit-lead', {
             state: {
                 value: {
@@ -242,9 +237,9 @@ function LeadDetails(props: any) {
                     skype_ID: leadDetails?.skype_ID,
                     file: leadDetails?.file,
                     close_date: leadDetails?.close_date,
-                    organization: leadDetails?.organization,
+                    organization: leadDetails?.organization,  // Passing the complete organization object
                     created_from_site: leadDetails?.created_from_site,
-                }, id: id, tags, countries, source, status, industries, users, contacts, teams, comments
+                }, id: leadId, tags, countries, source, status, industries, users, contacts, teams, comments
             }
         }
         )
@@ -374,7 +369,7 @@ function LeadDetails(props: any) {
                                 <div style={{ width: '32%' }}>
                                     <div className='title2'>Organization Name</div>
                                     <div className='title3'>
-                                        {leadDetails?.organization || '---'}
+                                        {leadDetails?.organization?.name || '---'}
                                     </div>
                                 </div>
                             </div>
@@ -793,38 +788,3 @@ function LeadDetails(props: any) {
     )
 }
 export default LeadDetails;
-{/* <form>
-                                    <div style={{
-                                        border: '1px solid gray',
-                                        padding: '10px',
-                                        borderRadius: '5px',
-                                        marginRight: '20px'
-                                    }}
-                                    >
-                                        <TextField
-                                            fullWidth label='Add Note'
-                                            id='fullWidth' style={{ marginBottom: '30px' }}
-                                            InputProps={{ disableUnderline: true }}
-                                        /> 
-                                        <Divider light style={{ marginTop: '30px' }} />
-                                        <div className='bottom-box' style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '10px', paddingTop: '9px' }}>
-                                            <div>
-                                                <Button component='label'>
-                                                    <FaRegAddressCard style={{ fill: 'gray' }} />
-                                                    <input
-                                                        type='file'
-                                                        hidden
-                                                    />
-                                                </Button>
-                                            </div>
-                                            <div>
-                                                <Button variant='contained' size='small' style={{ backgroundColor: '#C0C0C0', marginRight: '3px' }}>
-                                                    Cancel
-                                                </Button>
-                                                <Button variant='contained' size='small' style={{ backgroundColor: '#1F51FF', marginRight: '3px' }}>
-                                                    Send
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </form> */}
