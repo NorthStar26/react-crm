@@ -3,6 +3,7 @@ export { CustomButton } from './CustomButton';
 export { CustomIconButton } from './CustomIconButton';
 export { CustomFab } from './CustomFab';
 export { SuccessAlert } from './SuccessAlert';
+export { EditButton } from './EditButton';
 
 // Export types
 export type {
