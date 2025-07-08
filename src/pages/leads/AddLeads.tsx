@@ -1,5 +1,5 @@
 import React, { ChangeEvent, useEffect, useRef, useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import {
   TextField,
   FormControl,
@@ -31,6 +31,56 @@ import { useForm } from '../../components/UseForm'
 import { CustomPopupIcon, CustomSelectField, RequiredTextField, StyledSelect } from '../../styles/CssStyled'
 import { FiChevronDown } from '@react-icons/all-files/fi/FiChevronDown'
 import { FiChevronUp } from '@react-icons/all-files/fi/FiChevronUp'
+
+// Define interfaces for mock data
+interface Contact {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+}
+
+interface User {
+  id: string;
+  user__email: string;
+  username: string;
+}
+
+// Mock data for dropdowns and selectors
+const MOCK_CONTACTS: Contact[] = [];
+const MOCK_USERS: User[] = [
+  { id: 'user1', user__email: 'john.doe@example.com', username: 'John Doe' },
+  { id: 'user2', user__email: 'jane.smith@example.com', username: 'Jane Smith' },
+  { id: 'user3', user__email: 'michael.johnson@example.com', username: 'Michael Johnson' },
+  { id: 'user4', user__email: 'sarah.williams@example.com', username: 'Sarah Williams' },
+  { id: 'user5', user__email: 'david.brown@example.com', username: 'David Brown' }
+];
+const MOCK_TAGS: string[] = ['Important', 'Urgent', 'Follow-up', 'New'];
+const MOCK_CONTACT_OPTIONS: [string, string][] = [
+  ['contact1', 'Contact One'],
+  ['contact2', 'Contact Two'],
+  ['contact3', 'Contact Three'],
+  ['contact4', 'Contact Four'],
+  ['contact5', 'Contact Five']
+];
+const MOCK_COMPANIES: [string, string][] = [
+  ['company1', 'Company One'],
+  ['company2', 'Company Two'],
+  ['company3', 'Company Three'],
+  ['company4', 'Company Four'],
+  ['company5', 'Company Five']
+];
+const MOCK_STATUS: [string, string][] = [
+  ['open', 'Open'],
+  ['closed', 'Closed'],
+  ['assigned', 'Assigned']
+];
+const MOCK_SOURCES: [string, string][] = [
+  ['call', 'Call'],
+  ['email', 'Email'],
+  ['web', 'Web'],
+  ['referral', 'Referral']
+];
 
 // const useStyles = makeStyles({
 //   btnIcon: {
@@ -71,109 +121,65 @@ import { FiChevronUp } from '@react-icons/all-files/fi/FiChevronUp'
 // }
 
 type FormErrors = {
-  title?: string[],
-  first_name?: string[],
-  last_name?: string[],
-  account_name?: string[],
-  phone?: string[],
-  email?: string[],
   lead_attachment?: string[],
   opportunity_amount?: string[],
-  website?: string[],
   description?: string[],
-  teams?: string[],
   assigned_to?: string[],
   contacts?: string[],
   status?: string[],
   source?: string[],
-  address_line?: string[],
-  street?: string[],
-  city?: string[],
-  state?: string[],
-  postcode?: string[],
-  country?: string[],
   tags?: string[],
   company?: string[],
   probability?: number[],
-  industry?: string[],
-  skype_ID?: string[],
   file?: string[],
+  link?: string[],
+  title?: string[],
 };
 interface FormData {
+  // Main lead fields
   title: string,
-  first_name: string,
-  last_name: string,
-  account_name: string,
-  phone: string,
-  email: string,
-  lead_attachment: string | null,
   opportunity_amount: string,
-  website: string,
   description: string,
-  teams: string,
   assigned_to: string[],
   contacts: string[],
   status: string,
   source: string,
-  address_line: string,
-  street: string,
-  city: string,
-  state: string,
-  postcode: string,
-  country: string,
   tags: string[],
   company: string,
   probability: number,
-  industry: string,
-  skype_ID: string,
-  file: string | null
+  lead_attachment: string | null,
+  file: string | null,
+  link: string
 }
 
 export function AddLeads() {
   const navigate = useNavigate()
-  const { state } = useLocation()
   const { quill, quillRef } = useQuill();
   const initialContentRef = useRef(null);
 
   const autocompleteRef = useRef<any>(null);
   const [error, setError] = useState(false)
-  const [selectedContacts, setSelectedContacts] = useState<any[]>([]);
-  const [selectedAssignTo, setSelectedAssignTo] = useState<any[]>([]);
-  const [selectedTags, setSelectedTags] = useState<any[]>([]);
-  const [selectedCountry, setSelectedCountry] = useState<any[]>([]);
   const [sourceSelectOpen, setSourceSelectOpen] = useState(false)
   const [statusSelectOpen, setStatusSelectOpen] = useState(false)
-  const [countrySelectOpen, setCountrySelectOpen] = useState(false)
-  const [industrySelectOpen, setIndustrySelectOpen] = useState(false)
+  const [companySelectOpen, setCompanySelectOpen] = useState(false)
+  const [contactSelectOpen, setContactSelectOpen] = useState(false)
+  const [assignToSelectOpen, setAssignToSelectOpen] = useState(false)
+  const [tagsSelectOpen, setTagsSelectOpen] = useState(false)
   const [errors, setErrors] = useState<FormErrors>({});
   const [formData, setFormData] = useState<FormData>({
     title: '',
-    first_name: '',
-    last_name: '',
-    account_name: '',
-    phone: '',
-    email: '',
     lead_attachment: null,
     opportunity_amount: '',
-    website: '',
     description: '',
-    teams: '',
     assigned_to: [],
     contacts: [],
     status: 'assigned',
     source: 'call',
-    address_line: '',
-    street: '',
-    city: '',
-    state: '',
-    postcode: '',
-    country: '',
     tags: [],
     company: '',
     probability: 1,
-    industry: 'ADVERTISING',
-    skype_ID: '',
-    file: null
+    file: null,
+    link: ''
   })
 
   useEffect(() => {
@@ -183,27 +189,7 @@ export function AddLeads() {
     }
   }, [quill]);
 
-  const handleChange2 = (title: any, val: any) => {
-    // const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    // console.log('nd', val)
-    if (title === 'contacts') {
-      setFormData({ ...formData, contacts: val.length > 0 ? val.map((item: any) => item.id) : [] });
-      setSelectedContacts(val);
-    } else if (title === 'assigned_to') {
-      setFormData({ ...formData, assigned_to: val.length > 0 ? val.map((item: any) => item.id) : [] });
-      setSelectedAssignTo(val);
-    } else if (title === 'tags') {
-      setFormData({ ...formData, assigned_to: val.length > 0 ? val.map((item: any) => item.id) : [] });
-      setSelectedTags(val);
-    }
-    // else if (title === 'country') {
-    //   setFormData({ ...formData, country: val || [] })
-    //   setSelectedCountry(val);
-    // }
-    else {
-      setFormData({ ...formData, [title]: val })
-    }
-  }
+  // No longer need handleChange2 as we're using Select dropdowns for all fields
 
   const handleChange = (e: any) => {
     // const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -249,37 +235,23 @@ export function AddLeads() {
     // console.log('Form data:', formData.lead_attachment,'sfs', formData.file);
     const data = {
       title: formData.title,
-      first_name: formData.first_name,
-      last_name: formData.last_name,
-      account_name: formData.account_name,
-      phone: formData.phone,
-      email: formData.email,
-      // lead_attachment: formData.lead_attachment,
       lead_attachment: formData.file,
       opportunity_amount: formData.opportunity_amount,
-      website: formData.website,
       description: formData.description,
-      teams: formData.teams,
       assigned_to: formData.assigned_to,
       contacts: formData.contacts,
       status: formData.status,
       source: formData.source,
-      address_line: formData.address_line,
-      street: formData.street,
-      city: formData.city,
-      state: formData.state,
-      postcode: formData.postcode,
-      country: formData.country,
       tags: formData.tags,
       company: formData.company,
       probability: formData.probability,
-      industry: formData.industry,
-      skype_ID: formData.skype_ID
+      link: formData.link
     }
 
+    // Making a direct POST request to LeadUrl, independent from other pages
     fetchData(`${LeadUrl}/`, 'POST', JSON.stringify(data), Header)
       .then((res: any) => {
-        // console.log('Form data:', res);
+        console.log('Lead created successfully:', res);
         if (!res.error) {
           resetForm()
           navigate('/app/leads')
@@ -289,45 +261,30 @@ export function AddLeads() {
           setErrors(res?.errors)
         }
       })
-      .catch(() => {
+      .catch((error) => {
+        console.error('Error creating lead:', error);
+        setError(true);
       })
   };
 
   const resetForm = () => {
     setFormData({
       title: '',
-      first_name: '',
-      last_name: '',
-      account_name: '',
-      phone: '',
-      email: '',
       lead_attachment: null,
       opportunity_amount: '',
-      website: '',
       description: '',
-      teams: '',
       assigned_to: [],
       contacts: [],
       status: 'assigned',
       source: 'call',
-      address_line: '',
-      street: '',
-      city: '',
-      state: '',
-      postcode: '',
-      country: '',
       tags: [],
       company: '',
       probability: 1,
-      industry: 'ADVERTISING',
-      skype_ID: '',
-      file: null
+      file: null,
+      link: ''
     });
     setErrors({})
-    setSelectedContacts([]);
-    setSelectedAssignTo([])
-    setSelectedTags([])
-    // setSelectedCountry([])
+    // No longer need to reset selectedAssignTo and selectedTags as we're using direct state in formData
     // if (autocompleteRef.current) {
     //   console.log(autocompleteRef.current,'ccc')
     //   autocompleteRef.current.defaultValue([]);
@@ -365,244 +322,109 @@ export function AddLeads() {
                     noValidate
                     autoComplete='off'
                   >
-                    <div className='fieldContainer'>
-                      <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>Lead Name</div>
-                        <TextField
-                          name='account_name'
-                          value={formData.account_name}
-                          onChange={handleChange}
-                          style={{ width: '70%' }}
-                          size='small'
-                          helperText={errors?.account_name?.[0] ? errors?.account_name[0] : ''}
-                          error={!!errors?.account_name?.[0]}
-                        />
-                      </div>
-                      <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>Amount</div>
-                        <TextField
-                          type={'number'}
-                          name='opportunity_amount'
-                          value={formData.opportunity_amount}
-                          onChange={handleChange}
-                          style={{ width: '70%' }}
-                          size='small'
-                          helperText={errors?.opportunity_amount?.[0] ? errors?.opportunity_amount[0] : ''}
-                          error={!!errors?.opportunity_amount?.[0]}
-                        />
-                      </div>
-                    </div>
                     <div className='fieldContainer2'>
                       <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>Website</div>
+                        <div className='fieldTitle'>Lead Title</div>
                         <TextField
-                          name='website'
-                          value={formData.website}
+                          name='title'
+                          value={formData.title}
                           onChange={handleChange}
                           style={{ width: '70%' }}
                           size='small'
-                          helperText={errors?.website?.[0] ? errors?.website[0] : ''}
-                          error={!!errors?.website?.[0]}
+                          helperText={errors?.title?.[0] ? errors?.title[0] : ''}
+                          error={!!errors?.title?.[0]}
                         />
                       </div>
-                      <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>Contact Name</div>
-                        <FormControl error={!!errors?.contacts?.[0]} sx={{ width: '70%' }}>
-                          <Autocomplete
-                            // ref={autocompleteRef}
-                            multiple
-                            value={selectedContacts}
-                            limitTags={2}
-                            options={state?.contacts || []}
-                            // options={state.contacts ? state.contacts.map((option: any) => option) : ['']}
-                            getOptionLabel={(option: any) => state?.contacts ? option?.first_name : option}
-                            // value={formData.contacts}
-                            // onChange={handleChange}
-                            onChange={(e: any, value: any) => handleChange2('contacts', value)}
-                            // style={{ width: '80%' }}
-                            size='small'
-                            filterSelectedOptions
-                            renderTags={(value: any, getTagProps: any) =>
-                              value.map((option: any, index: any) => (
-                                <Chip
-                                  deleteIcon={<FaTimes style={{ width: '9px' }} />}
-                                  sx={{
-                                    backgroundColor: 'rgba(0, 0, 0, 0.08)',
-                                    height: '18px'
-                                  }}
-                                  variant='outlined'
-                                  label={state?.contacts ? option?.first_name : option}
-                                  {...getTagProps({ index })}
-                                />
-                              ))
-                            }
-                            popupIcon={<CustomPopupIcon><FaPlus className='input-plus-icon' /></CustomPopupIcon>}
-                            renderInput={(params: any) => (
-                              <TextField {...params}
-                                placeholder='Add Contacts'
-                                InputProps={{
-                                  ...params.InputProps,
-                                  sx: {
-                                    '& .MuiAutocomplete-popupIndicator': { '&:hover': { backgroundColor: 'white' } },
-                                    '& .MuiAutocomplete-endAdornment': {
-                                      mt: '-8px',
-                                      mr: '-8px',
-                                    }
-                                  }
-                                }}
-                              />
-                            )}
-                          />
-                          <FormHelperText>{errors?.contacts?.[0] || ''}</FormHelperText>
-                        </FormControl>
-                      </div>
-                    </div>
-                    <div className='fieldContainer2'>
                       <div className='fieldSubContainer'>
                         <div className='fieldTitle'>Assign To</div>
-                        <FormControl error={!!errors?.assigned_to?.[0]} sx={{ width: '70%' }}>
-                          <Autocomplete
-                            multiple
-                            value={selectedAssignTo}
-                            limitTags={2}
-                            options={state?.users || []}
-                            getOptionLabel={(option: any) => state?.users ? option?.user__email : option}
-                            onChange={(e: any, value: any) => handleChange2('assigned_to', value)}
-                            size='small'
-                            filterSelectedOptions
-                            renderTags={(value, getTagProps) =>
-                              value.map((option, index) => (
-                                <Chip
-                                  deleteIcon={<FaTimes style={{ width: '9px' }} />}
-                                  sx={{
-                                    backgroundColor: 'rgba(0, 0, 0, 0.08)',
-                                    height: '18px'
-
-                                  }}
-                                  variant='outlined'
-                                  label={state?.users ? option?.user__email : option}
-                                  {...getTagProps({ index })}
-                                />
-                              ))
-                            }
-                            popupIcon={<CustomPopupIcon><FaPlus className='input-plus-icon' /></CustomPopupIcon>}
-                            renderInput={(params) => (
-                              <TextField {...params}
-                                placeholder='Add Users'
-                                InputProps={{
-                                  ...params.InputProps,
-                                  sx: {
-                                    '& .MuiAutocomplete-popupIndicator': { '&:hover': { backgroundColor: 'white' } },
-                                    '& .MuiAutocomplete-endAdornment': {
-                                      mt: '-8px',
-                                      mr: '-8px',
-                                    }
-                                  }
-                                }}
-                              />
-                            )}
-                          />
-                          <FormHelperText>{errors?.assigned_to?.[0] || ''}</FormHelperText>
-                        </FormControl>
-                      </div>
-                      <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>Industry</div>
                         <FormControl sx={{ width: '70%' }}>
                           <Select
-                            name='industry'
-                            value={formData.industry}
-                            open={industrySelectOpen}
-                            onClick={() => setIndustrySelectOpen(!industrySelectOpen)}
+                            name='assigned_to'
+                            value={formData.assigned_to.length > 0 ? formData.assigned_to[0] : ''}
+                            open={assignToSelectOpen}
+                            onClick={() => setAssignToSelectOpen(!assignToSelectOpen)}
                             IconComponent={() => (
-                              <div onClick={() => setIndustrySelectOpen(!industrySelectOpen)} className="select-icon-background">
-                                {industrySelectOpen ? <FiChevronUp className='select-icon' /> : <FiChevronDown className='select-icon' />}
+                              <div onClick={() => setAssignToSelectOpen(!assignToSelectOpen)} className="select-icon-background">
+                                {assignToSelectOpen ? <FiChevronUp className='select-icon' /> : <FiChevronDown className='select-icon' />}
                               </div>
                             )}
                             className={'select'}
-                            onChange={handleChange}
-                            error={!!errors?.industry?.[0]}
-                            MenuProps={{
-                              PaperProps: {
-                                style: {
-                                  height: '200px'
-                                }
-                              }
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              setFormData({ ...formData, assigned_to: value ? [value] : [] });
                             }}
+                            error={!!errors?.assigned_to?.[0]}
                           >
-                            {state?.industries?.length ? state?.industries.map((option: any) => (
-                              <MenuItem key={option[0]} value={option[1]}>
-                                {option[1]}
+                            {MOCK_USERS.map((option: any) => (
+                              <MenuItem key={option.id} value={option.id}>
+                                {option.user__email || option.username}
                               </MenuItem>
-                            )) : ''}
+                            ))}
                           </Select>
-                          <FormHelperText>{errors?.industry?.[0] ? errors?.industry[0] : ''}</FormHelperText>
+                          <FormHelperText>{errors?.assigned_to?.[0] ? errors?.assigned_to[0] : ''}</FormHelperText>
                         </FormControl>
-                        {/* <CustomSelectField
-                          name='industry'
-                          select
-                          value={formData.industry}
-                          InputProps={{
-                            style: {
-                              height: '40px',
-                              maxHeight: '40px'
-                            }
-                          }}
-                          onChange={handleChange}
-                          sx={{ width: '70%' }}
-                          helperText={errors?.industry?.[0] ? errors?.industry[0] : ''}
-                          error={!!errors?.industry?.[0]}
-                        >
-                          {state?.industries?.length && state?.industries.map((option: any) => (
-                            <MenuItem key={option[0]} value={option[1]}>
-                              {option[1]}
-                            </MenuItem>
-                          ))}
-                        </CustomSelectField> */}
                       </div>
                     </div>
                     <div className='fieldContainer2'>
                       <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>Status</div>
+                        <div className='fieldTitle'>Company</div>
                         <FormControl sx={{ width: '70%' }}>
                           <Select
-                            name='status'
-                            value={formData.status}
-                            open={statusSelectOpen}
-                            onClick={() => setStatusSelectOpen(!statusSelectOpen)}
+                            name='company'
+                            value={formData.company}
+                            open={companySelectOpen}
+                            onClick={() => setCompanySelectOpen(!companySelectOpen)}
                             IconComponent={() => (
-                              <div onClick={() => setStatusSelectOpen(!statusSelectOpen)} className="select-icon-background">
-                                {statusSelectOpen ? <FiChevronUp className='select-icon' /> : <FiChevronDown className='select-icon' />}
+                              <div onClick={() => setCompanySelectOpen(!companySelectOpen)} className="select-icon-background">
+                                {companySelectOpen ? <FiChevronUp className='select-icon' /> : <FiChevronDown className='select-icon' />}
                               </div>
                             )}
                             className={'select'}
                             onChange={handleChange}
-                            error={!!errors?.status?.[0]}
+                            error={!!errors?.company?.[0]}
                           >
-                            {state?.status?.length ? state?.status.map((option: any) => (
-                              <MenuItem key={option[0]} value={option[1]}>
+                            {MOCK_COMPANIES.map((option: any) => (
+                              <MenuItem key={option[0]} value={option[0]}>
                                 {option[1]}
                               </MenuItem>
-                            )) : ''}
+                            ))}
                           </Select>
-                          <FormHelperText>{errors?.status?.[0] ? errors?.status[0] : ''}</FormHelperText>
+                          <FormHelperText>{errors?.company?.[0] ? errors?.company[0] : ''}</FormHelperText>
                         </FormControl>
                       </div>
                       <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>SkypeID</div>
-                        <TextField
-                          name='skype_ID'
-                          value={formData.skype_ID}
-                          onChange={handleChange}
-                          style={{ width: '70%' }}
-                          size='small'
-                          helperText={errors?.skype_ID?.[0] ? errors?.skype_ID[0] : ''}
-                          error={!!errors?.skype_ID?.[0]}
-                        />
+                        <div className='fieldTitle'>Contact</div>
+                        <FormControl sx={{ width: '70%' }}>
+                          <Select
+                            name='contacts'
+                            value={formData.contacts.length > 0 ? formData.contacts[0] : ''}
+                            open={contactSelectOpen}
+                            onClick={() => setContactSelectOpen(!contactSelectOpen)}
+                            IconComponent={() => (
+                              <div onClick={() => setContactSelectOpen(!contactSelectOpen)} className="select-icon-background">
+                                {contactSelectOpen ? <FiChevronUp className='select-icon' /> : <FiChevronDown className='select-icon' />}
+                              </div>
+                            )}
+                            className={'select'}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              setFormData({ ...formData, contacts: value ? [value] : [] });
+                            }}
+                            error={!!errors?.contacts?.[0]}
+                          >
+                            {MOCK_CONTACT_OPTIONS.map((option: any) => (
+                              <MenuItem key={option[0]} value={option[0]}>
+                                {option[1]}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                          <FormHelperText>{errors?.contacts?.[0] ? errors?.contacts[0] : ''}</FormHelperText>
+                        </FormControl>
                       </div>
                     </div>
                     <div className='fieldContainer2'>
                       <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>Lead Source</div>
+                        <div className='fieldTitle'>Source</div>
                         <FormControl sx={{ width: '70%' }}>
                           <Select
                             name='source'
@@ -618,16 +440,83 @@ export function AddLeads() {
                             onChange={handleChange}
                             error={!!errors?.source?.[0]}
                           >
-                            {state?.source?.length ? state?.source.map((option: any) => (
+                            {MOCK_SOURCES.map((option: any) => (
                               <MenuItem key={option[0]} value={option[0]}>
                                 {option[1]}
                               </MenuItem>
-                            )) : ''}
+                            ))}
                           </Select>
                           <FormHelperText>{errors?.source?.[0] ? errors?.source[0] : ''}</FormHelperText>
                         </FormControl>
+                      </div>                      <div className='fieldSubContainer'>
+                        <div className='fieldTitle'>Tags</div>
+                        <FormControl sx={{ width: '70%' }}>
+                          <Select
+                            name='tags'
+                            value={formData.tags.length > 0 ? formData.tags[0] : ''}
+                            open={tagsSelectOpen}
+                            onClick={() => setTagsSelectOpen(!tagsSelectOpen)}
+                            IconComponent={() => (
+                              <div onClick={() => setTagsSelectOpen(!tagsSelectOpen)} className="select-icon-background">
+                                {tagsSelectOpen ? <FiChevronUp className='select-icon' /> : <FiChevronDown className='select-icon' />}
+                              </div>
+                            )}
+                            className={'select'}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              setFormData({ ...formData, tags: value ? [value] : [] });
+                            }}
+                            error={!!errors?.tags?.[0]}
+                          >
+                            {MOCK_TAGS.map((option: string) => (
+                              <MenuItem key={option} value={option}>
+                                {option}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                          <FormHelperText>{errors?.tags?.[0] ? errors?.tags[0] : ''}</FormHelperText>
+                        </FormControl>
                       </div>
+                      
+                    </div>
+                    <div className='fieldContainer2'><div className='fieldSubContainer'>
+                        <div className='fieldTitle'>Amount</div>
+                        <TextField
+                          name='opportunity_amount'
+                          value={formData.opportunity_amount}
+                          onChange={handleChange}
+                          style={{ width: '70%' }}
+                          size='small'
+                          helperText={errors?.opportunity_amount?.[0] ? errors?.opportunity_amount[0] : ''}
+                          error={!!errors?.opportunity_amount?.[0]}
+                        />
+                      </div>
+                      
                       <div className='fieldSubContainer'>
+                        <div className='fieldTitle'>Probability</div>
+                        <TextField
+                          name='probability'
+                          value={formData.probability}
+                          onChange={handleChange}
+                          InputProps={{
+                            endAdornment: (
+                              <InputAdornment position='end'>
+                                <IconButton disableFocusRipple disableTouchRipple
+                                  sx={{ backgroundColor: '#d3d3d34a', width: '45px', borderRadius: '0px', mr: '-12px' }}>
+                                  <FaPercent style={{ width: "12px" }} />
+                                </IconButton>
+                              </InputAdornment>
+                            ),
+                          }}
+                          style={{ width: '70%' }}
+                          size='small'
+                          helperText={errors?.probability?.[0] ? errors?.probability[0] : ''}
+                          error={!!errors?.probability?.[0]}
+                        />
+                      </div>
+                      
+                    </div>
+                    <div className='fieldContainer2'><div className='fieldSubContainer'>
                         <div className='fieldTitle'>Lead Attachment</div>
                         <TextField
                           name='lead_attachment'
@@ -663,382 +552,52 @@ export function AddLeads() {
                           error={!!errors?.lead_attachment?.[0]}
                         />
                       </div>
+                      <div className='fieldSubContainer'>
+                        <div className='fieldTitle'>Link</div>
+                        <TextField
+                          name='link'
+                          value={formData.link}
+                          onChange={handleChange}
+                          style={{ width: '70%' }}
+                          size='small'
+                          helperText={errors?.link?.[0] ? errors?.link[0] : ''}
+                          error={!!errors?.link?.[0]}
+                        />
+                      </div>
+                      
                     </div>
                     <div className='fieldContainer2'>
                       <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>Tags</div>
-                        <FormControl error={!!errors?.tags?.[0]} sx={{ width: '70%' }}>
-                          <Autocomplete
-                            // ref={autocompleteRef}
-                            value={selectedTags}
-                            multiple
-                            limitTags={5}
-                            options={state?.tags || []}
-                            // options={state.contacts ? state.contacts.map((option: any) => option) : ['']}
-                            getOptionLabel={(option: any) => option}
-                            onChange={(e: any, value: any) => handleChange2('tags', value)}
-                            size='small'
-                            filterSelectedOptions
-                            renderTags={(value, getTagProps) =>
-                              value.map((option, index) => (
-                                <Chip
-                                  deleteIcon={<FaTimes style={{ width: '9px' }} />}
-                                  sx={{ backgroundColor: 'rgba(0, 0, 0, 0.08)', height: '18px' }}
-                                  variant='outlined'
-                                  label={option}
-                                  {...getTagProps({ index })}
-                                />
-                              ))
-                            }
-                            popupIcon={<CustomPopupIcon><FaPlus className='input-plus-icon' /></CustomPopupIcon>}
-                            renderInput={(params) => (
-                              <TextField {...params}
-                                placeholder='Add Tags'
-                                InputProps={{
-                                  ...params.InputProps,
-                                  sx: {
-                                    '& .MuiAutocomplete-popupIndicator': { '&:hover': { backgroundColor: 'white' } },
-                                    '& .MuiAutocomplete-endAdornment': {
-                                      mt: '-8px',
-                                      mr: '-8px',
-                                    }
-                                  }
-                                }}
-                              />
-                            )}
-                          />
-                          <FormHelperText>{errors?.tags?.[0] || ''}</FormHelperText>
-                        </FormControl>
-                      </div>
-                      <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>Probability</div>
-                        <TextField
-                          name='probability'
-                          value={formData.probability}
-                          onChange={handleChange}
-                          InputProps={{
-                            endAdornment: (
-                              <InputAdornment position='end'>
-                                <IconButton disableFocusRipple disableTouchRipple
-                                  sx={{ backgroundColor: '#d3d3d34a', width: '45px', borderRadius: '0px', mr: '-12px' }}>
-                                  <FaPercent style={{ width: "12px" }} />
-                                </IconButton>
-                              </InputAdornment>
-                            ),
-                          }}
-                          style={{ width: '70%' }}
-                          size='small'
-                          helperText={errors?.probability?.[0] ? errors?.probability[0] : ''}
-                          error={!!errors?.probability?.[0]}
-                        />
-
-                      </div>
-                    </div>
-                    {/* <div className='fieldContainer2'>
-                      <div className='fieldSubContainer'>
-                        <div className='fieldTitle'> Close Date</div>
-                        <TextField
-                          name='account_name'
-                          type='date'
-                          value={formData.account_name}
-                          onChange={handleChange}
-                          style={{ width: '70%' }}
-                          size='small'
-                          helperText={errors?.account_name?.[0] ? errors?.account_name[0] : ''}
-                          error={!!errors?.account_name?.[0]}
-                        />
-                      </div>
-                    </div> */}
-                    {/* <div className='fieldContainer2'>
-                      <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>Pipeline</div>
-                        <TextField
-                          error={!!(msg === 'pipeline' || msg === 'required')}
-                          name='pipeline'
-                          id='outlined-error-helper-text'
-                          // InputProps={{
-                          //   classes: {
-                          //     root: textFieldClasses.fieldHeight
-                          //   }
-                          // }}
-                          onChange={onChange} style={{ width: '80%' }}
-                          size='small'
-                          helperText={
-                            (error && msg === 'pipeline') || msg === 'required'
-                              ? error
-                              : ''
-                          }
-                        />
-                      </div>
-                      <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>Lost Reason </div>
-                        <TextareaAutosize
-                          aria-label='minimum height'
-                          name='lost_reason'
-                          minRows={2}
-                          // onChange={onChange} 
-                          style={{ width: '80%' }}
-                        />
-                      </div>
-                    </div> */}
-                  </Box>
-                </AccordionDetails>
-              </Accordion>
-            </div>
-            {/* contact details */}
-            <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', marginTop: '20px' }}>
-              <Accordion defaultExpanded style={{ width: '98%' }}>
-                <AccordionSummary expandIcon={<FiChevronDown style={{ fontSize: '25px' }} />}>
-                  <Typography className='accordion-header'>Contact</Typography>
-                </AccordionSummary>
-                <Divider className='divider' />
-                <AccordionDetails>
-                  <Box
-                    sx={{ width: '98%', color: '#1A3353', mb: 1 }}
-                    component='form'
-                    noValidate
-                    autoComplete='off'
-                  >
-                    <div className='fieldContainer'>
-                      <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>First Name</div>
-                        <RequiredTextField
-                          name='first_name'
-                          required
-                          value={formData.first_name}
-                          onChange={handleChange}
-                          style={{ width: '70%' }}
-                          size='small'
-                          helperText={errors?.first_name?.[0] ? errors?.first_name[0] : ''}
-                          error={!!errors?.first_name?.[0]}
-                        />
-                      </div>
-                      <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>Last Name</div>
-                        <RequiredTextField
-                          name='last_name'
-                          required
-                          value={formData.last_name}
-                          onChange={handleChange}
-                          style={{ width: '70%' }}
-                          size='small'
-                          helperText={errors?.last_name?.[0] ? errors?.last_name[0] : ''}
-                          error={!!errors?.last_name?.[0]}
-                        />
-                      </div>
-                    </div>
-                    <div className='fieldContainer2'>
-                      <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>Job Title</div>
-                        <RequiredTextField
-                          name='title'
-                          value={formData.title}
-                          onChange={handleChange}
-                          style={{ width: '70%' }}
-                          size='small'
-                          helperText={errors?.title?.[0] ? errors?.title[0] : ''}
-                          error={!!errors?.title?.[0]}
-                        />
-                      </div>
-                      <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>Phone Number</div>
-                        <Tooltip title="Number must starts with +91">
-                          <TextField
-                            name='phone'
-                            value={formData.phone}
-                            onChange={handleChange}
-                            style={{ width: '70%' }}
-                            size='small'
-                            helperText={errors?.phone?.[0] ? errors?.phone[0] : ''}
-                            error={!!errors?.phone?.[0]}
-                          />
-                        </Tooltip>
-                      </div>
-                    </div>
-                    <div className='fieldSubContainer' style={{ marginLeft: '5%', marginTop: '19px' }}>
-                      <div className='fieldTitle'>Email Address</div>
-                      {/* <div style={{ width: '40%', display: 'flex', flexDirection: 'row', marginTop: '19px', marginLeft: '6.6%' }}>
-                      <div style={{ marginRight: '10px', fontSize: '13px', width: '22%', textAlign: 'right', fontWeight: 'bold' }}>Email Address</div> */}
-                      <TextField
-                        name='email'
-                        type='email'
-                        value={formData.email}
-                        onChange={handleChange}
-                        style={{ width: '70%' }}
-                        size='small'
-                        helperText={errors?.email?.[0] ? errors?.email[0] : ''}
-                        error={!!errors?.email?.[0]}
-                      />
-                    </div>
-                  </Box>
-                </AccordionDetails>
-              </Accordion>
-            </div>
-            {/* address details */}
-            <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', marginTop: '20px' }}>
-              <Accordion defaultExpanded style={{ width: '98%' }}>
-                <AccordionSummary expandIcon={<FiChevronDown style={{ fontSize: '25px' }} />}>
-                  <Typography className='accordion-header'>Address</Typography>
-                </AccordionSummary>
-                <Divider className='divider' />
-                <AccordionDetails>
-                  <Box
-                    sx={{ width: '98%', color: '#1A3353', mb: 1 }}
-                    component='form'
-                    noValidate
-                    autoComplete='off'
-                  >
-                    <div className='fieldContainer'>
-                      <div className='fieldSubContainer'>
-                        <div className='fieldTitle'
-                        // style={{ marginRight: '10px', fontSize: '13px', width: '22%', textAlign: 'right', fontWeight: 'bold' }}
-                        >Address Lane</div>
-                        <TextField
-                          name='address_line'
-                          value={formData.address_line}
-                          onChange={handleChange}
-                          style={{ width: '70%' }}
-                          size='small'
-                          helperText={errors?.address_line?.[0] ? errors?.address_line[0] : ''}
-                          error={!!errors?.address_line?.[0]}
-                        />
-                      </div>
-                      <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>City</div>
-                        <TextField
-                          name='city'
-                          value={formData.city}
-                          onChange={handleChange}
-                          style={{ width: '70%' }}
-                          size='small'
-                          helperText={errors?.city?.[0] ? errors?.city[0] : ''}
-                          error={!!errors?.city?.[0]}
-                        />
-                      </div>
-                    </div>
-                    <div className='fieldContainer2'>
-                      <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>Street</div>
-                        <TextField
-                          name='street'
-                          value={formData.street}
-                          onChange={handleChange}
-                          style={{ width: '70%' }}
-                          size='small'
-                          helperText={errors?.street?.[0] ? errors?.street[0] : ''}
-                          error={!!errors?.street?.[0]}
-                        />
-                      </div>
-                      <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>State</div>
-                        <TextField
-                          name='state'
-                          value={formData.state}
-                          onChange={handleChange}
-                          style={{ width: '70%' }}
-                          size='small'
-                          helperText={errors?.state?.[0] ? errors?.state[0] : ''}
-                          error={!!errors?.state?.[0]}
-                        />
-                      </div>
-                    </div>
-                    <div className='fieldContainer2'>
-                      <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>Pincode</div>
-                        <TextField
-                          name='postcode'
-                          value={formData.postcode}
-                          onChange={handleChange}
-                          style={{ width: '70%' }}
-                          size='small'
-                          helperText={errors?.postcode?.[0] ? errors?.postcode[0] : ''}
-                          error={!!errors?.postcode?.[0]}
-                        />
-                      </div>
-                      <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>Country</div>
+                        <div className='fieldTitle'>Status</div>
                         <FormControl sx={{ width: '70%' }}>
                           <Select
-                            name='country'
-                            value={formData.country}
-                            open={countrySelectOpen}
-                            onClick={() => setCountrySelectOpen(!countrySelectOpen)}
+                            name='status'
+                            value={formData.status}
+                            open={statusSelectOpen}
+                            onClick={() => setStatusSelectOpen(!statusSelectOpen)}
                             IconComponent={() => (
-                              <div onClick={() => setCountrySelectOpen(!countrySelectOpen)} className="select-icon-background">
-                                {countrySelectOpen ? <FiChevronUp className='select-icon' /> : <FiChevronDown className='select-icon' />}
+                              <div onClick={() => setStatusSelectOpen(!statusSelectOpen)} className="select-icon-background">
+                                {statusSelectOpen ? <FiChevronUp className='select-icon' /> : <FiChevronDown className='select-icon' />}
                               </div>
                             )}
-                            MenuProps={{
-                              PaperProps: {
-                                style: {
-                                  height: '200px'
-                                }
-                              }
-                            }}
                             className={'select'}
                             onChange={handleChange}
-                            error={!!errors?.country?.[0]}
+                            error={!!errors?.status?.[0]}
                           >
-                            {state?.countries?.length ? state?.countries.map((option: any) => (
+                            {MOCK_STATUS.map((option: any) => (
                               <MenuItem key={option[0]} value={option[0]}>
                                 {option[1]}
                               </MenuItem>
-                            )) : ''}
-
+                            ))}
                           </Select>
-                          <FormHelperText>{errors?.country?.[0] ? errors?.country[0] : ''}</FormHelperText>
+                          <FormHelperText>{errors?.status?.[0] ? errors?.status[0] : ''}</FormHelperText>
                         </FormControl>
-                        {/* <FormControl error={!!errors?.country?.[0]} sx={{ width: '70%' }}>
-                          <Autocomplete
-                            // ref={autocompleteRef}
-                            // freeSolo
-                            value={selectedCountry}
-                            options={state.countries || []}
-                            getOptionLabel={(option: any) => option[1]}
-                            onChange={(e: any, value: any) => handleChange2('country', value)}
-                            size='small'
-                            renderTags={(value, getTagProps) =>
-                              value.map((option, index) => (
-                                <Chip
-                                  deleteIcon={<FaTimes style={{ width: '9px' }} />}
-                                  sx={{
-                                    backgroundColor: 'rgba(0, 0, 0, 0.08)',
-                                    height: '18px'
-
-                                  }}
-                                  variant='outlined'
-                                  label={option[1]}
-                                  {...getTagProps({ index })}
-                                />
-                              ))
-                            }
-                            popupIcon={<IconButton
-                              disableFocusRipple
-                              disableRipple
-                              sx={{
-                                width: '45px', height: '40px',
-                                borderRadius: '0px',
-                                backgroundColor: '#d3d3d34a'
-                              }}><FaArrowDown style={{ width: '15px' }} /></IconButton>}
-                            renderInput={(params) => (
-                              <TextField {...params}
-                                // placeholder='Add co'
-                                InputProps={{
-                                  ...params.InputProps,
-                                  sx: {
-                                    '& .MuiAutocomplete-endAdornment': {
-                                      mt: '-9px',
-                                      mr: '-8px'
-                                    }
-                                  }
-                                }}
-                              />
-                            )}
-                          />
-                          <FormHelperText>{errors?.country?.[0] || ''}</FormHelperText>
-                        </FormControl> */}
+                      </div>
+                      <div className='fieldSubContainer'>
+                        {/* Empty container for layout balance */}
                       </div>
                     </div>
+                    
                   </Box>
                 </AccordionDetails>
               </Accordion>
