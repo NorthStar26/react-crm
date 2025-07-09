@@ -1,627 +1,324 @@
-// import {
-//   Box,
-//   Button,
-//   Card,
-//   Stack,
-//   Tab,
-//   Table,
-//   TableBody,
-//   TableContainer,
-//   TableHead,
-//   TablePagination,
-//   TableRow,
-//   Tabs,
-//   Toolbar,
-//   Typography,
-//   Paper,
-//   Select,
-//   MenuItem,
-//   MenuProps,
-//   FormControl,
-//   InputLabel,
-//   InputBase,
-//   styled,
-//   TableCell,
-//   TableSortLabel,
-//   Container,
-//   Skeleton,
-// } from '@mui/material';
-// import React, { SyntheticEvent, useEffect, useState } from 'react';
-// import { FiPlus } from '@react-icons/all-files/fi/FiPlus';
-// import { FiChevronLeft } from '@react-icons/all-files/fi/FiChevronLeft';
-// import { FiChevronRight } from '@react-icons/all-files/fi/FiChevronRight';
-// import { getComparator, stableSort } from '../../components/Sorting';
-// import { Spinner } from '../../components/Spinner';
-// import { fetchData, Header } from '../../components/FetchData';
-// import { ContactUrl } from '../../services/ApiUrls';
-// import {
-//   AntSwitch,
-//   CustomTab,
-//   CustomToolbar,
-//   FabLeft,
-//   FabRight,
-//   StyledTableCell,
-//   StyledTableRow,
-// } from '../../styles/CssStyled';
-// import { useNavigate } from 'react-router-dom';
-// import { FaTrashAlt } from 'react-icons/fa';
-// import { DeleteModal } from '../../components/DeleteModal';
-// import { FiChevronUp } from '@react-icons/all-files/fi/FiChevronUp';
-// import { FiChevronDown } from '@react-icons/all-files/fi/FiChevronDown';
-// import { EnhancedTableHead } from '../../components/EnchancedTableHead';
-// import { useMyContext } from '../../context/Context';
-
-// interface HeadCell {
-//   disablePadding: boolean;
-//   id: any;
-//   label: string;
-//   numeric: boolean;
-// }
-
-// const headCells: readonly HeadCell[] = [
-//   {
-//     id: 'first_name',
-//     numeric: false,
-//     disablePadding: false,
-//     label: 'Name',
-//   },
-//   // {
-//   //     id: 'first_name',
-//   //     numeric: false,
-//   //     disablePadding: false,
-//   //     label: 'First Name'
-//   // },
-//   // {
-//   //     id: 'last_name',
-//   //     numeric: true,
-//   //     disablePadding: false,
-//   //     label: 'Last Name'
-//   // },
-
-//   {
-//     id: 'primary_email',
-//     numeric: true,
-//     disablePadding: false,
-//     label: 'Email Address',
-//   },
-//   {
-//     id: 'mobile_number',
-//     numeric: true,
-//     disablePadding: false,
-//     label: 'Phone Number',
-//   },
-//   {
-//     id: '',
-//     numeric: true,
-//     disablePadding: false,
-//     label: 'Action',
-//   },
-// ];
-
-// export default function Contacts() {
-//   const navigate = useNavigate();
-//   // const context = useMyContext();
-
-//   const [value, setValue] = useState('Open');
-//   const [loading, setLoading] = useState(true);
-//   const [page, setPage] = useState(0);
-//   const [rowsPerPage, setRowsPerPage] = useState(10);
-//   const [contactList, setContactList] = useState([]);
-//   const [countries, setCountries] = useState([]);
-
-//   const [deleteRowModal, setDeleteRowModal] = useState(false);
-
-//   const [selected, setSelected] = useState<string[]>([]);
-//   const [selectedId, setSelectedId] = useState('');
-//   const [isSelectedId, setIsSelectedId] = useState([]);
-//   const [order, setOrder] = useState('asc');
-//   const [orderBy, setOrderBy] = useState('first_name');
-
-//   const [selectOpen, setSelectOpen] = useState(false);
-//   const [currentPage, setCurrentPage] = useState<number>(1);
-//   const [recordsPerPage, setRecordsPerPage] = useState<number>(10);
-//   const [totalPages, setTotalPages] = useState<number>(0);
-
-//   // useEffect(() => {
-//   //     getContacts()
-//   // }, [localStorage.getItem('org')])
-
-//   useEffect(() => {
-//     getContacts();
-//   }, [currentPage, recordsPerPage]);
-
-//   // const handleChangeTab = (e: SyntheticEvent, val: any) => {
-//   //     setValue(val)
-//   // }
-
-//   // const fetch2 = () => {
-//   //     const headers = new Headers({
-//   //         'Accept': 'application/json',
-//   //         'Content-Type': 'application/json',
-//   //         'Authorization': localStorage.getItem('Token') || '',
-//   //         'org': localStorage.getItem('org') || '',
-//   //     });
-//   //     // fetch(`https://8000-little-dawn-70215372.eu-ws3.runcode.io/api/${ContactUrl}/`, { method: 'GET', headers: headers })
-//   //     fetch(`https://8000-little-dawn-70215372.eu-ws3.runcode.io/api/${ContactUrl}/?offset=0&limit=20`, { method: 'GET', headers: headers })
-//   //         .then((response) => response.json())
-//   //         .then((data) => { console.log(data, 'data') })
-//   // }
-//   const getContacts = async () => {
-//     const Header = {
-//       Accept: 'application/json',
-//       'Content-Type': 'application/json',
-//       Authorization: localStorage.getItem('Token'),
-//       org: localStorage.getItem('org'),
-//     };
-//     try {
-//       const offset = (currentPage - 1) * recordsPerPage;
-//       await fetchData(
-//         `${ContactUrl}/?offset=${offset}&limit=${recordsPerPage}`,
-//         'GET',
-//         null as any,
-//         Header
-//       )
-//         // fetchData(`${ContactUrl}/`, 'GET', null as any, Header)
-//         .then((data) => {
-//           if (!data.error) {
-//             // console.log(data.contact_obj_list, 'contact')
-//             // if (initial) {
-//             setContactList(data.contact_obj_list);
-//             setCountries(data?.countries);
-//             // setTotalPages(data?.contacts_count)
-//             setTotalPages(Math.ceil(data?.contacts_count / recordsPerPage));
-//             setLoading(false);
-//             // setTotalPages(Math.ceil(result.total / recordsPerPage));
-//             // setInitial(false)
-//             // } else {
-//             // setContactList(Object.assign([], contacts, [data.contact_obj_list]))
-//             // setContactList(prevContactList => prevContactList.concat(data.contact_obj_list));
-//             // setContactList(...contactList,data.contact_obj_list)
-//             // setLoading(false)
-//             // }
-//           }
-//         });
-//     } catch (error) {
-//       console.error('Error fetching data:', error);
-//     }
-//   };
-
-//   const handleRequestSort = (event: any, property: any) => {
-//     const isAsc = orderBy === property && order === 'asc';
-//     setOrder(isAsc ? 'desc' : 'asc');
-//     setOrderBy(property);
-//   };
-
-//   const DeleteItem = () => {
-//     const Header = {
-//       Accept: 'application/json',
-//       'Content-Type': 'application/json',
-//       Authorization: localStorage.getItem('Token'),
-//       org: localStorage.getItem('org'),
-//     };
-//     fetchData(`${ContactUrl}/${selectedId}/`, 'DELETE', null as any, Header)
-//       .then((res: any) => {
-//         // console.log('delete:', res);
-//         if (!res.error) {
-//           deleteRowModalClose();
-//           getContacts();
-//         }
-//       })
-//       .catch(() => {});
-//   };
-
-//   const handlePreviousPage = () => {
-//     setLoading(true);
-//     setCurrentPage((prevPage) => Math.max(prevPage - 1, 1));
-//   };
-
-//   const handleNextPage = () => {
-//     setLoading(true);
-//     setCurrentPage((prevPage) => Math.min(prevPage + 1, totalPages));
-//   };
-
-//   const handleRecordsPerPage = (
-//     event: React.ChangeEvent<HTMLSelectElement>
-//   ) => {
-//     setLoading(true);
-//     setRecordsPerPage(parseInt(event.target.value));
-//     setCurrentPage(1);
-//   };
-//   // const renderPageNumbers = () => {
-//   //     const pageNumbers = [];
-//   //     if (totalPages <= 1) return null;
-//   //     for (let i = 1; i <= totalPages; i++) {
-//   //         if (
-//   //             i === 1 ||
-//   //             i === totalPages ||
-//   //             (i >= currentPage - 1 && i <= currentPage + 1) ||
-//   //             (i <= 2 && currentPage <= 4) ||
-//   //             (i >= totalPages - 1 && currentPage >= totalPages - 3)
-//   //         ) {
-//   //             pageNumbers.push(
-//   //                 <button
-//   //                     key={i}
-//   //                     onClick={() => setCurrentPage(i)}
-//   //                     className={i === currentPage ? 'active' : ''}
-//   //                 >
-//   //                     {i}
-//   //                 </button>
-//   //             );
-//   //         } else if ((i === 3 && currentPage > 4) || (i === totalPages - 2 && currentPage < totalPages - 3)) {
-//   //             // Add ellipsis if necessary
-//   //             pageNumbers.push(<span key={-i}>...</span>);
-//   //         }
-//   //     }
-//   //     return pageNumbers;
-//   // };
-
-//   const onAddContact = () => {
-//     console.log('=== ADD CONTACT BUTTON CLICKED ===');
-//     console.log('Loading state:', loading);
-//     console.log('Countries available:', countries?.length || 0);
-
-//     if (!loading) {
-//       console.log('✅ Navigation allowed - loading is false');
-//       console.log('🚀 About to navigate to: /app/contacts/add-contacts');
-
-//       navigate('/app/contacts/add-contacts', { state: { countries } });
-
-//       console.log('✅ Navigate function called');
-//     } else {
-//       console.log('❌ Navigation blocked - loading is true');
-//     }
-//   };
-
-//   if (!loading) {
-//     navigate('/app/contacts/add-contacts', { state: { countries } });
-//   }
-//   // navigate('/contacts/add-contacts?page=add-contacts')
-// }
-
-// const contactHandle = (contactId: any) => {
-//   navigate(`/app/contacts/contact-details`, {
-//     state: { contactId, detail: true, countries },
-//   });
-// };
-
-// const deleteRow = (deleteId: any) => {
-//   setDeleteRowModal(true);
-//   setSelectedId(deleteId);
-// };
-// const deleteRowModalClose = () => {
-//   setDeleteRowModal(false);
-//   setSelectedId('');
-// };
-// const modalDialog = 'Are You Sure you want to delete this contact?';
-// const modalTitle = 'Delete Contact';
-
-// const recordsList = [
-//   [10, '10 Records per page'],
-//   [20, '20 Records per page'],
-//   [30, '30 Records per page'],
-//   [40, '40 Records per page'],
-//   [50, '50 Records per page'],
-// ];
-// // console.log(contactList, 'cccc')
-// // console.log(context, 'cc');
-// return (
-//   <Box
-//     sx={{
-//       mt: '60px',
-//       // , width: '1376px'
-//     }}
-//   >
-//     <CustomToolbar sx={{ flexDirection: 'row-reverse' }}>
-//       {/* <Tabs defaultValue={value} onChange={handleChangeTab} sx={{ mt: '27px' }}>
-//                     <CustomTab value="Open" label="Open"
-//                         sx={{
-//                             backgroundColor: value === 'Open' ? '#F0F7FF' : '#223d60',
-//                             color: value === 'Open' ? '#3f51b5' : 'white',
-//                         }}></CustomTab>
-//                     <CustomTab value="Closed" label="Closed"
-//                         sx={{
-//                             backgroundColor: value === 'Closed' ? '#F0F7FF' : '#223d60',
-//                             color: value === 'Closed' ? '#3f51b5' : 'white',
-//                             ml: '5px',
-//                         }}
-//                     ></CustomTab>
-//                 </Tabs> */}
-//       <Stack
-//         sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}
-//       >
-//         <Select
-//           value={recordsPerPage}
-//           // onChange={(e: any) => setRecordsPerPage(e.target.value)}
-//           onChange={(e: any) => handleRecordsPerPage(e)}
-//           open={selectOpen}
-//           onOpen={() => setSelectOpen(true)}
-//           onClose={() => setSelectOpen(false)}
-//           className={`custom-select`}
-//           onClick={() => setSelectOpen(!selectOpen)}
-//           IconComponent={() => (
-//             <div
-//               onClick={() => setSelectOpen(!selectOpen)}
-//               className="custom-select-icon"
-//             >
-//               {selectOpen ? (
-//                 <FiChevronUp style={{ marginTop: '12px' }} />
-//               ) : (
-//                 <FiChevronDown style={{ marginTop: '12px' }} />
-//               )}
-//             </div>
-//           )}
-//           sx={{ '& .MuiSelect-select': { overflow: 'visible !important' } }}
-//         >
-//           {recordsList?.length &&
-//             recordsList.map((item: any, i: any) => (
-//               <MenuItem key={i} value={item[0]}>
-//                 {item[1]}
-//               </MenuItem>
-//             ))}
-//         </Select>
-//         <Box
-//           sx={{
-//             borderRadius: '7px',
-//             backgroundColor: 'white',
-//             height: '40px',
-//             minHeight: '40px',
-//             maxHeight: '40px',
-//             display: 'flex',
-//             flexDirection: 'row',
-//             alignItems: 'center',
-//             mr: 1,
-//             p: '0px',
-//           }}
-//         >
-//           <FabLeft onClick={handlePreviousPage} disabled={currentPage === 1}>
-//             <FiChevronLeft style={{ height: '15px' }} />
-//           </FabLeft>
-//           <Typography
-//             sx={{
-//               mt: 0,
-//               textTransform: 'lowercase',
-//               fontSize: '15px',
-//               color: '#1A3353',
-//               textAlign: 'center',
-//             }}
-//           >
-//             {currentPage} to {totalPages}
-//             {/* {renderPageNumbers()} */}
-//           </Typography>
-//           <FabRight
-//             onClick={handleNextPage}
-//             disabled={currentPage === totalPages}
-//           >
-//             <FiChevronRight style={{ height: '15px' }} />
-//           </FabRight>
-//         </Box>
-//         <Button
-//           variant="contained"
-//           startIcon={<FiPlus className="plus-icon" />}
-//           onClick={onAddContact}
-//           className={'add-button'}
-//         >
-//           Add Contact
-//         </Button>
-//       </Stack>
-//     </CustomToolbar>
-
-//     <Container sx={{ width: '100%', maxWidth: '100%', minWidth: '100%' }}>
-//       <Box sx={{ width: '100%', minWidth: '100%', m: '15px 0px 0px 0px' }}>
-//         <Paper sx={{ width: 'cal(100%-15px)', mb: 2, p: '0px 15px 15px 15px' }}>
-//           <TableContainer>
-//             <Table>
-//               <EnhancedTableHead
-//                 numSelected={selected.length}
-//                 order={order}
-//                 orderBy={orderBy}
-//                 // onSelectAllClick={tab === 0 ? handleSelectAllClick : ''}
-//                 // onSelectAllClick={''}
-//                 onRequestSort={handleRequestSort}
-//                 // rowCount={tab === 0 ? usersData.active_users_count : usersData.inactive_users_count}
-//                 numSelectedId={selectedId}
-//                 isSelectedId={isSelectedId}
-//                 headCells={headCells}
-//               />
-//               {/* <TableHead>
-//                             <TableRow>
-//                                 <StyledTableCell style={{ fontWeight: 'bold', fontSize: '13p', color: '#1A3353' }}>Name</StyledTableCell>
-//                                 <StyledTableCell style={{ fontWeight: 'bold', fontSize: '13p', color: '#1A3353' }}>Email</StyledTableCell>
-//                                 <StyledTableCell style={{ fontWeight: 'bold', fontSize: '13p', color: '#1A3353' }}>Phone Number</StyledTableCell>
-//                                  <StyledTableCell style={{ fontWeight: 'bold', fontSize: '13p', color: '#1A3353' }}>Do Not Call</StyledTableCell>
-//                         <StyledTableCell style={{ fontWeight: 'bold', fontSize: '13p', color: '#1A3353' }}>Action</StyledTableCell>
-//                     </TableRow>
-//                 </TableHead> */}
-//               <TableBody>
-//                 {contactList?.length
-//                   ? stableSort(contactList, getComparator(order, orderBy))
-//                       // .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((item: any, index: any) => {
-//                       .map((item: any, index: any) => {
-//                         return (
-//                           <TableRow
-//                             tabIndex={-1}
-//                             key={index}
-//                             sx={{
-//                               border: 0,
-//                               '&:nth-of-type(even)': {
-//                                 backgroundColor: 'whitesmoke',
-//                               },
-//                               color: 'rgb(26, 51, 83)',
-//                               textTransform: 'capitalize',
-//                             }}
-//                           >
-//                             <TableCell
-//                               className="tableCell-link"
-//                               onClick={() => contactHandle(item)}
-//                             >
-//                               {item.first_name + ' ' + item.last_name}
-//                             </TableCell>
-//                             <TableCell className="tableCell">
-//                               {item.primary_email}
-//                             </TableCell>
-//                             <TableCell className="tableCell">
-//                               {item.mobile_number ? item.mobile_number : '---'}
-//                             </TableCell>
-//                             {/* <StyledTableCell align='left'>
-//                                                 <AntSwitch checked={item.do_not_call} inputProps={{ 'aria-label': 'ant design' }} />
-//                                             </StyledTableCell> */}
-//                             <TableCell className="tableCell">
-//                               <FaTrashAlt
-//                                 style={{ cursor: 'pointer' }}
-//                                 onClick={() => deleteRow(item.id)}
-//                               />
-//                             </TableCell>
-//                           </TableRow>
-//                         );
-//                       })
-//                   : ''}
-//               </TableBody>
-//             </Table>
-//           </TableContainer>
-//           {loading && (
-//             // <Skeleton variant="rectangular"
-//             // width={210} height={118}
-//             // />
-//             <Spinner />
-//           )}
-//         </Paper>
-//       </Box>
-//     </Container>
-//     {
-//       <DeleteModal
-//         onClose={deleteRowModalClose}
-//         open={deleteRowModal}
-//         id={selectedId}
-//         modalDialog={modalDialog}
-//         modalTitle={modalTitle}
-//         DeleteItem={DeleteItem}
-//       />
-//       // <DialogModal
-//       //     contact={contact}
-//       //     isDelete={isDelete}
-//       //     modalDialog={modalDialog}
-//       //     onClose={onclose}
-//       //     onDelete={onDelete}
-//       // />
-//     }
-//   </Box>
-// );
-// // setDeleteRowModal is already defined as a state setter from useState above, so no additional implementation is needed here.
-// // const [deleteRowModal, setDeleteRowModal] = useState(false);
-// // No additional implementation is needed here.
+import React, { useEffect, useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Button,
-  Card,
   Stack,
-  Tab,
-  Table,
-  TableBody,
-  TableContainer,
-  TableHead,
-  TablePagination,
-  TableRow,
-  Tabs,
-  Toolbar,
   Typography,
   Paper,
   Select,
   MenuItem,
-  MenuProps,
-  FormControl,
-  InputLabel,
   InputBase,
-  styled,
-  TableCell,
-  TableSortLabel,
+  FormControl,
   Container,
-  Skeleton,
+  Pagination,
+  IconButton,
 } from '@mui/material';
-import React, { SyntheticEvent, useEffect, useState } from 'react';
-import { FiPlus } from '@react-icons/all-files/fi/FiPlus';
-import { FiChevronLeft } from '@react-icons/all-files/fi/FiChevronLeft';
-import { FiChevronRight } from '@react-icons/all-files/fi/FiChevronRight';
-import { getComparator, stableSort } from '../../components/Sorting';
+import { SuccessAlert, ErrorAlert } from '../../components/Button/SuccessAlert';
 import { Spinner } from '../../components/Spinner';
-import { fetchData, Header } from '../../components/FetchData';
-import { ContactUrl } from '../../services/ApiUrls';
-import {
-  AntSwitch,
-  CustomTab,
-  CustomToolbar,
-  FabLeft,
-  FabRight,
-  StyledTableCell,
-  StyledTableRow,
-} from '../../styles/CssStyled';
-import { useNavigate } from 'react-router-dom';
-import { FaTrashAlt } from 'react-icons/fa';
-import { DeleteModal } from '../../components/DeleteModal';
+import { FiPlus } from '@react-icons/all-files/fi/FiPlus';
+import { FiSearch } from '@react-icons/all-files/fi/FiSearch';
+import { FaDownload } from 'react-icons/fa';
 import { FiChevronUp } from '@react-icons/all-files/fi/FiChevronUp';
 import { FiChevronDown } from '@react-icons/all-files/fi/FiChevronDown';
-import { EnhancedTableHead } from '../../components/EnchancedTableHead';
-import { useMyContext } from '../../context/Context';
+import { FaEdit, FaTrashAlt } from 'react-icons/fa';
+import { MdLanguage, MdBusinessCenter } from 'react-icons/md';
+import { fetchData } from '../../components/FetchData';
+import { ContactUrl } from '../../services/ApiUrls';
+import { DeleteModal } from '../../components/DeleteModal';
+import * as XLSX from 'xlsx';
 
-interface HeadCell {
-  disablePadding: boolean;
-  id: any;
-  label: string;
-  numeric: boolean;
-}
+// AG Grid imports
+import { ModuleRegistry, ClientSideRowModelModule } from 'ag-grid-community';
+import { AgGridReact } from 'ag-grid-react';
+import 'ag-grid-community/styles/ag-grid.css';
+import 'ag-grid-community/styles/ag-theme-alpine.css';
+import { ICellRendererParams, ColDef } from 'ag-grid-community';
+import { SelectChangeEvent } from '@mui/material/Select';
+ModuleRegistry.registerModules([ClientSideRowModelModule]);
+import LANGUAGE_CHOICES from '../../data/LANGUAGE';
+import '../../styles/contacts-table.css';
+import { CustomToolbar } from '../../styles/CssStyled';
+// const JOB_TITLES = [
+//   'Head of Sales',
+//   'Project Manager',
+//   'HR Specialist',
+//   'Sales',
+//   'Marketing Manager',
+//   'Software Engineer',
+//   'Business Analyst',
+//   'Account Manager',
+//   'Operations Manager',
+//   'Product Manager',
+// ];
 
-const headCells: readonly HeadCell[] = [
-  {
-    id: 'first_name',
-    numeric: false,
-    disablePadding: false,
-    label: 'Name',
-  },
-  {
-    id: 'primary_email',
-    numeric: true,
-    disablePadding: false,
-    label: 'Email Address',
-  },
-  {
-    id: 'mobile_number',
-    numeric: true,
-    disablePadding: false,
-    label: 'Phone Number',
-  },
-  {
-    id: '',
-    numeric: true,
-    disablePadding: false,
-    label: 'Action',
-  },
+const LANGUAGES = [
+  'English',
+  'Dutch',
+  'Spanish',
+  'French',
+  'German',
+  'Italian',
+  'Portuguese',
+  'Russian',
+  'Chinese',
+  'Japanese',
 ];
+
+// Custom cell renderers
+const NameCellRenderer = (props: ICellRendererParams) => {
+  const navigate = useNavigate();
+  const handleClick = () => {
+    navigate(`/app/contacts/contact-details`, {
+      state: { contactId: props.data, detail: true },
+    });
+  };
+
+  return (
+    <span
+      onClick={handleClick}
+      style={{
+        cursor: 'pointer',
+        color: '#1976d2',
+        textDecoration: 'none',
+        fontWeight: 500,
+      }}
+      onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
+      onMouseLeave={(e) => (e.currentTarget.style.textDecoration = 'none')}
+    >
+      {props.data.first_name} {props.data.last_name}
+    </span>
+  );
+};
+
+const PhoneNumberCellRenderer = (props: ICellRendererParams) => {
+  const phoneNumber = props.value;
+  const doNotCall = props.data.do_not_call;
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '4px',
+        position: 'relative',
+      }}
+    >
+      {phoneNumber || '---'}
+      {doNotCall && (
+        <span style={{ display: 'flex', alignItems: 'center' }}>
+          {/* SVG "Do Not Call" icon */}
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            style={{
+              flex: 'none',
+              order: 1,
+              flexGrow: 0,
+              position: 'relative',
+              marginLeft: 2,
+            }}
+          >
+            <circle cx="12" cy="12" r="12" fill="#D32F2F" />
+            <rect x="6" y="11" width="12" height="2" rx="1" fill="#fff" />
+          </svg>
+        </span>
+      )}
+    </div>
+  );
+};
+
+const ActionsCellRenderer = (props: ICellRendererParams) => {
+  const navigate = useNavigate();
+
+  const handleEdit = () => {
+    navigate(`/app/contacts/contact-details`, {
+      state: { contactId: props.data, detail: false },
+    });
+  };
+
+  const handleDelete = () => {
+    props.context.componentParent.deleteRow(props.data.id);
+  };
+
+  return (
+    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+      <FaEdit
+        style={{ cursor: 'pointer', color: '#1976d2', fontSize: '16px' }}
+        onClick={handleEdit}
+      />
+      <FaTrashAlt
+        style={{ cursor: 'pointer', color: '#d32f2f', fontSize: '16px' }}
+        onClick={handleDelete}
+      />
+    </div>
+  );
+};
 
 export default function Contacts() {
   const navigate = useNavigate();
-
-  const [value, setValue] = useState('Open');
   const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [contactList, setContactList] = useState([]);
-  const [countries, setCountries] = useState([]);
-
   const [deleteRowModal, setDeleteRowModal] = useState(false);
-
-  const [selected, setSelected] = useState<string[]>([]);
+  const [jobTitles, setJobTitles] = useState<string[]>([]);
   const [selectedId, setSelectedId] = useState('');
-  const [isSelectedId, setIsSelectedId] = useState([]);
-  const [order, setOrder] = useState('asc');
-  const [orderBy, setOrderBy] = useState('first_name');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [countries, setCountries] = useState<{ id: string; name: string }[]>(
+    []
+  );
 
-  const [selectOpen, setSelectOpen] = useState(false);
+  // Pagination states
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [recordsPerPage, setRecordsPerPage] = useState<number>(10);
   const [totalPages, setTotalPages] = useState<number>(0);
+  const [totalContacts, setTotalContacts] = useState<number>(0);
+
+  // Filter states
+  const [search, setSearch] = useState('');
+  const [jobTitleFilter, setJobTitleFilter] = useState('');
+  const [languageFilter, setLanguageFilter] = useState('');
+  const [companyFilter, setCompanyFilter] = useState('');
+  const [jobTitleSelectOpen, setJobTitleSelectOpen] = useState(false);
+  const [languageSelectOpen, setLanguageSelectOpen] = useState(false);
+  const [companySelectOpen, setCompanySelectOpen] = useState(false);
+
+  const gridRef = useRef<AgGridReact>(null);
+  const [gridApi, setGridApi] = useState<any>(null);
+
+  // AG Grid column definitions
+  const columnDefs: ColDef[] = [
+    {
+      headerCheckboxSelection: true,
+      checkboxSelection: true,
+      headerCheckboxSelectionFilteredOnly: true,
+      suppressSizeToFit: true,
+      width: 40,
+      maxWidth: 40,
+      sortable: false,
+      filter: false,
+    },
+    {
+      field: 'name',
+      headerName: 'Full Name',
+      cellRenderer: NameCellRenderer,
+      valueGetter: (params) =>
+        `${params.data.first_name} ${params.data.last_name}`,
+      minWidth: 150,
+      flex: 1,
+      sortable: true,
+    },
+    {
+      field: 'primary_email',
+      headerName: 'Email',
+      minWidth: 250,
+      flex: 1,
+      sortable: true,
+    },
+    {
+      field: 'mobile_number',
+      headerName: 'Phone Number',
+      cellRenderer: PhoneNumberCellRenderer,
+      minWidth: 200,
+      sortable: true,
+    },
+    {
+      field: 'title',
+      headerName: 'Job Title',
+      minWidth: 20,
+      sortable: true,
+    },
+    {
+      field: 'language',
+      headerName: 'Language',
+      minWidth: 40,
+      valueGetter: (params) => {
+        const code = params.data.language;
+        const found = LANGUAGE_CHOICES.find(([c]) => c === code);
+        return found ? found[1] : code;
+      },
+      sortable: true,
+    },
+    {
+      field: 'created_at',
+      headerName: 'Creation Date',
+      minWidth: 20,
+      valueFormatter: (params) => {
+        if (params.value) {
+          const date = new Date(params.value);
+          return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+          });
+        }
+        return '';
+      },
+      sortable: true,
+    },
+    {
+      field: 'actions',
+      headerName: 'Actions',
+      cellRenderer: ActionsCellRenderer,
+      minWidth: 70,
+      maxWidth: 70,
+      sortable: false,
+      filter: false,
+      pinned: 'right',
+    },
+  ];
+
+  const defaultColDef = {
+    resizable: true,
+    sortable: true,
+    filter: true,
+    wrapText: true,
+    autoHeight: true,
+    unSortIcon: true,
+    suppressSizeToFit: true,
+    cellStyle: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+      paddingRight: '4px',
+      paddingLeft: '4px',
+    },
+  };
+
+  // AG Grid theme variables
+  const gridTheme = {
+    '--ag-header-background-color': '#2E4258',
+    '--ag-header-foreground-color': '#FFFFFF',
+    '--ag-header-border-color': '#0F2A55',
+    '--ag-odd-row-background-color': '#FFFFFF',
+    '--ag-even-row-background-color': '#F3F8FF',
+    '--ag-row-border-color': '#E0E0E0',
+    '--ag-cell-horizontal-padding': '4px',
+    '--ag-header-cell-padding': '4px',
+  } as React.CSSProperties;
 
   useEffect(() => {
     getContacts();
-  }, [currentPage, recordsPerPage]);
+    // eslint-disable-next-line
+  }, [
+    currentPage,
+    recordsPerPage,
+    jobTitleFilter,
+    languageFilter,
+    companyFilter,
+  ]);
+
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      if (search !== undefined) {
+        getContacts();
+      }
+    }, 500);
+    return () => clearTimeout(delayDebounceFn);
+    // eslint-disable-next-line
+  }, [search]);
 
   const getContacts = async () => {
     const Header = {
@@ -630,85 +327,41 @@ export default function Contacts() {
       Authorization: localStorage.getItem('Token'),
       org: localStorage.getItem('org'),
     };
+
     try {
       const offset = (currentPage - 1) * recordsPerPage;
-      await fetchData(
-        `${ContactUrl}/?offset=${offset}&limit=${recordsPerPage}`,
-        'GET',
-        null as any,
-        Header
-      ).then((data) => {
-        if (!data.error) {
-          setContactList(data.contact_obj_list);
-          setCountries(data?.countries);
-          setTotalPages(Math.ceil(data?.contacts_count / recordsPerPage));
-          setLoading(false);
-        }
-      });
+      let url = `${ContactUrl}/?offset=${offset}&limit=${recordsPerPage}`;
+      if (search) url += `&search=${search}`;
+      //   if (jobTitleFilter) url += `&title=${jobTitleFilter}`;
+      if (languageFilter) url += `&language=${languageFilter}`;
+      if (companyFilter) url += `&company=${companyFilter}`;
+
+      const data = await fetchData(url, 'GET', null as any, Header);
+
+      if (!data.error) {
+        setContactList(data.data?.contact_obj_list || []);
+        setCountries(data.data?.companies || data.data?.countries || []);
+        setJobTitles(data.data?.job_titles || []);
+        setTotalContacts(
+          data.data?.contacts_count || data.data?.contact_obj_list?.length || 0
+        );
+        setTotalPages(
+          Math.ceil(
+            (data.data?.contacts_count ||
+              data.data?.contact_obj_list?.length ||
+              0) / recordsPerPage
+          )
+        );
+        setLoading(false);
+      }
     } catch (error) {
-      console.error('Error fetching data:', error);
+      setErrorMessage('Failed to fetch contacts');
+      setLoading(false);
     }
   };
 
-  const handleRequestSort = (event: any, property: any) => {
-    const isAsc = orderBy === property && order === 'asc';
-    setOrder(isAsc ? 'desc' : 'asc');
-    setOrderBy(property);
-  };
-
-  const DeleteItem = () => {
-    const Header = {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      Authorization: localStorage.getItem('Token'),
-      org: localStorage.getItem('org'),
-    };
-    fetchData(`${ContactUrl}/${selectedId}/`, 'DELETE', null as any, Header)
-      .then((res: any) => {
-        if (!res.error) {
-          deleteRowModalClose();
-          getContacts();
-        }
-      })
-      .catch(() => {});
-  };
-
-  const handlePreviousPage = () => {
-    setLoading(true);
-    setCurrentPage((prevPage) => Math.max(prevPage - 1, 1));
-  };
-
-  const handleNextPage = () => {
-    setLoading(true);
-    setCurrentPage((prevPage) => Math.min(prevPage + 1, totalPages));
-  };
-
-  const handleRecordsPerPage = (
-    event: React.ChangeEvent<HTMLSelectElement>
-  ) => {
-    setLoading(true);
-    setRecordsPerPage(parseInt(event.target.value));
-    setCurrentPage(1);
-  };
-
-  // ИСПРАВЛЕННАЯ ФУНКЦИЯ onAddContact - убрал дублирование
-  const onAddContact = () => {
-    if (!loading) {
-      console.log('✅ Navigation allowed - loading is false');
-      console.log('🚀 About to navigate to: /app/contacts/add-contacts');
-
-      navigate('/app/contacts/add-contacts', { state: { countries } });
-
-      console.log('✅ Navigate function called');
-    } else {
-      console.log('❌ Navigation blocked - loading is true');
-    }
-  };
-
-  const contactHandle = (contactId: any) => {
-    navigate(`/app/contacts/contact-details`, {
-      state: { contactId, detail: true, countries },
-    });
+  const addContact = () => {
+    navigate('/app/contacts/add-contacts', { state: { countries } });
   };
 
   const deleteRow = (deleteId: any) => {
@@ -721,167 +374,394 @@ export default function Contacts() {
     setSelectedId('');
   };
 
-  const modalDialog = 'Are You Sure you want to delete this contact?';
-  const modalTitle = 'Delete Contact';
+  const DeleteItem = async () => {
+    setDeleteLoading(true);
+    const Header = {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      Authorization: localStorage.getItem('Token'),
+      org: localStorage.getItem('org'),
+    };
 
-  const recordsList = [
-    [10, '10 Records per page'],
-    [20, '20 Records per page'],
-    [30, '30 Records per page'],
-    [40, '40 Records per page'],
-    [50, '50 Records per page'],
-  ];
+    try {
+      const res = await fetchData(
+        `${ContactUrl}/${selectedId}/`,
+        'DELETE',
+        null as any,
+        Header
+      );
+
+      if (!res.error) {
+        setSuccessMessage('Contact deleted successfully');
+        deleteRowModalClose();
+        getContacts();
+      } else {
+        setErrorMessage('Failed to delete contact');
+      }
+    } catch (error) {
+      setErrorMessage('Failed to delete contact');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const handleExport = () => {
+    const selectedNodes = gridRef.current?.api.getSelectedNodes();
+    const selectedData = selectedNodes?.map((node) => node.data) || [];
+    const dataToExport = selectedData.length > 0 ? selectedData : contactList;
+
+    const ws = XLSX.utils.json_to_sheet(dataToExport);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Contacts');
+    XLSX.writeFile(wb, 'contacts.xlsx');
+  };
+
+  const handlePageChange = (_e: any, page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleRecordsPerPageChange = (event: SelectChangeEvent<number>) => {
+    setRecordsPerPage(Number(event.target.value));
+    setCurrentPage(1);
+  };
+
+  const modalDialog = 'Are you sure you want to delete this contact?';
+  const modalTitle = 'Delete Contact';
 
   return (
     <Box sx={{ mt: '60px' }}>
-      <CustomToolbar sx={{ flexDirection: 'row-reverse' }}>
+      {/* Toolbar */}
+      <Box
+        className="CustomToolbar"
+        sx={{
+          bgcolor: '#1A3353',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          p: '2px 5px',
+          borderBottom: '1px solid #e0e0e0',
+          flexWrap: 'wrap',
+          gap: 2,
+          minHeight: '44px',
+        }}
+      >
         <Stack
-          sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}
+          direction="row"
+          spacing={2}
+          alignItems="center"
+          sx={{ flexWrap: 'wrap' }}
         >
-          <Select
-            value={recordsPerPage}
-            onChange={(e: any) => handleRecordsPerPage(e)}
-            open={selectOpen}
-            onOpen={() => setSelectOpen(true)}
-            onClose={() => setSelectOpen(false)}
-            className={`custom-select`}
-            onClick={() => setSelectOpen(!selectOpen)}
-            IconComponent={() => (
-              <div
-                onClick={() => setSelectOpen(!selectOpen)}
-                className="custom-select-icon"
-              >
-                {selectOpen ? (
-                  <FiChevronUp style={{ marginTop: '12px' }} />
-                ) : (
-                  <FiChevronDown style={{ marginTop: '12px' }} />
-                )}
-              </div>
-            )}
-            sx={{ '& .MuiSelect-select': { overflow: 'visible !important' } }}
-          >
-            {recordsList?.length &&
-              recordsList.map((item: any, i: any) => (
-                <MenuItem key={i} value={item[0]}>
-                  {item[1]}
-                </MenuItem>
-              ))}
-          </Select>
+          {/* Search */}
           <Box
-            sx={{
-              borderRadius: '7px',
-              backgroundColor: 'white',
-              height: '40px',
-              minHeight: '40px',
-              maxHeight: '40px',
-              display: 'flex',
-              flexDirection: 'row',
-              alignItems: 'center',
-              mr: 1,
-              p: '0px',
-            }}
+            sx={{ position: 'relative', display: 'flex', alignItems: 'center' }}
           >
-            <FabLeft onClick={handlePreviousPage} disabled={currentPage === 1}>
-              <FiChevronLeft style={{ height: '15px' }} />
-            </FabLeft>
-            <Typography
+            <FiSearch
+              style={{
+                position: 'absolute',
+                left: 12,
+                zIndex: 1,
+                color: '#666',
+              }}
+            />
+            <InputBase
+              placeholder="Search contacts..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setCurrentPage(1);
+              }}
               sx={{
-                mt: 0,
-                textTransform: 'lowercase',
-                fontSize: '15px',
-                color: '#1A3353',
-                textAlign: 'center',
+                background: '#fff',
+                borderRadius: 2,
+                px: 2,
+                py: 0.5,
+                pl: 5,
+                border: '1px solid #D9D9D9',
+                minWidth: 200,
+                fontSize: 16,
+              }}
+            />
+          </Box>
+          {/* Job Title Filter
+          <FormControl sx={{ minWidth: 160 }}>
+            <Select
+              displayEmpty
+              value={jobTitleFilter}
+              onChange={(e) => {
+                setJobTitleFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              onOpen={() => setJobTitleSelectOpen(true)}
+              onClose={() => setJobTitleSelectOpen(false)}
+              open={jobTitleSelectOpen}
+              IconComponent={() => (
+                <div style={{ marginRight: 8 }}>
+                  {jobTitleSelectOpen ? <FiChevronUp /> : <FiChevronDown />}
+                </div>
+              )}
+              sx={{
+                background: '#fff',
+                borderRadius: 2,
+                fontSize: 16,
+                height: 40,
               }}
             >
-              {currentPage} to {totalPages}
-            </Typography>
-            <FabRight
-              onClick={handleNextPage}
-              disabled={currentPage === totalPages}
+              <MenuItem value="">
+                <em>All Job Titles</em>
+              </MenuItem>
+              {jobTitles.map((title) => (
+                <MenuItem key={title} value={title}>
+                  {title}
+                </MenuItem>
+              ))}
+            </Select> */}
+          {/* </FormControl> */}
+          {/* Language Filter */}
+          <FormControl sx={{ minWidth: 160 }}>
+            <Select
+              displayEmpty
+              value={languageFilter}
+              onChange={(e) => {
+                setLanguageFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              onOpen={() => setLanguageSelectOpen(true)}
+              onClose={() => setLanguageSelectOpen(false)}
+              open={languageSelectOpen}
+              IconComponent={() => (
+                <div style={{ marginRight: 8 }}>
+                  {languageSelectOpen ? <FiChevronUp /> : <FiChevronDown />}
+                </div>
+              )}
+              sx={{
+                background: '#fff',
+                borderRadius: 2,
+                fontSize: 16,
+                height: 40,
+              }}
             >
-              <FiChevronRight style={{ height: '15px' }} />
-            </FabRight>
-          </Box>
-          {/* ИСПРАВЛЕННАЯ КНОПКА - добавил дополнительное логирование */}
+              <MenuItem value="">
+                <em>Language</em>
+              </MenuItem>
+              {LANGUAGE_CHOICES.map(([code, label]) => (
+                <MenuItem key={code} value={code}>
+                  {label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          {/* Company Filter */}
+          <FormControl sx={{ minWidth: 160 }}>
+            <Select
+              displayEmpty
+              value={companyFilter}
+              onChange={(e) => {
+                setCompanyFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              onOpen={() => setCompanySelectOpen(true)}
+              onClose={() => setCompanySelectOpen(false)}
+              open={companySelectOpen}
+              IconComponent={() => (
+                <div style={{ marginRight: 8 }}>
+                  {companySelectOpen ? <FiChevronUp /> : <FiChevronDown />}
+                </div>
+              )}
+              sx={{
+                background: '#fff',
+                borderRadius: 2,
+                fontSize: 16,
+                height: 40,
+              }}
+            >
+              <MenuItem value="">
+                <em>Company</em>
+              </MenuItem>
+              {countries.map((company: any) => (
+                <MenuItem key={company.id} value={company.id}>
+                  {company.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Stack>
+        {/* Export + Add Contact */}
+        <Stack direction="row" spacing={2}>
+          <Button
+            variant="outlined"
+            startIcon={<FaDownload />}
+            onClick={handleExport}
+            sx={{
+              background: '#2B5075',
+              boxShadow:
+                '0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px rgba(0,0,0,0.14), 0px 1px 5px rgba(0,0,0,0.12)',
+              borderRadius: '4px',
+              border: 'none',
+              color: '#FFFFFF',
+              '&:hover': {
+                borderColor: '#1565c0',
+                backgroundColor: '#2B5075',
+              },
+            }}
+          >
+            Export
+          </Button>
           <Button
             variant="contained"
-            startIcon={<FiPlus className="plus-icon" />}
-            onClick={() => {
-              console.log('🔘 Button physically clicked');
-              onAddContact();
+            startIcon={<FiPlus />}
+            onClick={addContact}
+            sx={{
+              fontFamily: 'Roboto',
+              backgroundColor: '#1976d2',
+              '&:hover': { backgroundColor: '#1565c0' },
             }}
-            className={'add-button'}
           >
             Add Contact
           </Button>
         </Stack>
-      </CustomToolbar>
+      </Box>
 
-      <Container sx={{ width: '100%', maxWidth: '100%', minWidth: '100%' }}>
-        <Box sx={{ width: '100%', minWidth: '100%', m: '15px 0px 0px 0px' }}>
-          <Paper
-            sx={{ width: 'cal(100%-15px)', mb: 2, p: '0px 15px 15px 15px' }}
-          >
-            <TableContainer>
-              <Table>
-                <EnhancedTableHead
-                  numSelected={selected.length}
-                  order={order}
-                  orderBy={orderBy}
-                  onRequestSort={handleRequestSort}
-                  numSelectedId={selectedId}
-                  isSelectedId={isSelectedId}
-                  headCells={headCells}
+      {/* Grid + Pagination */}
+      <Container maxWidth={false} disableGutters sx={{ px: 0.5, mt: 2 }}>
+        <Paper
+          sx={{ width: '100%', mb: 2, p: 0 }}
+          elevation={0}
+          square
+          variant="outlined"
+        >
+          {loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+              <Spinner />
+            </Box>
+          ) : (
+            <>
+              {/* AG Grid */}
+              <Box
+                className="ag-theme-alpine contacts-ag-theme"
+                sx={{
+                  width: '100%',
+                  ...gridTheme,
+                  '--ag-icon-color': '#FFFFFF',
+                  '& .ag-header-cell-label .ag-icon, & .ag-header-cell-label .ag-icon-wrapper svg':
+                    {
+                      fill: '#FFFFFF',
+                      color: '#FFFFFF',
+                    },
+                  '& .ag-sort-ascending-icon, & .ag-sort-descending-icon, & .ag-sort-none-icon':
+                    {
+                      fill: '#FFFFFF',
+                      color: '#FFFFFF',
+                    },
+                  '& .ag-row': { display: 'flex', alignItems: 'center' },
+                  '& .ag-cell': {
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'flex-start',
+                    paddingLeft: '4px',
+                    paddingRight: '4px',
+                  },
+                  '& .ag-header-cell': {
+                    paddingLeft: '4px',
+                    paddingRight: '4px',
+                  },
+                  '& .ag-pinned-right-cols-viewport .ag-cell': {
+                    paddingRight: '8px',
+                  },
+                }}
+              >
+                <AgGridReact
+                  ref={gridRef}
+                  rowData={contactList}
+                  columnDefs={columnDefs}
+                  defaultColDef={defaultColDef}
+                  domLayout="autoHeight"
+                  suppressRowClickSelection
+                  suppressCellFocus
+                  rowHeight={56}
+                  onGridReady={(params) => {
+                    setGridApi(params.api);
+                    params.api.sizeColumnsToFit();
+                  }}
+                  context={{ componentParent: { deleteRow } }}
+                  getRowId={(params) => params.data.id}
+                  animateRows={true}
+                  suppressNoRowsOverlay={false}
+                  rowClassRules={{
+                    even: (params) =>
+                      params.node &&
+                      params.node.rowIndex != null &&
+                      params.node.rowIndex % 2 === 1,
+                  }}
                 />
-                <TableBody>
-                  {contactList?.length
-                    ? stableSort(
-                        contactList,
-                        getComparator(order, orderBy)
-                      ).map((item: any, index: any) => {
-                        return (
-                          <TableRow
-                            tabIndex={-1}
-                            key={index}
-                            sx={{
-                              border: 0,
-                              '&:nth-of-type(even)': {
-                                backgroundColor: 'whitesmoke',
-                              },
-                              color: 'rgb(26, 51, 83)',
-                              textTransform: 'capitalize',
-                            }}
-                          >
-                            <TableCell
-                              className="tableCell-link"
-                              onClick={() => contactHandle(item)}
-                            >
-                              {item.first_name + ' ' + item.last_name}
-                            </TableCell>
-                            <TableCell className="tableCell">
-                              {item.primary_email}
-                            </TableCell>
-                            <TableCell className="tableCell">
-                              {item.mobile_number ? item.mobile_number : '---'}
-                            </TableCell>
-                            <TableCell className="tableCell">
-                              <FaTrashAlt
-                                style={{ cursor: 'pointer' }}
-                                onClick={() => deleteRow(item.id)}
-                              />
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })
-                    : ''}
-                </TableBody>
-              </Table>
-            </TableContainer>
-            {loading && <Spinner />}
-          </Paper>
-        </Box>
+              </Box>
+
+              {/* Pagination Footer */}
+              <Box
+                className="contacts-pagination"
+                sx={{
+                  mt: 1,
+                  px: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
+                {/* Rows per page */}
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Typography>Rows&nbsp;per&nbsp;page:</Typography>
+                  <Select
+                    size="small"
+                    value={recordsPerPage}
+                    onChange={handleRecordsPerPageChange}
+                    sx={{ height: 32 }}
+                  >
+                    {[10, 20, 30, 40, 50, 100].map((n) => (
+                      <MenuItem key={n} value={n}>
+                        {n}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  <Typography
+                    sx={{ ml: 1 }}
+                  >{`of ${totalContacts} rows`}</Typography>
+                </Stack>
+                {/* Page Navigation */}
+                <Pagination
+                  page={currentPage}
+                  count={totalPages}
+                  onChange={handlePageChange}
+                  variant="outlined"
+                  shape="rounded"
+                  size="small"
+                  showFirstButton
+                  showLastButton
+                  sx={{
+                    '& .MuiPaginationItem-root': {
+                      borderRadius: '50%',
+                      width: 36,
+                      height: 36,
+                      border: '1px solid #CED4DA',
+                    },
+                    '& .MuiPaginationItem-root:not(.Mui-selected):hover': {
+                      backgroundColor: '#F0F7FF',
+                    },
+                    '& .MuiPaginationItem-root.Mui-selected': {
+                      backgroundColor: '#1E3A5F',
+                      color: '#fff',
+                      border: '1px solid #284871',
+                    },
+                    '& .MuiPaginationItem-root.Mui-selected:hover': {
+                      backgroundColor: '#1E3A5F',
+                    },
+                  }}
+                />
+              </Box>
+            </>
+          )}
+        </Paper>
       </Container>
 
+      {/* Delete Modal */}
       <DeleteModal
         onClose={deleteRowModalClose}
         open={deleteRowModal}
@@ -889,6 +769,23 @@ export default function Contacts() {
         modalDialog={modalDialog}
         modalTitle={modalTitle}
         DeleteItem={DeleteItem}
+        loading={deleteLoading}
+      />
+
+      {/* Success Alert */}
+      <SuccessAlert
+        open={!!successMessage}
+        message={successMessage || ''}
+        onClose={() => setSuccessMessage(null)}
+        type="success"
+      />
+
+      {/* Error Alert */}
+      <ErrorAlert
+        open={!!errorMessage}
+        message={errorMessage || ''}
+        onClose={() => setErrorMessage(null)}
+        showCloseButton={true}
       />
     </Box>
   );

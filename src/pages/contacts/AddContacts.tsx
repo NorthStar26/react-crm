@@ -30,6 +30,7 @@ import { SuccessAlert, ErrorAlert } from '../../components/Button/SuccessAlert';
 import { Spinner } from '../../components/Spinner';
 import { DialogModal } from '../../components/DialogModal';
 import { COUNTRIES } from '../../data/countries';
+import LANGUAGE_CHOICES from '../../data/LANGUAGE';
 
 type FormErrors = {
   salutation?: string[];
@@ -40,6 +41,7 @@ type FormErrors = {
   company?: string[];
   title?: string[];
   country?: string[];
+  language?: string[];
   description?: string[];
   non_field_errors?: string[];
   detail?: string[];
@@ -54,6 +56,7 @@ interface FormData {
   company: string;
   title: string;
   country: string;
+  language: string;
   description: string;
   do_not_call: boolean;
 }
@@ -79,6 +82,7 @@ function AddContact() {
   const [salutationSelectOpen, setSalutationSelectOpen] = useState(false);
   const [companySelectOpen, setCompanySelectOpen] = useState(false);
   const [countrySelectOpen, setCountrySelectOpen] = useState(false);
+  const [languageSelectOpen, setLanguageSelectOpen] = useState(false);
 
   // Form data with default values
   const [formData, setFormData] = useState<FormData>({
@@ -90,6 +94,7 @@ function AddContact() {
     company: '',
     title: '',
     country: 'GB', // Default to United Kingdom
+    language: '',
     description: '',
     do_not_call: false,
   });
@@ -189,7 +194,6 @@ function AddContact() {
     }
   };
 
-  // Обновленная функция handleSubmit с улучшенной обработкой ошибок
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -229,6 +233,7 @@ function AddContact() {
         company: formData.company || null,
         title: formData.title || null,
         country: formData.country || null,
+        language: formData.language || null,
         description: descriptionContent || null,
         do_not_call: formData.do_not_call,
       };
@@ -249,7 +254,7 @@ function AddContact() {
           navigate('/app/contacts');
         }, 2000);
       } else {
-        // Обработка ошибок валидации полей
+        // Handle field validation errors
         if (res.details && typeof res.details === 'object') {
           console.log('Field errors received:', res.details);
           const newErrors: FormErrors = {};
@@ -278,7 +283,6 @@ function AddContact() {
     } catch (err: any) {
       console.error('API Error:', err);
 
-      // Обработка ошибок как в AddCompany
       if (
         err.message &&
         err.message.includes('An unexpected error occurred:')
@@ -315,7 +319,6 @@ function AddContact() {
         }
       }
 
-      // Проверка различных форматов ошибок
       if (err.data?.details && typeof err.data.details === 'object') {
         console.log('Field errors received:', err.data.details);
         const newErrors: FormErrors = {};
@@ -374,16 +377,13 @@ function AddContact() {
     }
   };
 
-  // Обновленная функция handleApiErrors для обработки ошибок Django
   const handleApiErrors = (error: any) => {
     console.log('Full error object:', error);
 
-    // Обработка ошибок валидации Django REST Framework
     if (error && error.error && typeof error.error === 'object') {
       const errorObj = error.error;
       const newErrors: FormErrors = {};
 
-      // Проверка полей с ошибками
       Object.keys(errorObj).forEach((field) => {
         if (field !== 'non_field_errors' && field !== 'detail') {
           if (Array.isArray(errorObj[field])) {
@@ -397,7 +397,6 @@ function AddContact() {
         }
       });
 
-      // Обработка non_field_errors
       if (errorObj.non_field_errors) {
         if (Array.isArray(errorObj.non_field_errors)) {
           setError(
@@ -409,7 +408,6 @@ function AddContact() {
       } else if (errorObj.detail) {
         setError(extractErrorMessage(errorObj.detail));
       } else if (Object.keys(newErrors).length === 0) {
-        // Если нет специфичных ошибок полей, показываем общее сообщение
         setError('Validation error. Please check your input.');
       }
 
@@ -669,6 +667,46 @@ function AddContact() {
                               </Select>
                               <FormHelperText error={!!errors?.company?.[0]}>
                                 {errors?.company?.[0] || ''}
+                              </FormHelperText>
+                            </FormControl>
+                          </div>
+                        </div>
+                        {/* Language field */}
+                        <div style={fieldStyles.fieldRow}>
+                          <div style={fieldStyles.fieldTitle}>Language</div>
+                          <div style={fieldStyles.fieldInput}>
+                            <FormControl fullWidth>
+                              <Select
+                                name="language"
+                                value={formData.language}
+                                onOpen={() => setLanguageSelectOpen(true)}
+                                onClose={() => setLanguageSelectOpen(false)}
+                                open={languageSelectOpen}
+                                IconComponent={() => (
+                                  <div className="select-icon-background">
+                                    {languageSelectOpen ? (
+                                      <FiChevronUp className="select-icon" />
+                                    ) : (
+                                      <FiChevronDown className="select-icon" />
+                                    )}
+                                  </div>
+                                )}
+                                className={'select'}
+                                onChange={handleChange}
+                                error={!!errors?.language?.[0]}
+                                displayEmpty
+                              >
+                                <MenuItem value="">
+                                  <em>None</em>
+                                </MenuItem>
+                                {LANGUAGE_CHOICES.map(([code, label]) => (
+                                  <MenuItem key={code} value={code}>
+                                    {label}
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                              <FormHelperText error={!!errors?.language?.[0]}>
+                                {errors?.language?.[0] || ''}
                               </FormHelperText>
                             </FormControl>
                           </div>
