@@ -44,6 +44,19 @@ export const formatDate = (dateString: any) => {
     return new Date(dateString).toLocaleDateString(undefined, options)
 }
 
+// Helper function to capitalize the first letter of each word in a string
+const capitalizeFirstLetter = (string: string | undefined | null): string => {
+    if (!string) return '';
+    
+    // For URL links, don't capitalize
+    if (string.startsWith('http')) return string;
+    
+    return string
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+}
+
 type LeadResponse = {
     lead_obj: {
         id: string;
@@ -622,13 +635,13 @@ function LeadDetails() {
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mt: 2 }}>
                             <Box>
                                 <Typography variant="h4" component="h1" sx={{ mb: 2 }}>
-                                    {leadData?.lead_obj?.contact?.first_name } {leadData?.lead_obj?.contact?.last_name || 'Doe'} Lead
+                                    {capitalizeFirstLetter(leadData?.lead_obj?.contact?.first_name)} {capitalizeFirstLetter(leadData?.lead_obj?.contact?.last_name) || 'Doe'} Lead
                                 </Typography>
                                 <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
                                     {/* First row: Status and Email */}
                                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                         <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
-                                            {leadData?.lead_obj?.status || 'Qualified'}
+                                            {capitalizeFirstLetter(leadData?.lead_obj?.status) || 'Qualified'}
                                         </Typography>
                                     </Box>
                                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -642,13 +655,13 @@ function LeadDetails() {
                                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                         <FaBuilding style={{ marginRight: '8px', color: '#666' }} size={14} />
                                         <Typography variant="body1" color="text.secondary">
-                                            {leadData?.lead_obj?.contact?.company?.name}
+                                            {capitalizeFirstLetter(leadData?.lead_obj?.contact?.company?.name)}
                                         </Typography>
                                     </Box>
                                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                         <FaIdBadge style={{ marginRight: '8px', color: '#666' }} size={14} />
                                         <Typography variant="body1" color="text.secondary">
-                                            {leadData?.lead_obj?.contact?.title}
+                                            {capitalizeFirstLetter(leadData?.lead_obj?.contact?.title)}
                                         </Typography>
                                     </Box>
                                 </Box>
@@ -701,7 +714,7 @@ function LeadDetails() {
                                     
                                     <Box sx={{ flex: '0 0 33%', mb: 2 }}>
                                         <Typography variant="body2" color="text.secondary">Lead Source</Typography>
-                                        <Typography variant="body1">{leadData?.lead_obj?.lead_source || 'Web'}</Typography>
+                                        <Typography variant="body1">{capitalizeFirstLetter(leadData?.lead_obj?.lead_source) || 'Web'}</Typography>
                                     </Box>
                                     
                                     <Box sx={{ flex: '0 0 33%', mb: 2 }}>
@@ -712,8 +725,8 @@ function LeadDetails() {
                                     <Box sx={{ flex: '0 0 33%', mb: 2 }}>
                                         <Typography variant="body2" color="text.secondary">Lead Owner</Typography>
                                         <Typography variant="body1">
-                                            {leadData?.lead_obj?.assigned_to?.user_details?.first_name || 'Johny'} {' '}
-                                            {leadData?.lead_obj?.assigned_to?.user_details?.last_name || 'User'}
+                                            {capitalizeFirstLetter(leadData?.lead_obj?.assigned_to?.user_details?.first_name) || 'Johny'} {' '}
+                                            {capitalizeFirstLetter(leadData?.lead_obj?.assigned_to?.user_details?.last_name) || 'User'}
                                         </Typography>
                                     </Box>
                                     
@@ -829,7 +842,7 @@ function LeadDetails() {
                                 <Box sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: '8px', bgcolor: 'white', mb: 3 }}>
                                 
                                 <Typography variant="body1">
-                                    {leadData?.lead_obj?.description || 'It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout.'}
+                                    {capitalizeFirstLetter(leadData?.lead_obj?.description) || 'It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout.'}
                                 </Typography>
                             </Box>
                             </Box>
@@ -887,7 +900,7 @@ function LeadDetails() {
                                                         <Avatar sx={{ mr: 1, width: 32, height: 32 }} src={comment.commented_by_user?.profile_pic} />
                                                         <Box>
                                                             <Typography variant="body2" fontWeight="bold">
-                                                                {comment.commented_by_user?.first_name || ''} {comment.commented_by_user?.last_name || ''}
+                                                                {capitalizeFirstLetter(comment.commented_by_user?.first_name) || ''} {capitalizeFirstLetter(comment.commented_by_user?.last_name) || ''}
                                                             </Typography>
                                                             <Typography variant="body2">{comment.comment}</Typography>
                                                         </Box>
