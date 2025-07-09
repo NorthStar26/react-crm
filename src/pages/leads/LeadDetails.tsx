@@ -28,6 +28,7 @@ import {
     FaBuilding,
     FaIdBadge
 } from 'react-icons/fa'
+import { SuccessAlert, AlertType } from '../../components/Button/SuccessAlert'
 import { CustomAppBar } from '../../components/CustomAppBar'
 import { useNavigate, useParams } from 'react-router-dom'
 import { LeadUrl } from '../../services/ApiUrls'
@@ -196,6 +197,11 @@ function LeadDetails() {
     const [commentsToShow, setCommentsToShow] = useState(5);
     const [attachmentUploading, setAttachmentUploading] = useState(false);
     const [attachmentError, setAttachmentError] = useState<string | null>(null);
+    
+    // Alert states
+    const [alertOpen, setAlertOpen] = useState(false);
+    const [alertMessage, setAlertMessage] = useState('');
+    const [alertType, setAlertType] = useState<AlertType>('success');
 
     useEffect(() => {
         if (leadId) {
@@ -275,12 +281,27 @@ function LeadDetails() {
                         setAttachments(prev => [...prev, file]);
                         // Refresh lead details to show the new attachment
                         getLeadDetails(leadId as string);
+                        
+                        // Show success alert
+                        setAlertMessage(`File "${file.name}" was successfully uploaded`);
+                        setAlertType('success');
+                        setAlertOpen(true);
                     } else {
                         setAttachmentError(`Failed to upload file: ${result.error}`);
+                        
+                        // Show error alert
+                        setAlertMessage(`Failed to upload file: ${result.error}`);
+                        setAlertType('error');
+                        setAlertOpen(true);
                     }
                 } catch (error) {
                     console.error('Error uploading file:', error);
                     setAttachmentError('An error occurred while uploading the file.');
+                    
+                    // Show error alert
+                    setAlertMessage('An error occurred while uploading the file.');
+                    setAlertType('error');
+                    setAlertOpen(true);
                 } finally {
                     // Hide loading indicator
                     setAttachmentUploading(false);
@@ -332,6 +353,11 @@ function LeadDetails() {
     const handleShowMoreComments = () => {
         setCommentsToShow(prev => prev + 5);
     };
+    
+    // Handler for closing the alert
+    const handleAlertClose = () => {
+        setAlertOpen(false);
+    };
 
     const handleAttachmentDelete = (attachmentId: string) => {
         // Confirm before deleting
@@ -355,13 +381,28 @@ function LeadDetails() {
                     if (!res.error) {
                         // Success - refresh lead details to update the UI
                         getLeadDetails(leadId as string);
+                        
+                        // Show success alert
+                        setAlertMessage('Attachment was successfully deleted');
+                        setAlertType('success');
+                        setAlertOpen(true);
                     } else {
                         setAttachmentError(res.errors || "Error deleting attachment");
+                        
+                        // Show error alert
+                        setAlertMessage(res.errors || "Error deleting attachment");
+                        setAlertType('error');
+                        setAlertOpen(true);
                     }
                 })
                 .catch((err) => {
                     console.error("Error deleting attachment:", err);
                     setAttachmentError("Failed to delete attachment. Please try again.");
+                    
+                    // Show error alert
+                    setAlertMessage("Failed to delete attachment. Please try again.");
+                    setAlertType('error');
+                    setAlertOpen(true);
                 })
                 .finally(() => {
                     setAttachmentUploading(false);
@@ -375,6 +416,16 @@ function LeadDetails() {
     
     return (
         <Box sx={{ mt: '60px' }}>
+            {/* Success/Error Alert for attachments */}
+            <SuccessAlert
+                open={alertOpen}
+                message={alertMessage}
+                onClose={handleAlertClose}
+                type={alertType}
+                autoHideDuration={4000}
+                showCloseButton={true}
+            />
+            
             <Box>
                 <CustomAppBar backbtnHandle={backbtnHandle} module={module} backBtn={backBtn} crntPage={crntPage} editHandle={editHandle} />
                 
