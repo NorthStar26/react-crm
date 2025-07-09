@@ -29,6 +29,7 @@ import '../../styles/style.css'
 import { LeadUrl } from '../../services/ApiUrls'
 import { fetchData, Header } from '../../components/FetchData'
 import { fetchCompanyOptions, CompanyOption } from '../../services/companyService'
+import { fetchContactOptions, ContactOption } from '../../services/contactService'
 import { useDebounce } from '../../hooks/useDebounce'
 import { CustomAppBar } from '../../components/CustomAppBar'
 import { FaArrowDown, FaCheckCircle, FaFileUpload, FaPalette, FaPercent, FaPlus, FaTimes, FaTimesCircle, FaUpload } from 'react-icons/fa'
@@ -61,13 +62,7 @@ const MOCK_USERS: User[] = [
   { id: 'user5', user__email: 'david.brown@example.com', username: 'David Brown' }
 ];
 const MOCK_TAGS: string[] = ['Important', 'Urgent', 'Follow-up', 'New'];
-const MOCK_CONTACT_OPTIONS: [string, string][] = [
-  ['contact1', 'Contact One'],
-  ['contact2', 'Contact Two'],
-  ['contact3', 'Contact Three'],
-  ['contact4', 'Contact Four'],
-  ['contact5', 'Contact Five']
-];
+// MOCK_CONTACT_OPTIONS removed as we're now using real data from the API
 // MOCK_COMPANIES removed as we're now using real data from the API
 const MOCK_STATUS: [string, string][] = [
   ['open', 'Open'],
@@ -187,8 +182,15 @@ export function AddLeads() {
   const [companyLoading, setCompanyLoading] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<CompanyOption | null>(null);
   
-  // Debounce search term to prevent excessive API calls
+  // Contact search states
+  const [contactOptions, setContactOptions] = useState<ContactOption[]>([]);
+  const [contactSearchTerm, setContactSearchTerm] = useState('');
+  const [contactLoading, setContactLoading] = useState(false);
+  const [selectedContacts, setSelectedContacts] = useState<ContactOption[]>([]);
+  
+  // Debounce search terms to prevent excessive API calls
   const debouncedCompanySearch = useDebounce(companySearchTerm, 400);
+  const debouncedContactSearch = useDebounce(contactSearchTerm, 400);
 
   useEffect(() => {
     if (quill) {
@@ -228,6 +230,69 @@ export function AddLeads() {
       fetchCompanyDetail();
     }
   }, [formData.company, selectedCompany]);
+  
+  // Load contacts when the search term changes or when the company changes
+  useEffect(() => {
+    const loadContacts = async () => {
+      setContactLoading(true);
+      const result = await fetchContactOptions(
+        debouncedContactSearch, 
+        formData.company, // Filter contacts by selected company
+        10
+      );
+      
+      if (result.options) {
+        setContactOptions(result.options);
+      }
+      setContactLoading(false);
+    };
+    
+    // Only load contacts if we have a company selected or if user is searching
+    if (formData.company || debouncedContactSearch) {
+      loadContacts();
+    } else {
+      // Clear contact options if no company is selected
+      setContactOptions([]);
+    }
+  }, [debouncedContactSearch, formData.company]);
+  
+  // Update selected contacts whenever formData.contacts changes
+  useEffect(() => {
+    if (formData.contacts.length > 0 && selectedContacts.length === 0) {
+      const fetchSelectedContacts = async () => {
+        // Fetch all contacts for the selected company (we'll filter them on the client side)
+        const result = await fetchContactOptions('', formData.company, 100);
+        
+        if (result.options) {
+          // Find all contacts that match the IDs in formData.contacts
+          const selected = result.options.filter(contact => 
+            formData.contacts.includes(contact.id)
+          );
+          
+          if (selected.length > 0) {
+            setSelectedContacts(selected);
+          }
+        }
+      };
+      
+      fetchSelectedContacts();
+    }
+  }, [formData.contacts, selectedContacts, formData.company]);
+  
+  // Reset contacts when company changes
+  useEffect(() => {
+    const prevCompany = formData.company;
+    
+    // If company has changed, clear selected contacts
+    if (prevCompany && prevCompany !== formData.company) {
+      setFormData(prev => ({
+        ...prev,
+        contacts: []
+      }));
+      setSelectedContacts([]);
+      setContactSearchTerm('');
+    }
+  }, [formData.company]);
 
   // No longer need handleChange2 as we're using Select dropdowns for all fields
 
@@ -326,6 +391,9 @@ export function AddLeads() {
     setErrors({});
     setSelectedCompany(null);
     setCompanySearchTerm('');
+    setSelectedContacts([]);
+    setContactSearchTerm('');
+    setContactOptions([]);
     // No longer need to reset selectedAssignTo and selectedTags as we're using direct state in formData
     // if (autocompleteRef.current) {
     //   console.log(autocompleteRef.current,'ccc')
@@ -468,30 +536,61 @@ export function AddLeads() {
                       <div className='fieldSubContainer'>
                         <div className='fieldTitle'>Contact</div>
                         <FormControl sx={{ width: '70%' }}>
-                          <Select
-                            name='contacts'
-                            value={formData.contacts.length > 0 ? formData.contacts[0] : ''}
-                            open={contactSelectOpen}
-                            onClick={() => setContactSelectOpen(!contactSelectOpen)}
-                            IconComponent={() => (
-                              <div onClick={() => setContactSelectOpen(!contactSelectOpen)} className="select-icon-background">
-                                {contactSelectOpen ? <FiChevronUp className='select-icon' /> : <FiChevronDown className='select-icon' />}
-                              </div>
-                            )}
-                            className={'select'}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              setFormData({ ...formData, contacts: value ? [value] : [] });
+                          <Autocomplete
+                            multiple
+                            id="contacts-select"
+                            options={contactOptions}
+                            loading={contactLoading}
+                            value={selectedContacts}
+                            onChange={(event, newValue) => {
+                              setSelectedContacts(newValue);
+                              setFormData({
+                                ...formData,
+                                contacts: newValue.map(contact => contact.id)
+                              });
                             }}
-                            error={!!errors?.contacts?.[0]}
-                          >
-                            {MOCK_CONTACT_OPTIONS.map((option: any) => (
-                              <MenuItem key={option[0]} value={option[0]}>
-                                {option[1]}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                          <FormHelperText>{errors?.contacts?.[0] ? errors?.contacts[0] : ''}</FormHelperText>
+                            onInputChange={(event, newInputValue) => {
+                              setContactSearchTerm(newInputValue);
+                            }}
+                            getOptionLabel={(option) => `${option.first_name} ${option.last_name}`.trim()}
+                            isOptionEqualToValue={(option, value) => option.id === value.id}
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                size="small"
+                                placeholder={formData.company ? "Search contacts..." : "Select a company first"}
+                                error={!!errors?.contacts?.[0]}
+                                helperText={errors?.contacts?.[0] || ''}
+                                InputProps={{
+                                  ...params.InputProps,
+                                  endAdornment: (
+                                    <>
+                                      {contactLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                                      {params.InputProps.endAdornment}
+                                    </>
+                                  ),
+                                }}
+                              />
+                            )}
+                            renderOption={(props, option) => (
+                              <li {...props}>
+                                <Stack direction="row" spacing={1} alignItems="center">
+                                  <Avatar sx={{ bgcolor: '#284871', width: 28, height: 28, fontSize: 14 }}>
+                                    {option.first_name?.charAt(0).toUpperCase() || 'C'}
+                                  </Avatar>
+                                  <div>
+                                    <Typography variant="body1">{`${option.first_name} ${option.last_name}`.trim()}</Typography>
+                                    {option.primary_email && (
+                                      <Typography variant="caption" color="text.secondary">
+                                        {option.primary_email}
+                                      </Typography>
+                                    )}
+                                  </div>
+                                </Stack>
+                              </li>
+                            )}
+                            disabled={!formData.company} // Disable if no company is selected
+                          />
                         </FormControl>
                       </div>
                     </div>
