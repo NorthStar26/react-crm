@@ -212,6 +212,9 @@ function LeadDetails() {
     
     // Convert modal states
     const [convertDialogOpen, setConvertDialogOpen] = useState(false);
+    
+    // Add Note modal states
+    const [addNoteDialogOpen, setAddNoteDialogOpen] = useState(false);
 
     useEffect(() => {
         if (leadId) {
@@ -322,12 +325,25 @@ function LeadDetails() {
         fileInput.click();
     };
 
-    const submitNote = () => {
+    // Open add note dialog
+    const handleAddNoteClick = () => {
         if (!note.trim()) {
             setNoteError('Note cannot be empty');
             return;
         }
-
+        
+        // Clear any previous errors
+        setNoteError('');
+        
+        // Open confirmation dialog
+        setAddNoteDialogOpen(true);
+    };
+    
+    // Submit note after confirmation
+    const submitNote = () => {
+        // Close the dialog first
+        setAddNoteDialogOpen(false);
+        
         setNoteSubmitting(true);
         
         const Header = {
@@ -348,12 +364,26 @@ function LeadDetails() {
                     getLeadDetails(leadId as string);
                     setNote('');
                     setNoteError('');
-                    // Could add success message here
+                    
+                    // Show success alert
+                    setAlertMessage('Note added successfully');
+                    setAlertType('success');
+                    setAlertOpen(true);
+                } else {
+                    // Show error alert
+                    setAlertMessage(res.errors || 'Failed to add note');
+                    setAlertType('error');
+                    setAlertOpen(true);
                 }
             })
             .catch((err) => {
                 console.error('Error submitting note:', err);
                 setNoteError('Failed to submit note. Please try again.');
+                
+                // Show error alert
+                setAlertMessage('Failed to add note. Please try again.');
+                setAlertType('error');
+                setAlertOpen(true);
             })
             .finally(() => {
                 setNoteSubmitting(false);
@@ -474,7 +504,7 @@ function LeadDetails() {
                 onClose={() => setDeleteModalOpen(false)}
                 DeleteItem={confirmAttachmentDelete}
                 modalTitle="Delete Attachment"
-                modalDialog={`Are you sure you want to delete${attachmentNameToDelete ? ` "${attachmentNameToDelete}"` : ' this attachment'}?`}
+                modalDialog={`Are you sure you want to delete${attachmentNameToDelete ? ` "${attachmentNameToDelete}"` : ' this attachment'} from ${leadData?.lead_obj?.contact?.first_name || ''} ${leadData?.lead_obj?.contact?.last_name || 'Doe'}'s lead?`}
             />
             
             {/* Convert Lead Dialog */}
@@ -482,8 +512,18 @@ function LeadDetails() {
                 isDelete={convertDialogOpen}
                 onClose={() => setConvertDialogOpen(false)}
                 onConfirm={handleConvertConfirm}
-                modalDialog="Convert Lead"
+                modalDialog={`Are you sure you want to convert ${leadData?.lead_obj?.contact?.first_name || ''} ${leadData?.lead_obj?.contact?.last_name || 'Doe'}'s lead to oppurtunity?` }
                 confirmText="Convert"
+                cancelText="Cancel"
+            />
+            
+            {/* Add Note Dialog */}
+            <DialogModal
+                isDelete={addNoteDialogOpen}
+                onClose={() => setAddNoteDialogOpen(false)}
+                onConfirm={submitNote}
+                modalDialog={`Are you sure you want to add a note to ${leadData?.lead_obj?.contact?.first_name || ''} ${leadData?.lead_obj?.contact?.last_name || 'Doe'}'s lead?`}
+                confirmText="Add"
                 cancelText="Cancel"
             />
             
@@ -748,7 +788,7 @@ function LeadDetails() {
                                         <Button
                                             variant="contained"
                                             color="primary"
-                                            onClick={submitNote}
+                                            onClick={handleAddNoteClick}
                                             disabled={noteSubmitting || !note.trim()}
                                             sx={{ textTransform: 'capitalize' }}
                                         >
@@ -800,7 +840,7 @@ function LeadDetails() {
                                     ) : (
                                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, justifyContent: 'center', p: 2 }}>
                                             <Typography variant="body2" color="text.secondary">
-                                                No notes yet. Add a note to start the conversation.
+                                                No notes yet. Add a note to start .
                                             </Typography>
                                         </Box>
                                     )}
