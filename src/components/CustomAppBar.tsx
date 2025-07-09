@@ -135,8 +135,28 @@ export function CustomAppBar({
         );
 
       case 'view':
+        return backbtnHandle && backBtn ? (
+          <div className="saveClose">
+            <div style={{ marginRight: '10px' }}>
+              <Button
+                size="small"
+                className="header-button"
+                onClick={backbtnHandle}
+                startIcon={
+                  <FiChevronLeft
+                    style={{ fontSize: '20px', marginRight: '-2px' }}
+                  />
+                }
+                style={{ backgroundColor: 'white', color: '#5B5C63' }}
+              >
+                {backBtn}
+              </Button>
+            </div>
+          </div>
+        ) : null;
+
       default:
-        return null; // No buttons for view pages
+        return null;
     }
   };
 

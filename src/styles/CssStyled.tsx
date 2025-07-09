@@ -15,6 +15,8 @@ import {
   TableRow,
   TextField,
   Toolbar,
+  Box,
+  Card,
 } from '@mui/material';
 // import css from "styled-jsx/css";
 
@@ -316,3 +318,70 @@ export const CustomInputBoxWrapper = styled('div')({
   outline: 'none',
   position: 'relative',
 });
+// Добавьте в конец файла
+export const EditContactButton = styled(Button)`
+  background-color: #1976d2;
+  color: #ffffff;
+  text-transform: none;
+  font-weight: 600;
+  font-size: 16px;
+  height: 46px;
+  padding: 8px 24px;
+  border-radius: 8px;
+  box-shadow: 0px 1px 5px rgba(0, 0, 0, 0.12),
+    0px 3px 1px -2px rgba(0, 0, 0, 0.2), 0px 2px 2px rgba(0, 0, 0, 0.14);
+
+  &:hover {
+    background-color: #1565c0;
+    box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.15),
+      0px 4px 2px -2px rgba(0, 0, 0, 0.2), 0px 3px 3px rgba(0, 0, 0, 0.14);
+  }
+
+  .MuiButton-startIcon {
+    margin-right: 8px;
+  }
+`;
+
+export const DoNotCallChip = styled(Box)`
+  background-color: #6c757d;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid #6c757d;
+  }
+`;
+
+export const ContactDetailCard = styled(Card)`
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e0e0e0;
+  overflow: hidden;
+`;
+
+export const LanguageChip = styled(Box)`
+  background-color: #f5f5f5;
+  color: #333;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  display: inline-block;
+  margin-right: 12px;
+  border: 1px solid #e0e0e0;
+`;
