@@ -5,6 +5,7 @@ import {
     Box,
     Typography,
     Link,
+    TextField,
 } from '@mui/material'
 import { FaPlus, FaPaperclip } from 'react-icons/fa'
 import { CustomAppBar } from '../../components/CustomAppBar'
@@ -157,6 +158,44 @@ function LeadDetails() {
         fileInput.click();
     };
 
+    const submitNote = () => {
+        if (!note.trim()) {
+            setNoteError('Note cannot be empty');
+            return;
+        }
+
+        setNoteSubmitting(true);
+        
+        const Header = {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            Authorization: localStorage.getItem('Token'),
+            org: localStorage.getItem('org')
+        };
+
+        const data = JSON.stringify({
+            comment: note,
+        });
+
+        fetchData(`${LeadUrl}/${leadId}/`, 'POST', data, Header)
+            .then((res) => {
+                if (!res.error) {
+                    // Refresh lead details to show the new comment
+                    getLeadDetails(leadId as string);
+                    setNote('');
+                    setNoteError('');
+                    // Could add success message here
+                }
+            })
+            .catch((err) => {
+                console.error('Error submitting note:', err);
+                setNoteError('Failed to submit note. Please try again.');
+            })
+            .finally(() => {
+                setNoteSubmitting(false);
+            });
+    };
+
     const module = 'Leads'
     const crntPage = 'Lead Details'
     const backBtn = 'Back To Leads'
@@ -262,6 +301,32 @@ function LeadDetails() {
                                     </Typography>
                                 </Box>
                                 
+                                {/* Note input field */}
+                                <Box sx={{ mb: 3 }}>
+                                    <TextField
+                                        fullWidth
+                                        multiline
+                                        rows={3}
+                                        variant="outlined"
+                                        placeholder="Write a note..."
+                                        value={note}
+                                        onChange={(e) => setNote(e.target.value)}
+                                        error={!!noteError}
+                                        helperText={noteError}
+                                        sx={{ mb: 1 }}
+                                    />
+                                    <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                                        <Button
+                                            variant="contained"
+                                            color="primary"
+                                            onClick={submitNote}
+                                            disabled={noteSubmitting || !note.trim()}
+                                        >
+                                            {noteSubmitting ? 'Submitting...' : 'Add Note'}
+                                        </Button>
+                                    </Box>
+                                </Box>
+                                
                                 <Button 
                                     variant="contained" 
                                     color="primary"
@@ -269,45 +334,41 @@ function LeadDetails() {
                                     sx={{ mb: 2 }}
                                     onClick={handleAttachmentClick}
                                 >
-                                    Add Note
+                                    Add Attachment
                                 </Button>
                                 
                                 {/* Activity items */}
                                 <Box sx={{ mt: 3 }}>
-                                    <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
-                                        <Avatar sx={{ mr: 1, width: 32, height: 32 }} src={leadData?.lead_obj?.created_by?.profile_pic} />
-                                        <Box>
-                                            <Typography variant="body2" fontWeight="bold">John Doe</Typography>
-                                            <Typography variant="body2" color="text.secondary">Comment</Typography>
-                                        </Box>
-                                        <Typography variant="caption" color="text.secondary" sx={{ ml: 'auto' }}>
-                                            Jul 2, 2025, 12:19 AM
-                                        </Typography>
-                                    </Box>
-                                    
-                                    <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
-                                        <Box sx={{ 
-                                            width: 32, 
-                                            height: 32, 
-                                            borderRadius: '50%', 
-                                            bgcolor: '#f0f0f0', 
-                                            display: 'flex', 
-                                            alignItems: 'center', 
-                                            justifyContent: 'center',
-                                            mr: 1
-                                        }}>
-                                            <FaPaperclip size={14} color="#666" />
-                                        </Box>
-                                        <Box>
-                                            <Typography variant="body2">Action</Typography>
-                                            <Typography variant="body2" color="text.secondary">
-                                                John Doe Lead status changed into <b>Qualified</b>
+                                    {/* Display comments from API response */}
+                                    {leadData?.comments && leadData.comments.length > 0 ? (
+                                        leadData.comments.map((comment: any, index: number) => (
+                                            <Box key={index} sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
+                                                <Avatar sx={{ mr: 1, width: 32, height: 32 }} src={comment.commented_by_user?.profile_pic} />
+                                                <Box>
+                                                    <Typography variant="body2" fontWeight="bold">
+                                                        {comment.commented_by_user?.first_name || ''} {comment.commented_by_user?.last_name || ''}
+                                                    </Typography>
+                                                    <Typography variant="body2">{comment.comment}</Typography>
+                                                </Box>
+                                                <Typography variant="caption" color="text.secondary" sx={{ ml: 'auto' }}>
+                                                    {new Date(comment.commented_on).toLocaleString()}
+                                                </Typography>
+                                            </Box>
+                                        ))
+                                    ) : (
+                                        <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
+                                            <Avatar sx={{ mr: 1, width: 32, height: 32 }} src={leadData?.lead_obj?.created_by?.profile_pic} />
+                                            <Box>
+                                                <Typography variant="body2" fontWeight="bold">John Doe</Typography>
+                                                <Typography variant="body2" color="text.secondary">Comment</Typography>
+                                            </Box>
+                                            <Typography variant="caption" color="text.secondary" sx={{ ml: 'auto' }}>
+                                                Jul 2, 2025, 12:19 AM
                                             </Typography>
                                         </Box>
-                                        <Typography variant="caption" color="text.secondary" sx={{ ml: 'auto' }}>
-                                            Jul 2, 2025, 12:19 AM
-                                        </Typography>
-                                    </Box>
+                                    )}
+                                    
+                                    
                                 </Box>
                             </Box>
                         </Box>
