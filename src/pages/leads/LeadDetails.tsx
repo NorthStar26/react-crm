@@ -372,50 +372,56 @@ function LeadDetails() {
     
     return (
         <Box sx={{ mt: '60px' }}>
-            <div>
+            <Box>
                 <CustomAppBar backbtnHandle={backbtnHandle} module={module} backBtn={backBtn} crntPage={crntPage} editHandle={editHandle} />
                 
                 <Box sx={{ mt: '40px', p: '80px 40px'  }}>
-                    <Box sx={{ mb: 3 ,p: 2, border: '1px solid #e0e0e0', borderRadius: '8px', bgcolor: 'white'}}>
-                        <Typography variant="h4" component="h1">
+                    
+                    
+                    <Box sx={{ display: 'flex', gap: 3 }}>
+                        <Box sx={{ flex: 3 }}>
+                            <Box sx={{ mb: 3 ,p: 2, border: '1px solid #e0e0e0', borderRadius: '8px', bgcolor: 'white'}}>
+                        
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mt: 2 }}>
+                            <Box>
+                                <Typography variant="h4" component="h1">
                             {leadData?.lead_obj?.contact?.first_name } {leadData?.lead_obj?.contact?.last_name || 'Doe'} Lead
                         </Typography>
-                        <Box sx={{ display: 'flex', mb: 2 }}>
-                                    <Box sx={{ flex: 1 }}>
-                                       
-                                        <Typography variant="body1">{leadData?.lead_obj?.status || 'Qualified'}</Typography>
-                                    </Box>
-                                    
+                                <Box sx={{ mb: 1 }}>
+                                    <Typography variant="body1">{leadData?.lead_obj?.status || 'Qualified'}</Typography>
                                 </Box>
-                                <Box sx={{ display: 'flex', mb: 2 }}>{leadData?.lead_obj?.contact?.primary_email } </Box>
-                        <Box sx={{ display: 'flex', mt: 2, gap: 2 }}>
-                            <Button 
-                                variant="contained" 
-                                color="primary" 
-                                sx={{ borderRadius: '4px' }}
-                                startIcon={<FaSyncAlt />}
-                            >
-                                Convert
-                            </Button>
-                            
-                            <Button 
-                                variant="outlined"
-                                sx={{ borderRadius: '4px' }}
-                                onClick={editHandle}
-                                startIcon={<FaPen />}
-                            >
-                                Edit Lead
-                            </Button>
-                            <Button 
+                                <Box sx={{ mb: 1 }}>{leadData?.lead_obj?.contact?.primary_email } </Box>
+                            </Box>
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, width: '180px' }}>
+                                <Button 
+                                    variant="contained" 
+                                    color="primary" 
+                                    sx={{ borderRadius: '4px', width: '100%' }}
+                                    startIcon={<FaSyncAlt />}
+                                >
+                                    Convert
+                                </Button>
+                                
+                                <Button 
+                                    variant="outlined"
+                                    sx={{ borderRadius: '4px', width: '100%' }}
+                                    onClick={editHandle}
+                                    startIcon={<FaPen />}
+                                >
+                                    Edit Lead
+                                </Button>
+                                
+                                <Button 
                                     variant="contained" 
                                     color="primary"
                                     startIcon={<FaPaperclip />}
-                                    sx={{ mb: 2 }}
+                                    sx={{ borderRadius: '4px', width: '100%' }}
                                     onClick={handleAttachmentClick}
                                     disabled={attachmentUploading}
                                 >
                                     {attachmentUploading ? 'Uploading...' : 'Add Attachment'}
                                 </Button>
+                            </Box>
                         </Box>
                         
                         {attachmentError && (
@@ -426,9 +432,6 @@ function LeadDetails() {
                             </Box>
                         )}
                     </Box>
-                    
-                    <Box sx={{ display: 'flex', gap: 3 }}>
-                        <Box sx={{ flex: 3 }}>
                             {/* Left column - Lead Information */}
                             <Box sx={{ mb: 3, p: 2, border: '1px solid #e0e0e0', borderRadius: '8px', bgcolor: 'white' }}>
                                 <Typography variant="h6" sx={{ mb: 2 }}>Lead Information</Typography>
@@ -666,7 +669,7 @@ function LeadDetails() {
                         </Box>
                     </Box>
                 </Box>
-            </div>
+            </Box>
         </Box>
     )
 }
