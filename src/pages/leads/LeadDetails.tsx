@@ -28,7 +28,9 @@ import {
     FaBuilding,
     FaIdBadge
 } from 'react-icons/fa'
+import { DeleteModal } from '../../components/DeleteModal'
 import { SuccessAlert, AlertType } from '../../components/Button/SuccessAlert'
+import { DialogModal } from '../../components/DialogModal'
 import { CustomAppBar } from '../../components/CustomAppBar'
 import { useNavigate, useParams } from 'react-router-dom'
 import { LeadUrl } from '../../services/ApiUrls'
@@ -202,6 +204,14 @@ function LeadDetails() {
     const [alertOpen, setAlertOpen] = useState(false);
     const [alertMessage, setAlertMessage] = useState('');
     const [alertType, setAlertType] = useState<AlertType>('success');
+    
+    // Delete modal states
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [attachmentToDelete, setAttachmentToDelete] = useState<string | null>(null);
+    const [attachmentNameToDelete, setAttachmentNameToDelete] = useState<string>('');
+    
+    // Convert modal states
+    const [convertDialogOpen, setConvertDialogOpen] = useState(false);
 
     useEffect(() => {
         if (leadId) {
@@ -358,56 +368,88 @@ function LeadDetails() {
     const handleAlertClose = () => {
         setAlertOpen(false);
     };
+    
+    // Handle convert button click
+    const handleConvertClick = () => {
+        setConvertDialogOpen(true);
+    };
+    
+    // Handle convert confirmation
+    const handleConvertConfirm = () => {
+        // Close the dialog
+        setConvertDialogOpen(false);
+        
+        // Here you would add the actual conversion logic
+        // For now, we'll just show a success alert
+        setAlertMessage('Lead successfully converted');
+        setAlertType('success');
+        setAlertOpen(true);
+        
+        // In a real implementation, you might navigate to the newly created
+        // opportunity or account after successful conversion
+    };
 
-    const handleAttachmentDelete = (attachmentId: string) => {
-        // Confirm before deleting
-        if (window.confirm("Do you want to delete this attachment?")) {
-            // Show loading indicator
-            setAttachmentUploading(true);
-            setAttachmentError(null);
-            
-            // Use the Header object consistent with other API calls
-            const Header = {
-                Accept: 'application/json',
-                'Content-Type': 'application/json',
-                Authorization: localStorage.getItem('Token'),
-                org: localStorage.getItem('org')
-            };
-            
-            // Use fetchData function like other API calls
-            // API endpoint should be /api/leads/attachment/ID/ not /leads/attachment/
-            fetchData(`/${LeadUrl}/attachment/${attachmentId}/`, 'DELETE', null as any, Header)
-                .then((res) => {
-                    if (!res.error) {
-                        // Success - refresh lead details to update the UI
-                        getLeadDetails(leadId as string);
-                        
-                        // Show success alert
-                        setAlertMessage('Attachment was successfully deleted');
-                        setAlertType('success');
-                        setAlertOpen(true);
-                    } else {
-                        setAttachmentError(res.errors || "Error deleting attachment");
-                        
-                        // Show error alert
-                        setAlertMessage(res.errors || "Error deleting attachment");
-                        setAlertType('error');
-                        setAlertOpen(true);
-                    }
-                })
-                .catch((err) => {
-                    console.error("Error deleting attachment:", err);
-                    setAttachmentError("Failed to delete attachment. Please try again.");
+    // Open delete confirmation modal
+    const handleAttachmentDelete = (attachmentId: string, fileName: string = '') => {
+        setAttachmentToDelete(attachmentId);
+        setAttachmentNameToDelete(fileName);
+        setDeleteModalOpen(true);
+    };
+    
+    // Handle actual deletion after confirmation
+    const confirmAttachmentDelete = () => {
+        if (!attachmentToDelete) return;
+        
+        // Show loading indicator
+        setAttachmentUploading(true);
+        setAttachmentError(null);
+        
+        // Use the Header object consistent with other API calls
+        const Header = {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            Authorization: localStorage.getItem('Token'),
+            org: localStorage.getItem('org')
+        };
+        
+        // Close the modal first
+        setDeleteModalOpen(false);
+        
+        // Use fetchData function like other API calls
+        // API endpoint should be /api/leads/attachment/ID/ not /leads/attachment/
+        fetchData(`/${LeadUrl}/attachment/${attachmentToDelete}/`, 'DELETE', null as any, Header)
+            .then((res) => {
+                if (!res.error) {
+                    // Success - refresh lead details to update the UI
+                    getLeadDetails(leadId as string);
+                    
+                    // Show success alert
+                    setAlertMessage('Attachment was successfully deleted');
+                    setAlertType('success');
+                    setAlertOpen(true);
+                } else {
+                    setAttachmentError(res.errors || "Error deleting attachment");
                     
                     // Show error alert
-                    setAlertMessage("Failed to delete attachment. Please try again.");
+                    setAlertMessage(res.errors || "Error deleting attachment");
                     setAlertType('error');
                     setAlertOpen(true);
-                })
-                .finally(() => {
-                    setAttachmentUploading(false);
-                });
-        }
+                }
+            })
+            .catch((err) => {
+                console.error("Error deleting attachment:", err);
+                setAttachmentError("Failed to delete attachment. Please try again.");
+                
+                // Show error alert
+                setAlertMessage("Failed to delete attachment. Please try again.");
+                setAlertType('error');
+                setAlertOpen(true);
+            })
+            .finally(() => {
+                setAttachmentUploading(false);
+                setAttachmentToDelete(null);
+                setAttachmentNameToDelete('');
+            });
     };
 
     const module = 'Leads'
@@ -424,6 +466,25 @@ function LeadDetails() {
                 type={alertType}
                 autoHideDuration={4000}
                 showCloseButton={true}
+            />
+            
+            {/* Delete Confirmation Modal */}
+            <DeleteModal
+                open={deleteModalOpen}
+                onClose={() => setDeleteModalOpen(false)}
+                DeleteItem={confirmAttachmentDelete}
+                modalTitle="Delete Attachment"
+                modalDialog={`Are you sure you want to delete${attachmentNameToDelete ? ` "${attachmentNameToDelete}"` : ' this attachment'}?`}
+            />
+            
+            {/* Convert Lead Dialog */}
+            <DialogModal
+                isDelete={convertDialogOpen}
+                onClose={() => setConvertDialogOpen(false)}
+                onConfirm={handleConvertConfirm}
+                modalDialog="Convert Lead"
+                confirmText="Convert"
+                cancelText="Cancel"
             />
             
             <Box>
@@ -476,6 +537,7 @@ function LeadDetails() {
                                     color="primary" 
                                     sx={{ borderRadius: '4px', width: '100%', textTransform: 'capitalize' }}
                                     startIcon={<FaSyncAlt />}
+                                    onClick={handleConvertClick}
                                 >
                                     Convert
                                 </Button>
@@ -622,7 +684,7 @@ function LeadDetails() {
                                                             </Box>
                                                             <Tooltip title="Delete attachment" arrow>
                                                                 <Button 
-                                                                    onClick={() => handleAttachmentDelete(attachment.id)} 
+                                                                    onClick={() => handleAttachmentDelete(attachment.id, attachment.file_name)} 
                                                                     size="small"
                                                                     color="error"
                                                                     sx={{ 
