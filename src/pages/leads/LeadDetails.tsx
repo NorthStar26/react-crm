@@ -391,6 +391,13 @@ function LeadDetails() {
                                     <Typography variant="body1">{leadData?.lead_obj?.status || 'Qualified'}</Typography>
                                 </Box>
                                 <Box sx={{ mb: 1 }}>{leadData?.lead_obj?.contact?.primary_email } </Box>
+                                <Box sx={{ mb: 1 }}>
+                                    <Typography variant="body1" color="text.secondary" sx={{ display: 'flex', alignItems: 'center' }}>
+                                     {leadData?.lead_obj?.contact?.company?.name}
+                                    </Typography> <Typography variant="body1" color="text.secondary" sx={{ display: 'flex', alignItems: 'center' }}>
+                                      {leadData?.lead_obj?.contact?.title}
+                                    </Typography>
+                                </Box>
                             </Box>
                             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, width: '180px' }}>
                                 <Button 
