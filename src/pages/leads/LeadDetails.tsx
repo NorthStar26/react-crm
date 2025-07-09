@@ -7,7 +7,7 @@ import {
     Link,
     TextField,
 } from '@mui/material'
-import { FaPlus, FaPaperclip } from 'react-icons/fa'
+import { FaPlus, FaPaperclip, FaExchangeAlt, FaSyncAlt, FaPen } from 'react-icons/fa'
 import { CustomAppBar } from '../../components/CustomAppBar'
 import { useNavigate, useParams } from 'react-router-dom'
 import { LeadUrl } from '../../services/ApiUrls'
@@ -105,6 +105,7 @@ function LeadDetails() {
     const [noteError, setNoteError] = useState('');
     const [noteSubmitting, setNoteSubmitting] = useState(false);
     const [attachments, setAttachments] = useState<File[]>([]);
+    const [commentsToShow, setCommentsToShow] = useState(5);
 
     useEffect(() => {
         if (leadId) {
@@ -196,6 +197,10 @@ function LeadDetails() {
             });
     };
 
+    const handleShowMoreComments = () => {
+        setCommentsToShow(prev => prev + 5);
+    };
+
     const module = 'Leads'
     const crntPage = 'Lead Details'
     const backBtn = 'Back To Leads'
@@ -223,7 +228,7 @@ function LeadDetails() {
                                 variant="contained" 
                                 color="primary" 
                                 sx={{ borderRadius: '4px' }}
-                                startIcon={<FaPaperclip />}
+                                startIcon={<FaSyncAlt />}
                             >
                                 Convert
                             </Button>
@@ -232,9 +237,19 @@ function LeadDetails() {
                                 variant="outlined"
                                 sx={{ borderRadius: '4px' }}
                                 onClick={editHandle}
+                                startIcon={<FaPen />}
                             >
                                 Edit Lead
                             </Button>
+                            <Button 
+                                    variant="contained" 
+                                    color="primary"
+                                    startIcon={<FaPaperclip />}
+                                    sx={{ mb: 2 }}
+                                    onClick={handleAttachmentClick}
+                                >
+                                    Add Attachment
+                                </Button>
                         </Box>
                     </Box>
                     
@@ -297,11 +312,7 @@ function LeadDetails() {
                             <Box sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: '8px', bgcolor: 'white' }}>
                                 <Typography variant="h6" sx={{ mb: 2 }}>Activities and Notes</Typography>
                                 
-                                <Box sx={{ p: 2, mb: 3, border: '1px solid #e0e0e0', borderRadius: '4px' }}>
-                                    <Typography variant="body1">
-                                        {leadData?.lead_obj?.notes || 'It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout.'}
-                                    </Typography>
-                                </Box>
+                               
                                 
                                 {/* Note input field */}
                                 <Box sx={{ mb: 3 }}>
@@ -329,43 +340,49 @@ function LeadDetails() {
                                     </Box>
                                 </Box>
                                 
-                                <Button 
-                                    variant="contained" 
-                                    color="primary"
-                                    startIcon={<FaPlus />}
-                                    sx={{ mb: 2 }}
-                                    onClick={handleAttachmentClick}
-                                >
-                                    Add Attachment
-                                </Button>
+                                
                                 
                                 {/* Activity items */}
                                 <Box sx={{ mt: 3 }}>
                                     {/* Display comments from API response */}
                                     {leadData?.comments && leadData.comments.length > 0 ? (
-                                        leadData.comments.map((comment: any, index: number) => (
-                                            <Box key={index} sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
-                                                <Avatar sx={{ mr: 1, width: 32, height: 32 }} src={comment.commented_by_user?.profile_pic} />
-                                                <Box>
-                                                    <Typography variant="body2" fontWeight="bold">
-                                                        {comment.commented_by_user?.first_name || ''} {comment.commented_by_user?.last_name || ''}
-                                                    </Typography>
-                                                    <Typography variant="body2">{comment.comment}</Typography>
+                                        <>
+                                            {[...leadData.comments]
+                                                .sort((a, b) => new Date(b.commented_on).getTime() - new Date(a.commented_on).getTime())
+                                                .slice(0, commentsToShow)
+                                                .map((comment: any, index: number) => (
+                                                    <Box key={index} sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
+                                                        <Avatar sx={{ mr: 1, width: 32, height: 32 }} src={comment.commented_by_user?.profile_pic} />
+                                                        <Box>
+                                                            <Typography variant="body2" fontWeight="bold">
+                                                                {comment.commented_by_user?.first_name || ''} {comment.commented_by_user?.last_name || ''}
+                                                            </Typography>
+                                                            <Typography variant="body2">{comment.comment}</Typography>
+                                                        </Box>
+                                                        <Typography variant="caption" color="text.secondary" sx={{ ml: 'auto' }}>
+                                                            {new Date(comment.commented_on).toLocaleString()}
+                                                        </Typography>
+                                                    </Box>
+                                                ))
+                                            }
+                                            
+                                            {/* Show More button for pagination */}
+                                            {leadData.comments.length > commentsToShow && (
+                                                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                                                    <Button 
+                                                        variant="outlined" 
+                                                        size="small" 
+                                                        onClick={handleShowMoreComments}
+                                                    >
+                                                        Show More
+                                                    </Button>
                                                 </Box>
-                                                <Typography variant="caption" color="text.secondary" sx={{ ml: 'auto' }}>
-                                                    {new Date(comment.commented_on).toLocaleString()}
-                                                </Typography>
-                                            </Box>
-                                        ))
+                                            )}
+                                        </>
                                     ) : (
-                                        <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
-                                            <Avatar sx={{ mr: 1, width: 32, height: 32 }} src={leadData?.lead_obj?.created_by?.profile_pic} />
-                                            <Box>
-                                                <Typography variant="body2" fontWeight="bold">John Doe</Typography>
-                                                <Typography variant="body2" color="text.secondary">Comment</Typography>
-                                            </Box>
-                                            <Typography variant="caption" color="text.secondary" sx={{ ml: 'auto' }}>
-                                                Jul 2, 2025, 12:19 AM
+                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, justifyContent: 'center', p: 2 }}>
+                                            <Typography variant="body2" color="text.secondary">
+                                                No notes yet. Add a note to start the conversation.
                                             </Typography>
                                         </Box>
                                     )}
