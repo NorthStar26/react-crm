@@ -14,6 +14,7 @@ import { LeadUrl } from '../../services/ApiUrls'
 import { fetchData } from '../../components/FetchData'
 import FormateTime from '../../components/FormateTime'
 import '../../styles/style.css'
+import { uploadFileToCloudinary, uploadAndAttachFileToLead, isFileTypeAllowed } from '../../utils/uploadFileToCloudinary'
 
 export const formatDate = (dateString: any) => {
     const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' }
@@ -106,6 +107,8 @@ function LeadDetails() {
     const [noteSubmitting, setNoteSubmitting] = useState(false);
     const [attachments, setAttachments] = useState<File[]>([]);
     const [commentsToShow, setCommentsToShow] = useState(5);
+    const [attachmentUploading, setAttachmentUploading] = useState(false);
+    const [attachmentError, setAttachmentError] = useState<string | null>(null);
 
     useEffect(() => {
         if (leadId) {
@@ -150,12 +153,54 @@ function LeadDetails() {
     const handleAttachmentClick = () => {
         const fileInput = document.createElement('input');
         fileInput.type = 'file';
-        fileInput.addEventListener('change', (event: any) => {
+        // Accept all the file types we support
+        fileInput.accept = '.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.csv,.rtf,.zip,.rar,.7z,.tar,.gz,.psd,.ai,.eps,.ttf,.otf,.woff,.woff2,.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.ico,.heic,.svg,.avif,.jfif';
+        
+        fileInput.addEventListener('change', async (event: any) => {
             const files = event.target.files;
             if (files && files[0]) {
-                setAttachments(prev => [...prev, files[0]]);
+                const file = files[0];
+                
+                // Check if file type is allowed
+                if (!isFileTypeAllowed(file)) {
+                    setAttachmentError('This file type is not supported. Please select a different file.');
+                    return;
+                }
+                
+                // Show loading indicator
+                setAttachmentUploading(true);
+                setAttachmentError(null);
+                
+                try {
+                    // Prepare headers for API request
+                    const headers = {
+                        Accept: 'application/json',
+                        'Content-Type': 'application/json',
+                        Authorization: localStorage.getItem('Token'),
+                        org: localStorage.getItem('org')
+                    };
+                    
+                    // Upload and attach the file
+                    const result = await uploadAndAttachFileToLead(leadId as string, file, headers);
+                    
+                    if (result.success) {
+                        // Add to local state
+                        setAttachments(prev => [...prev, file]);
+                        // Refresh lead details to show the new attachment
+                        getLeadDetails(leadId as string);
+                    } else {
+                        setAttachmentError(`Failed to upload file: ${result.error}`);
+                    }
+                } catch (error) {
+                    console.error('Error uploading file:', error);
+                    setAttachmentError('An error occurred while uploading the file.');
+                } finally {
+                    // Hide loading indicator
+                    setAttachmentUploading(false);
+                }
             }
         });
+        
         fileInput.click();
     };
 
@@ -247,10 +292,19 @@ function LeadDetails() {
                                     startIcon={<FaPaperclip />}
                                     sx={{ mb: 2 }}
                                     onClick={handleAttachmentClick}
+                                    disabled={attachmentUploading}
                                 >
-                                    Add Attachment
+                                    {attachmentUploading ? 'Uploading...' : 'Add Attachment'}
                                 </Button>
                         </Box>
+                        
+                        {attachmentError && (
+                            <Box sx={{ mt: 1, color: 'error.main' }}>
+                                <Typography variant="body2" color="error">
+                                    {attachmentError}
+                                </Typography>
+                            </Box>
+                        )}
                     </Box>
                     
                     <Box sx={{ display: 'flex', gap: 3 }}>
@@ -292,7 +346,42 @@ function LeadDetails() {
                                     
                                     <Box sx={{ flex: '0 0 33%', mb: 2 }}>
                                         <Typography variant="body2" color="text.secondary">Attachments</Typography>
-                                        <Typography variant="body1">PDF</Typography>
+                                        {leadData?.lead_obj?.lead_attachment && leadData.lead_obj.lead_attachment.length > 0 ? (
+                                            <Box>
+                                                {leadData.lead_obj.lead_attachment.map((attachment, index) => {
+                                                    // Check if we have a file_path or use the attachment_url
+                                                    let url = attachment.file_path;
+                                                    
+                                                    // If file_path is encoded, decode it
+                                                    if (url && url.startsWith('/media/https%3A')) {
+                                                        url = decodeURIComponent(url.replace('/media/', ''));
+                                                    }
+                                                    
+                                                    const isPdf = attachment.file_name && attachment.file_name.toLowerCase().endsWith('.pdf');
+                                                    
+                                                    // If it's a PDF, add download parameter
+                                                    if (isPdf && url && !url.includes('?')) {
+                                                        url = url + '?dl=1';
+                                                    }
+                                                    
+                                                    return (
+                                                        <Typography key={index} variant="body1">
+                                                            <Link 
+                                                                href={url} 
+                                                                target="_blank" 
+                                                                rel="noopener"
+                                                                download={isPdf ? attachment.file_name || `document-${index}.pdf` : undefined}
+                                                            >
+                                                                {attachment.file_name || `Attachment ${index + 1}`}
+                                                                {isPdf && ' (PDF)'}
+                                                            </Link>
+                                                        </Typography>
+                                                    );
+                                                })}
+                                            </Box>
+                                        ) : (
+                                            <Typography variant="body1">No attachments</Typography>
+                                        )}
                                     </Box>
                                 </Box><Typography sx={{ flex: '0 0 33%', mb: 2 }}variant="body2" color="text.secondary">Description</Typography>
                                 <Box sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: '8px', bgcolor: 'white', mb: 3 }}>
