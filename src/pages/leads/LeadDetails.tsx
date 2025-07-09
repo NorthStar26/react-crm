@@ -347,7 +347,7 @@ function LeadDetails() {
             
             // Use fetchData function like other API calls
             // API endpoint should be /api/leads/attachment/ID/ not /leads/attachment/
-            fetchData(`/leads/attachment/${attachmentId}/`, 'DELETE', null as any, Header)
+            fetchData(`/${LeadUrl}/attachment/${attachmentId}/`, 'DELETE', null as any, Header)
                 .then((res) => {
                     if (!res.error) {
                         // Success - refresh lead details to update the UI
