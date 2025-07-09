@@ -22,7 +22,8 @@ import {
     FaFileArchive, 
     FaFile,
     FaFileAlt,
-    FaFileCode
+    FaFileCode,
+    FaTimes
 } from 'react-icons/fa'
 import { CustomAppBar } from '../../components/CustomAppBar'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -329,6 +330,42 @@ function LeadDetails() {
         setCommentsToShow(prev => prev + 5);
     };
 
+    const handleAttachmentDelete = (attachmentId: string) => {
+        // Confirm before deleting
+        if (window.confirm("Do you want to delete this attachment?")) {
+            // Show loading indicator
+            setAttachmentUploading(true);
+            setAttachmentError(null);
+            
+            // Use the Header object consistent with other API calls
+            const Header = {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                Authorization: localStorage.getItem('Token'),
+                org: localStorage.getItem('org')
+            };
+            
+            // Use fetchData function like other API calls
+            // API endpoint should be /api/leads/attachment/ID/ not /leads/attachment/
+            fetchData(`/leads/attachment/${attachmentId}/`, 'DELETE', null as any, Header)
+                .then((res) => {
+                    if (!res.error) {
+                        // Success - refresh lead details to update the UI
+                        getLeadDetails(leadId as string);
+                    } else {
+                        setAttachmentError(res.errors || "Error deleting attachment");
+                    }
+                })
+                .catch((err) => {
+                    console.error("Error deleting attachment:", err);
+                    setAttachmentError("Failed to delete attachment. Please try again.");
+                })
+                .finally(() => {
+                    setAttachmentUploading(false);
+                });
+        }
+    };
+
     const module = 'Leads'
     const crntPage = 'Lead Details'
     const backBtn = 'Back To Leads'
@@ -466,6 +503,7 @@ function LeadDetails() {
                                                             sx={{ 
                                                                 display: 'flex', 
                                                                 alignItems: 'center',
+                                                                justifyContent: 'space-between',
                                                                 p: 1, 
                                                                 border: '1px solid #e0e0e0',
                                                                 borderRadius: '4px',
@@ -476,29 +514,51 @@ function LeadDetails() {
                                                                 }
                                                             }}
                                                         >
-                                                            <Tooltip title={attachment.file_name} arrow>
-                                                                <Avatar sx={{ mr: 1.5, width: 28, height: 28, bgcolor: 'action.hover', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-                                                                    {getFileIcon(attachment.file_name)}
-                                                                </Avatar>
+                                                            <Box sx={{ display: 'flex', alignItems: 'center', flex: 1, overflow: 'hidden' }}>
+                                                                <Tooltip title={attachment.file_name} arrow>
+                                                                    <Avatar sx={{ mr: 1.5, width: 28, height: 28, bgcolor: 'action.hover', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+                                                                        {getFileIcon(attachment.file_name)}
+                                                                    </Avatar>
+                                                                </Tooltip>
+                                                                <Link 
+                                                                    href={url} 
+                                                                    target="_blank" 
+                                                                    rel="noopener"
+                                                                    download={isPdf ? attachment.file_name || `document-${index}.pdf` : undefined}
+                                                                    style={{ textDecoration: 'none', color: 'inherit', flex: 1 }}
+                                                                >
+                                                                    <Typography variant="body1" sx={{ 
+                                                                        display: 'inline-flex', 
+                                                                        alignItems: 'center',
+                                                                        maxWidth: '220px',
+                                                                        overflow: 'hidden',
+                                                                        textOverflow: 'ellipsis',
+                                                                        whiteSpace: 'nowrap'
+                                                                    }}>
+                                                                        {truncateFilename(attachment.file_name || `Attachment ${index + 1}`, 35)}
+                                                                    </Typography>
+                                                                </Link>
+                                                            </Box>
+                                                            <Tooltip title="Delete attachment" arrow>
+                                                                <Button 
+                                                                    onClick={() => handleAttachmentDelete(attachment.id)} 
+                                                                    size="small"
+                                                                    color="error"
+                                                                    sx={{ 
+                                                                        minWidth: 'auto', 
+                                                                        ml: 1,
+                                                                        p: '4px 8px',
+                                                                        opacity: 0.8,
+                                                                        '&:hover': { 
+                                                                            opacity: 1,
+                                                                            backgroundColor: '#ffebee'
+                                                                        }
+                                                                    }}
+                                                                    disabled={attachmentUploading}
+                                                                >
+                                                                    <FaTimes size={14} />
+                                                                </Button>
                                                             </Tooltip>
-                                                            <Link 
-                                                                href={url} 
-                                                                target="_blank" 
-                                                                rel="noopener"
-                                                                download={isPdf ? attachment.file_name || `document-${index}.pdf` : undefined}
-                                                                style={{ textDecoration: 'none', color: 'inherit', flex: 1 }}
-                                                            >
-                                                                <Typography variant="body1" sx={{ 
-                                                                    display: 'inline-flex', 
-                                                                    alignItems: 'center',
-                                                                    maxWidth: '240px',
-                                                                    overflow: 'hidden',
-                                                                    textOverflow: 'ellipsis',
-                                                                    whiteSpace: 'nowrap'
-                                                                }}>
-                                                                    {truncateFilename(attachment.file_name || `Attachment ${index + 1}`, 35)}
-                                                                </Typography>
-                                                            </Link>
                                                         </Box>
                                                     );
                                                 })}
