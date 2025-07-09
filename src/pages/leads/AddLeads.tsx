@@ -127,7 +127,7 @@ type FormErrors = {
 interface FormData {
   // Main lead fields
   title: string,
-  opportunity_amount: string,
+  opportunity_amount: number | '', // Using number or empty string to handle initial state
   description: string,
   assigned_to: string, // Single UUID string, not an array
   contact: string, // Singular, not plural - single UUID string
@@ -339,14 +339,37 @@ export function AddLeads() {
 
   const handleChange = (e: any) => {
     // const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    // console.log('e.target',e)
     const { name, value, files, type, checked, id } = e.target;
-    // console.log('auto', val)
+    
     if (type === 'file') {
       setFormData({ ...formData, [name]: e.target.files?.[0] || null });
     }
     else if (type === 'checkbox') {
       setFormData({ ...formData, [name]: checked });
+    }
+    else if (name === 'opportunity_amount') {
+      // Only allow numbers and decimal point
+      // Remove any non-numeric characters except decimal point
+      // Also ensure only one decimal point is allowed
+      const numericValue = value.replace(/[^\d.]/g, '');
+      const parts = numericValue.split('.');
+      const formattedValue = parts[0] + (parts.length > 1 ? '.' + parts[1].slice(0, 2) : '');
+      
+      // Convert to number or keep as empty string
+      const finalValue = formattedValue === '' ? '' : Number(formattedValue);
+      
+      setFormData({ ...formData, [name]: finalValue });
+    }
+    else if (name === 'probability') {
+      // Only allow integers between 0 and 100
+      // Remove any non-numeric characters
+      const numericValue = value.replace(/\D/g, '');
+      
+      // Ensure value is between 0 and 100
+      let finalValue = numericValue === '' ? 0 : parseInt(numericValue, 10);
+      if (finalValue > 100) finalValue = 100;
+      
+      setFormData({ ...formData, [name]: finalValue });
     }
     else {
       setFormData({ ...formData, [name]: value });
@@ -381,10 +404,15 @@ export function AddLeads() {
     console.log('Selected users:', selectedUsers);
     // console.log('Form data:', formData.lead_attachment,'sfs', formData.file);
   // Prepare data according to Swagger example
+  // Format opportunity_amount to 2 decimal places if it exists
+  const formattedAmount = formData.opportunity_amount !== '' 
+    ? Number(formData.opportunity_amount).toFixed(2) 
+    : '';
+    
   const data = {
     title: formData.title,
     lead_attachment: formData.file,
-    opportunity_amount: formData.opportunity_amount,
+    opportunity_amount: formattedAmount !== '' ? Number(formattedAmount) : null,
     description: formData.description,
     // The API expects a single UUID string for assigned_to
     assigned_to: formData.assigned_to || null, 
@@ -394,7 +422,8 @@ export function AddLeads() {
     source: formData.source, // In Swagger this is lead_source but we'll stick with source for now
     tags: formData.tags,
     company: formData.company,
-    probability: formData.probability,
+    // Ensure probability is a number between 0 and 100
+    probability: Number(formData.probability),
     link: formData.link
   }
   
@@ -425,7 +454,7 @@ export function AddLeads() {
     setFormData({
       title: '',
       lead_attachment: null,
-      opportunity_amount: '',
+      opportunity_amount: '', // Empty string for initial state
       description: '',
       assigned_to: '',
       contact: '',
@@ -758,6 +787,27 @@ export function AddLeads() {
                           onChange={handleChange}
                           style={{ width: '70%' }}
                           size='small'
+                          type="text"
+                          placeholder="0.00"
+                          onKeyDown={(e) => {
+                            // Allow only numbers, decimal point, backspace, delete, tab, arrows
+                            const allowedKeys = ['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
+                            const isNumber = /[0-9]/.test(e.key);
+                            const isDecimal = e.key === '.';
+                            const isAllowedKey = allowedKeys.includes(e.key);
+                            
+                            // Prevent more than one decimal point
+                            if (isDecimal && String(formData.opportunity_amount).includes('.')) {
+                              e.preventDefault();
+                              return;
+                            }
+                            
+                            // Prevent input if not a number, decimal, or allowed key
+                            if (!isNumber && !isDecimal && !isAllowedKey) {
+                              e.preventDefault();
+                            }
+                          }}
+                          
                           helperText={errors?.opportunity_amount?.[0] ? errors?.opportunity_amount[0] : ''}
                           error={!!errors?.opportunity_amount?.[0]}
                         />
@@ -769,6 +819,19 @@ export function AddLeads() {
                           name='probability'
                           value={formData.probability}
                           onChange={handleChange}
+                          type="text"
+                          placeholder="0-100"
+                          onKeyDown={(e) => {
+                            // Allow only numbers, backspace, delete, tab, arrows
+                            const allowedKeys = ['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
+                            const isNumber = /[0-9]/.test(e.key);
+                            const isAllowedKey = allowedKeys.includes(e.key);
+                            
+                            // Prevent input if not a number or allowed key
+                            if (!isNumber && !isAllowedKey) {
+                              e.preventDefault();
+                            }
+                          }}
                           InputProps={{
                             endAdornment: (
                               <InputAdornment position='end'>
@@ -778,6 +841,7 @@ export function AddLeads() {
                                 </IconButton>
                               </InputAdornment>
                             ),
+                            inputProps: { min: 0, max: 100 } // HTML5 validation attributes
                           }}
                           style={{ width: '70%' }}
                           size='small'
