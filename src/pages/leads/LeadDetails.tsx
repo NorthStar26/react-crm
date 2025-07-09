@@ -6,8 +6,24 @@ import {
     Typography,
     Link,
     TextField,
+    Tooltip,
 } from '@mui/material'
-import { FaPlus, FaPaperclip, FaExchangeAlt, FaSyncAlt, FaPen } from 'react-icons/fa'
+import { 
+    FaPlus, 
+    FaPaperclip, 
+    FaExchangeAlt, 
+    FaSyncAlt, 
+    FaPen, 
+    FaFilePdf, 
+    FaFileWord, 
+    FaFileExcel, 
+    FaFilePowerpoint, 
+    FaFileImage, 
+    FaFileArchive, 
+    FaFile,
+    FaFileAlt,
+    FaFileCode
+} from 'react-icons/fa'
 import { CustomAppBar } from '../../components/CustomAppBar'
 import { useNavigate, useParams } from 'react-router-dom'
 import { LeadUrl } from '../../services/ApiUrls'
@@ -95,6 +111,73 @@ type LeadResponse = {
     source: Array<[string, string]>;
     status: Array<[string, string]>;
     countries: Array<[string, string]>;
+};
+
+// Function to get the appropriate icon based on file extension
+const getFileIcon = (fileName: string) => {
+    if (!fileName) return <FaFile />;
+    
+    const extension = fileName.split('.').pop()?.toLowerCase() || '';
+    
+    switch (extension) {
+        case 'pdf':
+            return <FaFilePdf style={{ color: '#f40f02' }} />;
+        case 'doc':
+        case 'docx':
+            return <FaFileWord style={{ color: '#2b579a' }} />;
+        case 'xls':
+        case 'xlsx':
+        case 'csv':
+            return <FaFileExcel style={{ color: '#217346' }} />;
+        case 'ppt':
+        case 'pptx':
+            return <FaFilePowerpoint style={{ color: '#d24726' }} />;
+        case 'jpg':
+        case 'jpeg':
+        case 'png':
+        case 'gif':
+        case 'bmp':
+        case 'webp':
+        case 'tiff':
+        case 'svg':
+            return <FaFileImage style={{ color: '#7e4dd2' }} />;
+        case 'zip':
+        case 'rar':
+        case '7z':
+        case 'tar':
+        case 'gz':
+            return <FaFileArchive style={{ color: '#ffc107' }} />;
+        case 'txt':
+        case 'rtf':
+            return <FaFileAlt style={{ color: '#5a6268' }} />;
+        case 'html':
+        case 'css':
+        case 'js':
+        case 'jsx':
+        case 'ts':
+        case 'tsx':
+        case 'json':
+            return <FaFileCode style={{ color: '#0099e5' }} />;
+        default:
+            return <FaFile style={{ color: '#6c757d' }} />;
+    }
+};
+
+// Function to truncate long filenames
+const truncateFilename = (fileName: string, maxLength: number = 20) => {
+    if (!fileName) return '';
+    if (fileName.length <= maxLength) return fileName;
+    
+    const extension = fileName.includes('.') ? fileName.split('.').pop() : '';
+    const nameWithoutExtension = fileName.includes('.') 
+        ? fileName.substring(0, fileName.lastIndexOf('.')) 
+        : fileName;
+    
+    // Calculate how much of the name we can show
+    const availableChars = maxLength - 3; // 3 characters for ellipsis
+    const truncatedName = nameWithoutExtension.substring(0, availableChars) + '...';
+    
+    return extension ? `${truncatedName}.${extension}` : truncatedName;
 };
 
 function LeadDetails() {
@@ -347,7 +430,15 @@ function LeadDetails() {
                                     <Box sx={{ flex: '0 0 33%', mb: 2 }}>
                                         <Typography variant="body2" color="text.secondary">Attachments</Typography>
                                         {leadData?.lead_obj?.lead_attachment && leadData.lead_obj.lead_attachment.length > 0 ? (
-                                            <Box>
+                                            <Box sx={{ 
+                                                display: 'flex', 
+                                                flexDirection: 'column', 
+                                                gap: 1, 
+                                                mt: 1, 
+                                                maxHeight: '200px', 
+                                                overflowY: 'auto',
+                                                pr: 1
+                                            }}>
                                                 {leadData.lead_obj.lead_attachment.map((attachment, index) => {
                                                     // Check if we have a file_path or use the attachment_url
                                                     let url = attachment.file_path;
@@ -358,6 +449,11 @@ function LeadDetails() {
                                                     }
                                                     
                                                     const isPdf = attachment.file_name && attachment.file_name.toLowerCase().endsWith('.pdf');
+                                                    const isDoc = attachment.file_name && (attachment.file_name.toLowerCase().endsWith('.doc') || attachment.file_name.toLowerCase().endsWith('.docx'));
+                                                    const isXls = attachment.file_name && (attachment.file_name.toLowerCase().endsWith('.xls') || attachment.file_name.toLowerCase().endsWith('.xlsx'));
+                                                    const isPpt = attachment.file_name && (attachment.file_name.toLowerCase().endsWith('.ppt') || attachment.file_name.toLowerCase().endsWith('.pptx'));
+                                                    const isImage = attachment.file_name && (attachment.file_name.toLowerCase().endsWith('.jpg') || attachment.file_name.toLowerCase().endsWith('.jpeg') || attachment.file_name.toLowerCase().endsWith('.png') || attachment.file_name.toLowerCase().endsWith('.gif'));
+                                                    const isArchive = attachment.file_name && (attachment.file_name.toLowerCase().endsWith('.zip') || attachment.file_name.toLowerCase().endsWith('.rar') || attachment.file_name.toLowerCase().endsWith('.7z'));
                                                     
                                                     // If it's a PDF, add download parameter
                                                     if (isPdf && url && !url.includes('?')) {
@@ -365,17 +461,45 @@ function LeadDetails() {
                                                     }
                                                     
                                                     return (
-                                                        <Typography key={index} variant="body1">
+                                                        <Box 
+                                                            key={index} 
+                                                            sx={{ 
+                                                                display: 'flex', 
+                                                                alignItems: 'center',
+                                                                p: 1, 
+                                                                border: '1px solid #e0e0e0',
+                                                                borderRadius: '4px',
+                                                                transition: 'all 0.2s ease',
+                                                                '&:hover': {
+                                                                    backgroundColor: '#f5f5f5',
+                                                                    borderColor: '#d0d0d0'
+                                                                }
+                                                            }}
+                                                        >
+                                                            <Tooltip title={attachment.file_name} arrow>
+                                                                <Avatar sx={{ mr: 1.5, width: 28, height: 28, bgcolor: 'action.hover', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+                                                                    {getFileIcon(attachment.file_name)}
+                                                                </Avatar>
+                                                            </Tooltip>
                                                             <Link 
                                                                 href={url} 
                                                                 target="_blank" 
                                                                 rel="noopener"
                                                                 download={isPdf ? attachment.file_name || `document-${index}.pdf` : undefined}
+                                                                style={{ textDecoration: 'none', color: 'inherit', flex: 1 }}
                                                             >
-                                                                {attachment.file_name || `Attachment ${index + 1}`}
-                                                                {isPdf && ' (PDF)'}
+                                                                <Typography variant="body1" sx={{ 
+                                                                    display: 'inline-flex', 
+                                                                    alignItems: 'center',
+                                                                    maxWidth: '240px',
+                                                                    overflow: 'hidden',
+                                                                    textOverflow: 'ellipsis',
+                                                                    whiteSpace: 'nowrap'
+                                                                }}>
+                                                                    {truncateFilename(attachment.file_name || `Attachment ${index + 1}`, 35)}
+                                                                </Typography>
                                                             </Link>
-                                                        </Typography>
+                                                        </Box>
                                                     );
                                                 })}
                                             </Box>
