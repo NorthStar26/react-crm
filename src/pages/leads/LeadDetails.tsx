@@ -664,18 +664,11 @@ function LeadDetails() {
                                     Convert
                                 </Button>
                                 
-                                <Button 
-                                    variant="outlined"
-                                    sx={{ borderRadius: '4px', width: '100%', textTransform: 'capitalize' }}
-                                    onClick={editHandle}
-                                    startIcon={<FaPen />}
-                                >
-                                    Edit lead
-                                </Button>
                                 
-                                <Button 
-                                    variant="contained" 
-                                    color="primary"
+                                
+                                <Button variant="outlined"
+                                     
+                                    
                                     startIcon={<FaPaperclip />}
                                     sx={{ borderRadius: '4px', width: '100%', textTransform: 'capitalize' }}
                                     onClick={handleAttachmentClick}
