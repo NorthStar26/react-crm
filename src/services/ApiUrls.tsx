@@ -27,14 +27,15 @@ export const CompaniesUrl = 'companies/';
 export const LeadUrl = 'leads';
 // Contact
 export const ContactUrl = 'contacts';
+// Users/USERS
+export const UsersUrl = 'users';
 // Opportunity
 export const OpportunityUrl = 'opportunities';
 // ACCOUNTS
 export const AccountsUrl = 'accounts';
 // CASES
 export const CasesUrl = 'cases';
-// USERS
-export const UsersUrl = 'users';
+// User (singular)
 export const UserUrl = 'user';
 // PROFILE
 export const ProfileUrl = 'profile';

@@ -30,6 +30,7 @@ import { LeadUrl } from '../../services/ApiUrls'
 import { fetchData, Header } from '../../components/FetchData'
 import { fetchCompanyOptions, CompanyOption } from '../../services/companyService'
 import { fetchContactOptions, ContactOption } from '../../services/contactService'
+import { fetchUserOptions, UserOption } from '../../services/userService'
 import { useDebounce } from '../../hooks/useDebounce'
 import { CustomAppBar } from '../../components/CustomAppBar'
 import { FaArrowDown, FaCheckCircle, FaFileUpload, FaPalette, FaPercent, FaPlus, FaTimes, FaTimesCircle, FaUpload } from 'react-icons/fa'
@@ -54,13 +55,7 @@ interface User {
 
 // Mock data for dropdowns and selectors
 const MOCK_CONTACTS: Contact[] = [];
-const MOCK_USERS: User[] = [
-  { id: 'user1', user__email: 'john.doe@example.com', username: 'John Doe' },
-  { id: 'user2', user__email: 'jane.smith@example.com', username: 'Jane Smith' },
-  { id: 'user3', user__email: 'michael.johnson@example.com', username: 'Michael Johnson' },
-  { id: 'user4', user__email: 'sarah.williams@example.com', username: 'Sarah Williams' },
-  { id: 'user5', user__email: 'david.brown@example.com', username: 'David Brown' }
-];
+// MOCK_USERS removed as we're now using real data from the API
 const MOCK_TAGS: string[] = ['Important', 'Urgent', 'Follow-up', 'New'];
 // MOCK_CONTACT_OPTIONS removed as we're now using real data from the API
 // MOCK_COMPANIES removed as we're now using real data from the API
@@ -134,8 +129,8 @@ interface FormData {
   title: string,
   opportunity_amount: string,
   description: string,
-  assigned_to: string[],
-  contacts: string[],
+  assigned_to: string, // Single UUID string, not an array
+  contact: string, // Singular, not plural - single UUID string
   status: string,
   source: string,
   tags: string[],
@@ -165,8 +160,8 @@ export function AddLeads() {
     lead_attachment: null,
     opportunity_amount: '',
     description: '',
-    assigned_to: [],
-    contacts: [],
+    assigned_to: '', // Single string
+    contact: '', // Singular field, single string
     status: 'assigned',
     source: 'call',
     tags: [],
@@ -188,9 +183,16 @@ export function AddLeads() {
   const [contactLoading, setContactLoading] = useState(false);
   const [selectedContacts, setSelectedContacts] = useState<ContactOption[]>([]);
   
+  // User search states
+  const [userOptions, setUserOptions] = useState<UserOption[]>([]);
+  const [userSearchTerm, setUserSearchTerm] = useState('');
+  const [userLoading, setUserLoading] = useState(false);
+  const [selectedUsers, setSelectedUsers] = useState<UserOption[]>([]);
+  
   // Debounce search terms to prevent excessive API calls
   const debouncedCompanySearch = useDebounce(companySearchTerm, 400);
   const debouncedContactSearch = useDebounce(contactSearchTerm, 400);
+  const debouncedUserSearch = useDebounce(userSearchTerm, 400);
 
   useEffect(() => {
     if (quill) {
@@ -256,43 +258,82 @@ export function AddLeads() {
     }
   }, [debouncedContactSearch, formData.company]);
   
-  // Update selected contacts whenever formData.contacts changes
+  // Update selected contact whenever formData.contact changes
   useEffect(() => {
-    if (formData.contacts.length > 0 && selectedContacts.length === 0) {
-      const fetchSelectedContacts = async () => {
+    if (formData.contact && selectedContacts.length === 0) {
+      const fetchSelectedContact = async () => {
         // Fetch all contacts for the selected company (we'll filter them on the client side)
         const result = await fetchContactOptions('', formData.company, 100);
         
         if (result.options) {
-          // Find all contacts that match the IDs in formData.contacts
+          // Find the contact that matches the ID in formData.contact
           const selected = result.options.filter(contact => 
-            formData.contacts.includes(contact.id)
+            contact.id === formData.contact
           );
           
           if (selected.length > 0) {
-            setSelectedContacts(selected);
+            setSelectedContacts([selected[0]]);
           }
         }
       };
       
-      fetchSelectedContacts();
+      fetchSelectedContact();
     }
-  }, [formData.contacts, selectedContacts, formData.company]);
+  }, [formData.contact, selectedContacts, formData.company]);
   
-  // Reset contacts when company changes
+  // Reset contact when company changes
   useEffect(() => {
     const prevCompany = formData.company;
     
-    // If company has changed, clear selected contacts
+    // If company has changed, clear selected contact
     if (prevCompany && prevCompany !== formData.company) {
       setFormData(prev => ({
         ...prev,
-        contacts: []
+        contact: ''
       }));
       setSelectedContacts([]);
       setContactSearchTerm('');
     }
   }, [formData.company]);
+  
+  // Load users when the component mounts or search term changes
+  useEffect(() => {
+    const loadUsers = async () => {
+      setUserLoading(true);
+      const result = await fetchUserOptions(debouncedUserSearch);
+      
+      if (result.options) {
+        setUserOptions(result.options);
+      }
+      setUserLoading(false);
+    };
+    
+    loadUsers();
+  }, [debouncedUserSearch]);
+  
+  // Initialize selected user if formData.assigned_to has a value
+  useEffect(() => {
+    if (formData.assigned_to && selectedUsers.length === 0) {
+      const fetchSelectedUser = async () => {
+        setUserLoading(true);
+        const result = await fetchUserOptions('');
+        
+        if (result.options) {
+          // Find the user that matches the ID in formData.assigned_to
+          const selected = result.options.find(user => 
+            user.id === formData.assigned_to
+          );
+          
+          if (selected) {
+            setSelectedUsers([selected]);
+          }
+        }
+        setUserLoading(false);
+      };
+      
+      fetchSelectedUser();
+    }
+  }, [formData.assigned_to, selectedUsers]);
 
   // No longer need handleChange2 as we're using Select dropdowns for all fields
 
@@ -337,21 +378,29 @@ export function AddLeads() {
     submitForm();
   }
   const submitForm = () => {
+    console.log('Selected users:', selectedUsers);
     // console.log('Form data:', formData.lead_attachment,'sfs', formData.file);
-    const data = {
-      title: formData.title,
-      lead_attachment: formData.file,
-      opportunity_amount: formData.opportunity_amount,
-      description: formData.description,
-      assigned_to: formData.assigned_to,
-      contacts: formData.contacts,
-      status: formData.status,
-      source: formData.source,
-      tags: formData.tags,
-      company: formData.company,
-      probability: formData.probability,
-      link: formData.link
-    }
+  // Prepare data according to Swagger example
+  const data = {
+    title: formData.title,
+    lead_attachment: formData.file,
+    opportunity_amount: formData.opportunity_amount,
+    description: formData.description,
+    // The API expects a single UUID string for assigned_to
+    assigned_to: formData.assigned_to || null, 
+    // The field should be contact (singular), not contacts (plural)
+    contact: formData.contact || null,
+    status: formData.status,
+    source: formData.source, // In Swagger this is lead_source but we'll stick with source for now
+    tags: formData.tags,
+    company: formData.company,
+    probability: formData.probability,
+    link: formData.link
+  }
+  
+  // Log the final data being sent to the API
+  console.log('Final data being sent to API:', JSON.stringify(data, null, 2));
+    console.log('Submitting assigned_to:', data.assigned_to);
 
     // Making a direct POST request to LeadUrl, independent from other pages
     fetchData(`${LeadUrl}/`, 'POST', JSON.stringify(data), Header)
@@ -378,8 +427,8 @@ export function AddLeads() {
       lead_attachment: null,
       opportunity_amount: '',
       description: '',
-      assigned_to: [],
-      contacts: [],
+      assigned_to: '',
+      contact: '',
       status: 'assigned',
       source: 'call',
       tags: [],
@@ -394,6 +443,9 @@ export function AddLeads() {
     setSelectedContacts([]);
     setContactSearchTerm('');
     setContactOptions([]);
+    setSelectedUsers([]);
+    setUserSearchTerm('');
+    setUserOptions([]);
     // No longer need to reset selectedAssignTo and selectedTags as we're using direct state in formData
     // if (autocompleteRef.current) {
     //   console.log(autocompleteRef.current,'ccc')
@@ -448,30 +500,77 @@ export function AddLeads() {
                       <div className='fieldSubContainer'>
                         <div className='fieldTitle'>Assign To</div>
                         <FormControl sx={{ width: '70%' }}>
-                          <Select
-                            name='assigned_to'
-                            value={formData.assigned_to.length > 0 ? formData.assigned_to[0] : ''}
-                            open={assignToSelectOpen}
-                            onClick={() => setAssignToSelectOpen(!assignToSelectOpen)}
-                            IconComponent={() => (
-                              <div onClick={() => setAssignToSelectOpen(!assignToSelectOpen)} className="select-icon-background">
-                                {assignToSelectOpen ? <FiChevronUp className='select-icon' /> : <FiChevronDown className='select-icon' />}
-                              </div>
-                            )}
-                            className={'select'}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              setFormData({ ...formData, assigned_to: value ? [value] : [] });
+                          <Autocomplete
+                            // Remove multiple selection since API expects a single user
+                            id="assign-to-select"
+                            options={userOptions}
+                            loading={userLoading}
+                            value={selectedUsers.length > 0 ? selectedUsers[0] : null}
+                            onChange={(event, newValue) => {
+                              setSelectedUsers(newValue ? [newValue] : []);
+                              // Use the top-level profile ID, not the user_details.id
+                              setFormData({
+                                ...formData,
+                                assigned_to: newValue ? newValue.id : ''
+                              });
+                              console.log('Selected user for assignment:', newValue ? {
+                                id: newValue.id,
+                                user_details_id: newValue.user_details?.id
+                              } : 'None');
                             }}
-                            error={!!errors?.assigned_to?.[0]}
-                          >
-                            {MOCK_USERS.map((option: any) => (
-                              <MenuItem key={option.id} value={option.id}>
-                                {option.user__email || option.username}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                          <FormHelperText>{errors?.assigned_to?.[0] ? errors?.assigned_to[0] : ''}</FormHelperText>
+                            onInputChange={(event, newInputValue) => {
+                              setUserSearchTerm(newInputValue);
+                            }}
+                            getOptionLabel={(option) => {
+                              // Get the name from user_details if available, otherwise fall back to old properties
+                              const firstName = option.user_details?.first_name || option.user__first_name || '';
+                              const lastName = option.user_details?.last_name || option.user__last_name || '';
+                              return `${firstName} ${lastName}`.trim();
+                            }}
+                            isOptionEqualToValue={(option, value) => option.id === value.id}
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                size="small"
+                                placeholder="Search users..."
+                                error={!!errors?.assigned_to?.[0]}
+                                helperText={errors?.assigned_to?.[0] || ''}
+                                InputProps={{
+                                  ...params.InputProps,
+                                  endAdornment: (
+                                    <>
+                                      {userLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                                      {params.InputProps.endAdornment}
+                                    </>
+                                  ),
+                                }}
+                              />
+                            )}
+                            renderOption={(props, option) => {
+                              // Get the name and email from user_details if available, otherwise fall back to old properties
+                              const firstName = option.user_details?.first_name || option.user__first_name || '';
+                              const lastName = option.user_details?.last_name || option.user__last_name || '';
+                              const email = option.user_details?.email || option.user__email || '';
+                              
+                              return (
+                                <li {...props}>
+                                  <Stack direction="row" spacing={1} alignItems="center">
+                                    <Avatar sx={{ bgcolor: '#284871', width: 28, height: 28, fontSize: 14 }}>
+                                      {firstName.charAt(0).toUpperCase() || 'U'}
+                                    </Avatar>
+                                    <div>
+                                      <Typography variant="body1">{`${firstName} ${lastName}`.trim()}</Typography>
+                                      {email && (
+                                        <Typography variant="caption" color="text.secondary">
+                                          {email}
+                                        </Typography>
+                                      )}
+                                    </div>
+                                  </Stack>
+                                </li>
+                              );
+                            }}
+                          />
                         </FormControl>
                       </div>
                     </div>
@@ -537,16 +636,16 @@ export function AddLeads() {
                         <div className='fieldTitle'>Contact</div>
                         <FormControl sx={{ width: '70%' }}>
                           <Autocomplete
-                            multiple
-                            id="contacts-select"
+                            // Remove multiple selection since API expects a single contact
+                            id="contact-select"
                             options={contactOptions}
                             loading={contactLoading}
-                            value={selectedContacts}
+                            value={selectedContacts.length > 0 ? selectedContacts[0] : null}
                             onChange={(event, newValue) => {
-                              setSelectedContacts(newValue);
+                              setSelectedContacts(newValue ? [newValue] : []);
                               setFormData({
                                 ...formData,
-                                contacts: newValue.map(contact => contact.id)
+                                contact: newValue ? newValue.id : ''
                               });
                             }}
                             onInputChange={(event, newInputValue) => {
