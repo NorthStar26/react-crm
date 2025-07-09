@@ -215,6 +215,9 @@ function LeadDetails() {
     
     // Add Note modal states
     const [addNoteDialogOpen, setAddNoteDialogOpen] = useState(false);
+    
+    // Delete Lead modal states
+    const [deleteLeadModal, setDeleteLeadModal] = useState(false);
 
     useEffect(() => {
         if (leadId) {
@@ -254,6 +257,51 @@ function LeadDetails() {
                 leadData: leadData
             }
         })
+    }
+    
+    // Handle lead deletion
+    const handleDeleteLead = () => {
+        setDeleteLeadModal(true);
+    }
+    
+    // Close delete lead modal
+    const closeDeleteLeadModal = () => {
+        setDeleteLeadModal(false);
+    }
+    
+    // Confirm and execute lead deletion
+    const confirmDeleteLead = () => {
+        const Header = {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            Authorization: localStorage.getItem('Token'),
+            org: localStorage.getItem('org')
+        }
+        
+        fetchData(`${LeadUrl}/${leadId}/`, 'DELETE', null as any, Header)
+            .then((res: any) => {
+                if (!res.error) {
+                    setAlertType('success');
+                    setAlertMessage('Lead deleted successfully');
+                    setAlertOpen(true);
+                    
+                    // Navigate back to leads list after a short delay
+                    setTimeout(() => {
+                        navigate('/app/leads');
+                    }, 1500);
+                } else {
+                    setAlertType('error');
+                    setAlertMessage('Failed to delete lead');
+                    setAlertOpen(true);
+                }
+                closeDeleteLeadModal();
+            })
+            .catch((error) => {
+                setAlertType('error');
+                setAlertMessage('An error occurred while deleting the lead');
+                setAlertOpen(true);
+                closeDeleteLeadModal();
+            });
     }
 
     const handleAttachmentClick = () => {
@@ -527,8 +575,42 @@ function LeadDetails() {
                 cancelText="Cancel"
             />
             
+            {/* Delete Lead Dialog */}
+            <DeleteModal
+                open={deleteLeadModal}
+                onClose={closeDeleteLeadModal}
+                DeleteItem={confirmDeleteLead}
+                modalTitle="Delete Lead"
+                modalDialog={`Are you sure you want to delete ${leadData?.lead_obj?.contact?.first_name || ''} ${leadData?.lead_obj?.contact?.last_name || 'Doe'}'s lead? This action cannot be undone.`}
+            />
+            
             <Box>
-                <CustomAppBar backbtnHandle={backbtnHandle} module={module} backBtn={backBtn} crntPage={crntPage} editHandle={editHandle} />
+                <CustomAppBar 
+                    backbtnHandle={backbtnHandle} 
+                    module={module} 
+                    backBtn="Back to list" 
+                    crntPage={crntPage} 
+                    editHandle={editHandle}
+                    variant="detail"
+                    customButtons={
+                        <Button
+                            size="small"
+                            className="header-button"
+                            onClick={handleDeleteLead}
+                            variant="contained"
+                            sx={{
+                                backgroundColor: '#d32f2f',
+                                color: 'white',
+                                textTransform: 'capitalize',
+                                fontWeight: 'bold',
+                                fontSize: '16px',
+                                ':hover': { backgroundColor: '#b71c1c' }
+                            }}
+                        >
+                            Delete Lead
+                        </Button>
+                    }
+                />
                 
                 <Box sx={{ mt: '40px', p: '80px 40px'  }}>
                     
