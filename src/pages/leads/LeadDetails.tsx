@@ -387,34 +387,43 @@ function LeadDetails() {
                         
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mt: 2 }}>
                             <Box>
-                                <Typography variant="h4" component="h1">
-                            {leadData?.lead_obj?.contact?.first_name } {leadData?.lead_obj?.contact?.last_name || 'Doe'} Lead
-                        </Typography>
-                                <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 4 }}>
-                                    <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center' }}>
-                                        {leadData?.lead_obj?.status || 'Qualified'}
-                                    </Typography>
+                                <Typography variant="h4" component="h1" sx={{ mb: 2 }}>
+                                    {leadData?.lead_obj?.contact?.first_name } {leadData?.lead_obj?.contact?.last_name || 'Doe'} Lead
+                                </Typography>
+                                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                                    {/* First row: Status and Email */}
                                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                        <FaEnvelope style={{ marginRight: '6px', color: '#666' }} size={14} />
-                                        {leadData?.lead_obj?.contact?.primary_email}
+                                        <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
+                                            {leadData?.lead_obj?.status || 'Qualified'}
+                                        </Typography>
                                     </Box>
-                                </Box>
-                                <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 4 }}>
-                                    <Typography variant="body1" color="text.secondary" sx={{ display: 'flex', alignItems: 'center' }}>
-                                        <FaBuilding style={{ marginRight: '6px' }} size={14} />
-                                        {leadData?.lead_obj?.contact?.company?.name}
-                                    </Typography>
-                                    <Typography variant="body1" color="text.secondary" sx={{ display: 'flex', alignItems: 'center' }}>
-                                        <FaIdBadge style={{ marginRight: '6px' }} size={14} />
-                                        {leadData?.lead_obj?.contact?.title}
-                                    </Typography>
+                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                        <FaEnvelope style={{ marginRight: '8px', color: '#666' }} size={14} />
+                                        <Typography variant="body1">
+                                            {leadData?.lead_obj?.contact?.primary_email}
+                                        </Typography>
+                                    </Box>
+                                    
+                                    {/* Second row: Company and Job Title */}
+                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                        <FaBuilding style={{ marginRight: '8px', color: '#666' }} size={14} />
+                                        <Typography variant="body1" color="text.secondary">
+                                            {leadData?.lead_obj?.contact?.company?.name}
+                                        </Typography>
+                                    </Box>
+                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                        <FaIdBadge style={{ marginRight: '8px', color: '#666' }} size={14} />
+                                        <Typography variant="body1" color="text.secondary">
+                                            {leadData?.lead_obj?.contact?.title}
+                                        </Typography>
+                                    </Box>
                                 </Box>
                             </Box>
                             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, width: '180px' }}>
                                 <Button 
                                     variant="contained" 
                                     color="primary" 
-                                    sx={{ borderRadius: '4px', width: '100%' }}
+                                    sx={{ borderRadius: '4px', width: '100%', textTransform: 'capitalize' }}
                                     startIcon={<FaSyncAlt />}
                                 >
                                     Convert
@@ -422,22 +431,22 @@ function LeadDetails() {
                                 
                                 <Button 
                                     variant="outlined"
-                                    sx={{ borderRadius: '4px', width: '100%' }}
+                                    sx={{ borderRadius: '4px', width: '100%', textTransform: 'capitalize' }}
                                     onClick={editHandle}
                                     startIcon={<FaPen />}
                                 >
-                                    Edit Lead
+                                    Edit lead
                                 </Button>
                                 
                                 <Button 
                                     variant="contained" 
                                     color="primary"
                                     startIcon={<FaPaperclip />}
-                                    sx={{ borderRadius: '4px', width: '100%' }}
+                                    sx={{ borderRadius: '4px', width: '100%', textTransform: 'capitalize' }}
                                     onClick={handleAttachmentClick}
                                     disabled={attachmentUploading}
                                 >
-                                    {attachmentUploading ? 'Uploading...' : 'Add Attachment'}
+                                    {attachmentUploading ? 'Uploading...' : 'Add attachment'}
                                 </Button>
                             </Box>
                         </Box>
@@ -628,8 +637,9 @@ function LeadDetails() {
                                             color="primary"
                                             onClick={submitNote}
                                             disabled={noteSubmitting || !note.trim()}
+                                            sx={{ textTransform: 'capitalize' }}
                                         >
-                                            {noteSubmitting ? 'Submitting...' : 'Add Note'}
+                                            {noteSubmitting ? 'Submitting...' : 'Add note'}
                                         </Button>
                                     </Box>
                                 </Box>
@@ -667,8 +677,9 @@ function LeadDetails() {
                                                         variant="outlined" 
                                                         size="small" 
                                                         onClick={handleShowMoreComments}
+                                                        sx={{ textTransform: 'capitalize' }}
                                                     >
-                                                        Show More
+                                                        Show more
                                                     </Button>
                                                 </Box>
                                             )}
