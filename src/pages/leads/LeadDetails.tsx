@@ -375,8 +375,8 @@ function LeadDetails() {
             <div>
                 <CustomAppBar backbtnHandle={backbtnHandle} module={module} backBtn={backBtn} crntPage={crntPage} editHandle={editHandle} />
                 
-                <Box sx={{ mt: '40px', p: '80px 40px' }}>
-                    <Box sx={{ mb: 3 }}>
+                <Box sx={{ mt: '40px', p: '80px 40px'  }}>
+                    <Box sx={{ mb: 3 ,p: 2, border: '1px solid #e0e0e0', borderRadius: '8px', bgcolor: 'white'}}>
                         <Typography variant="h4" component="h1">
                             {leadData?.lead_obj?.contact?.first_name } {leadData?.lead_obj?.contact?.last_name || 'Doe'} Lead
                         </Typography>
@@ -428,7 +428,7 @@ function LeadDetails() {
                     </Box>
                     
                     <Box sx={{ display: 'flex', gap: 3 }}>
-                        <Box sx={{ flex: 2 }}>
+                        <Box sx={{ flex: 3 }}>
                             {/* Left column - Lead Information */}
                             <Box sx={{ mb: 3, p: 2, border: '1px solid #e0e0e0', borderRadius: '8px', bgcolor: 'white' }}>
                                 <Typography variant="h6" sx={{ mb: 2 }}>Lead Information</Typography>
