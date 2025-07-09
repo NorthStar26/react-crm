@@ -18,13 +18,18 @@ import {
   Tooltip,
   Divider,
   Select,
-  Button
+  Button,
+  Avatar,
+  Stack,
+  CircularProgress
 } from '@mui/material'
 import { useQuill } from 'react-quilljs';
 import 'quill/dist/quill.snow.css';
 import '../../styles/style.css'
 import { LeadUrl } from '../../services/ApiUrls'
 import { fetchData, Header } from '../../components/FetchData'
+import { fetchCompanyOptions, CompanyOption } from '../../services/companyService'
+import { useDebounce } from '../../hooks/useDebounce'
 import { CustomAppBar } from '../../components/CustomAppBar'
 import { FaArrowDown, FaCheckCircle, FaFileUpload, FaPalette, FaPercent, FaPlus, FaTimes, FaTimesCircle, FaUpload } from 'react-icons/fa'
 import { useForm } from '../../components/UseForm'
@@ -63,13 +68,7 @@ const MOCK_CONTACT_OPTIONS: [string, string][] = [
   ['contact4', 'Contact Four'],
   ['contact5', 'Contact Five']
 ];
-const MOCK_COMPANIES: [string, string][] = [
-  ['company1', 'Company One'],
-  ['company2', 'Company Two'],
-  ['company3', 'Company Three'],
-  ['company4', 'Company Four'],
-  ['company5', 'Company Five']
-];
+// MOCK_COMPANIES removed as we're now using real data from the API
 const MOCK_STATUS: [string, string][] = [
   ['open', 'Open'],
   ['closed', 'Closed'],
@@ -181,6 +180,15 @@ export function AddLeads() {
     file: null,
     link: ''
   })
+  
+  // Company search states
+  const [companyOptions, setCompanyOptions] = useState<CompanyOption[]>([]);
+  const [companySearchTerm, setCompanySearchTerm] = useState('');
+  const [companyLoading, setCompanyLoading] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState<CompanyOption | null>(null);
+  
+  // Debounce search term to prevent excessive API calls
+  const debouncedCompanySearch = useDebounce(companySearchTerm, 400);
 
   useEffect(() => {
     if (quill) {
@@ -188,6 +196,38 @@ export function AddLeads() {
       initialContentRef.current = quillRef.current.firstChild.innerHTML;
     }
   }, [quill]);
+  
+  // Load companies when the component mounts or search term changes
+  useEffect(() => {
+    const loadCompanies = async () => {
+      setCompanyLoading(true);
+      const result = await fetchCompanyOptions(debouncedCompanySearch, 10);
+      
+      if (result.options) {
+        setCompanyOptions(result.options);
+      }
+      setCompanyLoading(false);
+    };
+    
+    loadCompanies();
+  }, [debouncedCompanySearch]);
+  
+  // Initialize selected company if formData.company has a value
+  useEffect(() => {
+    if (formData.company && !selectedCompany) {
+      const fetchCompanyDetail = async () => {
+        setCompanyLoading(true);
+        const result = await fetchCompanyOptions('', 100); // Fetch a larger batch to find the company
+        const company = result.options.find(option => option.id === formData.company);
+        if (company) {
+          setSelectedCompany(company);
+        }
+        setCompanyLoading(false);
+      };
+      
+      fetchCompanyDetail();
+    }
+  }, [formData.company, selectedCompany]);
 
   // No longer need handleChange2 as we're using Select dropdowns for all fields
 
@@ -283,7 +323,9 @@ export function AddLeads() {
       file: null,
       link: ''
     });
-    setErrors({})
+    setErrors({});
+    setSelectedCompany(null);
+    setCompanySearchTerm('');
     // No longer need to reset selectedAssignTo and selectedTags as we're using direct state in formData
     // if (autocompleteRef.current) {
     //   console.log(autocompleteRef.current,'ccc')
@@ -369,27 +411,58 @@ export function AddLeads() {
                       <div className='fieldSubContainer'>
                         <div className='fieldTitle'>Company</div>
                         <FormControl sx={{ width: '70%' }}>
-                          <Select
-                            name='company'
-                            value={formData.company}
-                            open={companySelectOpen}
-                            onClick={() => setCompanySelectOpen(!companySelectOpen)}
-                            IconComponent={() => (
-                              <div onClick={() => setCompanySelectOpen(!companySelectOpen)} className="select-icon-background">
-                                {companySelectOpen ? <FiChevronUp className='select-icon' /> : <FiChevronDown className='select-icon' />}
-                              </div>
+                          <Autocomplete
+                            id="company-autocomplete"
+                            options={companyOptions}
+                            getOptionLabel={(option) => option.name || ''}
+                            value={selectedCompany}
+                            onChange={(event, newValue) => {
+                              setSelectedCompany(newValue);
+                              setFormData({
+                                ...formData,
+                                company: newValue ? newValue.id : ''
+                              });
+                            }}
+                            onInputChange={(event, newInputValue) => {
+                              setCompanySearchTerm(newInputValue);
+                            }}
+                            loading={companyLoading}
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                size="small"
+                                placeholder="Search companies..."
+                                error={!!errors?.company?.[0]}
+                                helperText={errors?.company?.[0] || ''}
+                                InputProps={{
+                                  ...params.InputProps,
+                                  endAdornment: (
+                                    <>
+                                      {companyLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                                      {params.InputProps.endAdornment}
+                                    </>
+                                  ),
+                                }}
+                              />
                             )}
-                            className={'select'}
-                            onChange={handleChange}
-                            error={!!errors?.company?.[0]}
-                          >
-                            {MOCK_COMPANIES.map((option: any) => (
-                              <MenuItem key={option[0]} value={option[0]}>
-                                {option[1]}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                          <FormHelperText>{errors?.company?.[0] ? errors?.company[0] : ''}</FormHelperText>
+                            renderOption={(props, option) => (
+                              <li {...props}>
+                                <Stack direction="row" spacing={1} alignItems="center">
+                                  <Avatar sx={{ bgcolor: '#284871', width: 28, height: 28, fontSize: 14 }}>
+                                    {option.name?.charAt(0).toUpperCase() || 'C'}
+                                  </Avatar>
+                                  <div>
+                                    <Typography variant="body1">{option.name}</Typography>
+                                    {option.email && (
+                                      <Typography variant="caption" color="text.secondary">
+                                        {option.email}
+                                      </Typography>
+                                    )}
+                                  </div>
+                                </Stack>
+                              </li>
+                            )}
+                          />
                         </FormControl>
                       </div>
                       <div className='fieldSubContainer'>
