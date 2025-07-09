@@ -23,7 +23,10 @@ import {
     FaFile,
     FaFileAlt,
     FaFileCode,
-    FaTimes
+    FaTimes,
+    FaEnvelope,
+    FaBuilding,
+    FaIdBadge
 } from 'react-icons/fa'
 import { CustomAppBar } from '../../components/CustomAppBar'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -387,15 +390,23 @@ function LeadDetails() {
                                 <Typography variant="h4" component="h1">
                             {leadData?.lead_obj?.contact?.first_name } {leadData?.lead_obj?.contact?.last_name || 'Doe'} Lead
                         </Typography>
-                                <Box sx={{ mb: 1 }}>
-                                    <Typography variant="body1">{leadData?.lead_obj?.status || 'Qualified'}</Typography>
+                                <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 4 }}>
+                                    <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center' }}>
+                                        {leadData?.lead_obj?.status || 'Qualified'}
+                                    </Typography>
+                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                        <FaEnvelope style={{ marginRight: '6px', color: '#666' }} size={14} />
+                                        {leadData?.lead_obj?.contact?.primary_email}
+                                    </Box>
                                 </Box>
-                                <Box sx={{ mb: 1 }}>{leadData?.lead_obj?.contact?.primary_email } </Box>
-                                <Box sx={{ mb: 1 }}>
+                                <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 4 }}>
                                     <Typography variant="body1" color="text.secondary" sx={{ display: 'flex', alignItems: 'center' }}>
-                                     {leadData?.lead_obj?.contact?.company?.name}
-                                    </Typography> <Typography variant="body1" color="text.secondary" sx={{ display: 'flex', alignItems: 'center' }}>
-                                      {leadData?.lead_obj?.contact?.title}
+                                        <FaBuilding style={{ marginRight: '6px' }} size={14} />
+                                        {leadData?.lead_obj?.contact?.company?.name}
+                                    </Typography>
+                                    <Typography variant="body1" color="text.secondary" sx={{ display: 'flex', alignItems: 'center' }}>
+                                        <FaIdBadge style={{ marginRight: '6px' }} size={14} />
+                                        {leadData?.lead_obj?.contact?.title}
                                     </Typography>
                                 </Box>
                             </Box>
