@@ -26,7 +26,9 @@ import {
   FormControlLabel,
   Paper,
   Alert,
-  Snackbar
+  Snackbar,
+  Link,
+  Grid
 } from '@mui/material'
 import { useQuill } from 'react-quilljs';
 import 'quill/dist/quill.snow.css';
@@ -38,11 +40,35 @@ import { fetchContactOptions, ContactOption } from '../../services/contactServic
 import { fetchUserOptions, UserOption } from '../../services/userService'
 import { useDebounce } from '../../hooks/useDebounce'
 import { CustomAppBar } from '../../components/CustomAppBar'
-import { FaArrowDown, FaCheckCircle, FaFileUpload, FaPalette, FaPercent, FaPlus, FaTimes, FaTimesCircle, FaUpload, FaEdit, FaSave } from 'react-icons/fa'
+import { 
+  FaArrowDown, 
+  FaCheckCircle, 
+  FaFileUpload, 
+  FaPalette, 
+  FaPercent, 
+  FaPlus, 
+  FaTimes, 
+  FaTimesCircle, 
+  FaUpload, 
+  FaEdit, 
+  FaSave,
+  FaFilePdf,
+  FaFileWord,
+  FaFileExcel,
+  FaFilePowerpoint,
+  FaFileImage,
+  FaFileArchive,
+  FaFile,
+  FaFileAlt,
+  FaFileCode,
+  FaPaperclip
+} from 'react-icons/fa'
 import { useForm } from '../../components/UseForm'
 import { CustomPopupIcon, CustomSelectField, RequiredTextField, StyledSelect } from '../../styles/CssStyled'
 import { FiChevronDown } from '@react-icons/all-files/fi/FiChevronDown'
 import { FiChevronUp } from '@react-icons/all-files/fi/FiChevronUp'
+import { uploadFileToCloudinary, uploadAndAttachFileToLead, isFileTypeAllowed } from '../../utils/uploadFileToCloudinary'
+import { DeleteModal } from '../../components/DeleteModal'
 
 // Define interfaces for mock data
 interface Contact {
@@ -57,6 +83,73 @@ interface User {
   user__email: string;
   username: string;
 }
+
+// Function to get the appropriate icon based on file extension
+const getFileIcon = (fileName: string) => {
+  if (!fileName) return <FaFile />;
+  
+  const extension = fileName.split('.').pop()?.toLowerCase() || '';
+  
+  switch (extension) {
+      case 'pdf':
+          return <FaFilePdf style={{ color: '#f40f02' }} />;
+      case 'doc':
+      case 'docx':
+          return <FaFileWord style={{ color: '#2b579a' }} />;
+      case 'xls':
+      case 'xlsx':
+      case 'csv':
+          return <FaFileExcel style={{ color: '#217346' }} />;
+      case 'ppt':
+      case 'pptx':
+          return <FaFilePowerpoint style={{ color: '#d24726' }} />;
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+      case 'gif':
+      case 'bmp':
+      case 'webp':
+      case 'tiff':
+      case 'svg':
+          return <FaFileImage style={{ color: '#7e4dd2' }} />;
+      case 'zip':
+      case 'rar':
+      case '7z':
+      case 'tar':
+      case 'gz':
+          return <FaFileArchive style={{ color: '#ffc107' }} />;
+      case 'txt':
+      case 'rtf':
+          return <FaFileAlt style={{ color: '#5a6268' }} />;
+      case 'html':
+      case 'css':
+      case 'js':
+      case 'jsx':
+      case 'ts':
+      case 'tsx':
+      case 'json':
+          return <FaFileCode style={{ color: '#0099e5' }} />;
+      default:
+          return <FaFile style={{ color: '#6c757d' }} />;
+  }
+};
+
+// Function to truncate long filenames
+const truncateFilename = (fileName: string, maxLength: number = 20) => {
+  if (!fileName) return '';
+  if (fileName.length <= maxLength) return fileName;
+  
+  const extension = fileName.includes('.') ? fileName.split('.').pop() : '';
+  const nameWithoutExtension = fileName.includes('.') 
+      ? fileName.substring(0, fileName.lastIndexOf('.')) 
+      : fileName;
+  
+  // Calculate how much of the name we can show
+  const availableChars = maxLength - 3; // 3 characters for ellipsis
+  const truncatedName = nameWithoutExtension.substring(0, availableChars) + '...';
+  
+  return extension ? `${truncatedName}.${extension}` : truncatedName;
+};
 
 // Mock data for dropdowns and selectors
 const MOCK_CONTACTS: Contact[] = [];
@@ -111,7 +204,7 @@ interface FormData {
   tags: string[],
   company: string,
   probability: number,
-  lead_attachment: string | null,
+  lead_attachment: any[], // Array of attachment objects
   file: string | null,
   link: string
 }
@@ -134,10 +227,19 @@ export function EditLead() {
   const [assignToSelectOpen, setAssignToSelectOpen] = useState(false)
   const [tagsSelectOpen, setTagsSelectOpen] = useState(false)
   const [errors, setErrors] = useState<FormErrors>({});
+  
+  // File handling state variables
+  const [fileUploading, setFileUploading] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [attachmentToDelete, setAttachmentToDelete] = useState<string | null>(null);
+  const [attachmentNameToDelete, setAttachmentNameToDelete] = useState<string>('');
+  const [tempUploadedFiles, setTempUploadedFiles] = useState<File[]>([]);
+  
   const [formData, setFormData] = useState<FormData>({
     title: '',
     lead_title: '',
-    lead_attachment: null,
+    lead_attachment: [], // Initialize as empty array
     amount: '',
     description: '',
     assigned_to: '', // Single string
@@ -190,10 +292,15 @@ export function EditLead() {
       if (response && response.lead_obj) {
         const lead = response.lead_obj;
         
+        // Reset file upload related states
+        setFileUploading(false);
+        setFileError(null);
+        setTempUploadedFiles([]);
+        
         setFormData({
           title: lead.lead_title || '', // Use lead_title from API
           lead_title: lead.lead_title || '', // Store in both fields for consistency
-          lead_attachment: null,
+          lead_attachment: lead.lead_attachment || [],
           amount: lead.amount || '',
           description: lead.description || '',
           assigned_to: lead.assigned_to ? lead.assigned_to.id : '',
@@ -472,6 +579,139 @@ export function EditLead() {
       // If switching to read-only mode, disable the Quill editor
       quill.enable(false);
     }
+  };
+
+  // Handle file upload button click
+  const handleFileUploadClick = () => {
+    // Only allow file uploads in edit mode
+    if (!isEditable) {
+      setSuccessMessage('Please enable edit mode to upload files');
+      return;
+    }
+    
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    // Accept all the file types we support
+    fileInput.accept = '.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.csv,.rtf,.zip,.rar,.7z,.tar,.gz,.psd,.ai,.eps,.ttf,.otf,.woff,.woff2,.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.ico,.heic,.svg,.avif,.jfif';
+    
+    fileInput.addEventListener('change', async (event: any) => {
+      const files = event.target.files;
+      if (files && files[0]) {
+        const file = files[0];
+        
+        // Check if file type is allowed
+        if (!isFileTypeAllowed(file)) {
+          setFileError('This file type is not supported. Please select a different file.');
+          return;
+        }
+        
+        // Show loading indicator
+        setFileUploading(true);
+        setFileError(null);
+        
+        try {
+          // Add the file to temp uploaded files for UI feedback
+          setTempUploadedFiles(prev => [...prev, file]);
+          
+          // Prepare headers for API request
+          const headers = {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+              Authorization: localStorage.getItem('Token'),
+              org: localStorage.getItem('org')
+          };
+          
+          // Upload and attach the file
+          const result = await uploadAndAttachFileToLead(leadId as string, file, headers);
+          
+          if (result.success) {
+            // Show success message
+            setSuccessMessage(`File "${file.name}" was successfully uploaded`);
+            
+            // Refresh lead data to include the new attachment
+            fetchLeadData(leadId as string);
+          } else {
+            setFileError(`Failed to upload file: ${result.error}`);
+            
+            // Remove from temp files if upload fails
+            setTempUploadedFiles(prev => prev.filter(f => f.name !== file.name));
+            
+            // Show error alert
+            setSuccessMessage(`Failed to upload file: ${result.error}`);
+          }
+        } catch (error) {
+          console.error('Error uploading file:', error);
+          setFileError('An error occurred while uploading the file.');
+          
+          // Remove from temp files if upload fails
+          setTempUploadedFiles(prev => prev.filter(f => f.name !== file.name));
+          
+          // Show error alert
+          setSuccessMessage('An error occurred while uploading the file.');
+        } finally {
+          // Hide loading indicator
+          setFileUploading(false);
+        }
+      }
+    });
+    
+    fileInput.click();
+  };
+  
+  // Open delete confirmation modal
+  const handleAttachmentDelete = (attachmentId: string, fileName: string = '') => {
+    // Only allow deletion in edit mode
+    if (!isEditable) {
+      setSuccessMessage('Please enable edit mode to delete attachments');
+      return;
+    }
+    
+    setAttachmentToDelete(attachmentId);
+    setAttachmentNameToDelete(fileName);
+    setDeleteModalOpen(true);
+  };
+  
+  // Handle actual deletion after confirmation
+  const confirmAttachmentDelete = () => {
+    if (!attachmentToDelete) return;
+    
+    // Show loading indicator
+    setFileUploading(true);
+    setFileError(null);
+    
+    // Use the Header object consistent with other API calls
+    const Header = {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      Authorization: localStorage.getItem('Token'),
+      org: localStorage.getItem('org')
+    };
+    
+    // Close the modal first
+    setDeleteModalOpen(false);
+    
+    // Use fetchData function like other API calls
+    fetchData(`/${LeadUrl}/attachment/${attachmentToDelete}/`, 'DELETE', null as any, Header)
+      .then((res) => {
+        if (!res.error) {
+          // Success - refresh lead details to update the UI
+          fetchLeadData(leadId as string);
+          
+          // Show success alert
+          setSuccessMessage('Attachment was successfully deleted');
+        } else {
+          setFileError(res.error || 'Failed to delete attachment');
+          setSuccessMessage(`Error: ${res.error || 'Failed to delete attachment'}`);
+        }
+      })
+      .catch((err) => {
+        console.error("Error deleting attachment:", err);
+        setFileError('An error occurred while deleting the attachment');
+        setSuccessMessage('An error occurred while deleting the attachment');
+      })
+      .finally(() => {
+        setFileUploading(false);
+      });
   };
 
   const handleChange = (e: any) => {
@@ -991,20 +1231,8 @@ export function EditLead() {
                               />
                             )}
                             renderOption={(props, option) => (
-                              <li {...props}>
-                                <Stack direction="row" spacing={1} alignItems="center">
-                                  <Avatar sx={{ bgcolor: '#284871', width: 28, height: 28, fontSize: 14 }}>
-                                    {option.name?.charAt(0).toUpperCase() || 'C'}
-                                  </Avatar>
-                                  <div>
-                                    <Typography variant="body1">{option.name}</Typography>
-                                    {option.email && (
-                                      <Typography variant="caption" color="text.secondary">
-                                        {option.email}
-                                      </Typography>
-                                    )}
-                                  </div>
-                                </Stack>
+                              <li>
+                                
                               </li>
                             )}
                             disabled={!isEditable}
@@ -1012,7 +1240,7 @@ export function EditLead() {
                         </FormControl>
                       </div>
                       <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>Contact <span style={{ color: 'red' }}>*</span></div>
+                        <div className='fieldTitle'>Contact </div>
                         <FormControl sx={{ width: '70%' }}>
                           <Autocomplete
                             id="contact-select"
@@ -1064,26 +1292,17 @@ export function EditLead() {
                             )}
                             renderOption={(props, option) => (
                               <li {...props}>
-                                <Stack direction="row" spacing={1} alignItems="center">
-                                  <Avatar sx={{ bgcolor: '#284871', width: 28, height: 28, fontSize: 14 }}>
-                                    {option.first_name?.charAt(0).toUpperCase() || 'C'}
-                                  </Avatar>
-                                  <div>
-                                    <Typography variant="body1">{`${option.first_name} ${option.last_name}`.trim()}</Typography>
-                                    {option.primary_email && (
-                                      <Typography variant="caption" color="text.secondary">
-                                        {option.primary_email}
-                                      </Typography>
-                                    )}
-                                  </div>
-                                </Stack>
+                                {option.first_name} {option.last_name}
                               </li>
                             )}
-                            disabled={!isEditable || !formData.company} // Disable if no company is selected or not in edit mode
-                          />
+                            disabled={!isEditable || !formData.company}                          />
                         </FormControl>
                       </div>
                     </div>
+                    
+                    {/* File Attachments Section */}
+                    
+                    
                     <div className='fieldContainer2'>
                       <div className='fieldSubContainer'>
                         <div className='fieldTitle'>Source</div>
@@ -1229,61 +1448,6 @@ export function EditLead() {
                     </div>
                     <div className='fieldContainer2'>
                       <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>Lead Attachment</div>
-                        <TextField
-                          name='lead_attachment'
-                          value={formData.lead_attachment}
-                          InputProps={{
-                            endAdornment: isEditable ? (
-                              <InputAdornment position='end'>
-                                <IconButton disableFocusRipple
-                                  disableTouchRipple
-                                  sx={{ width: '40px', height: '40px', backgroundColor: 'whitesmoke', borderRadius: '0px', mr: '-13px', cursor: 'pointer' }}
-                                  disabled={!isEditable}
-                                >
-                                  <label htmlFor='icon-button-file'>
-                                    <input
-                                      hidden
-                                      accept='image/*'
-                                      id='icon-button-file'
-                                      type='file'
-                                      name='account_attachment'
-                                      onChange={(e: any) => {
-                                        if (!isEditable) return;
-                                        handleFileChange(e);
-                                      }}
-                                      disabled={!isEditable}
-                                    />
-                                    <FaUpload color='primary' style={{ fontSize: '15px', cursor: isEditable ? 'pointer' : 'not-allowed' }} />
-                                  </label>
-                                </IconButton>
-                              </InputAdornment>
-                            ) : null
-                          }}
-                          sx={{ width: '70%', ...(isEditable ? {} : { backgroundColor: '#f5f5f5' }) }}
-                          size='small'
-                          helperText={errors?.lead_attachment?.[0] ? errors?.lead_attachment[0] : ''}
-                          error={!!errors?.lead_attachment?.[0]}
-                          inputProps={{ readOnly: true }} // Always read-only as we use the file input
-                        />
-                      </div>
-                      <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>Link</div>
-                        <TextField
-                          name='link'
-                          value={formData.link}
-                          onChange={handleChange}
-                          style={{ width: '70%', ...(isEditable ? {} : { backgroundColor: '#f5f5f5' }) }}
-                          size='small'
-                          helperText={errors?.link?.[0] ? errors?.link[0] : ''}
-                          error={!!errors?.link?.[0]}
-                          inputProps={{ readOnly: !isEditable }}
-                        />
-                      </div>
-                      
-                    </div>
-                    <div className='fieldContainer2'>
-                      <div className='fieldSubContainer'>
                         <div className='fieldTitle'>Status</div>
                         <FormControl sx={{ width: '70%' }}>
                           <Select
@@ -1312,10 +1476,193 @@ export function EditLead() {
                         </FormControl>
                       </div>
                       <div className='fieldSubContainer'>
-                        {/* Empty container for layout balance */}
+                        <div className='fieldTitle'>Link</div>
+                        <TextField
+                          name='link'
+                          value={formData.link}
+                          onChange={handleChange}
+                          style={{ width: '70%', ...(isEditable ? {} : { backgroundColor: '#f5f5f5' }) }}
+                          size='small'
+                          helperText={errors?.link?.[0] ? errors?.link[0] : ''}
+                          error={!!errors?.link?.[0]}
+                          inputProps={{ readOnly: !isEditable }}
+                          placeholder="https://example.com/document"
+                        />
                       </div>
+                      
                     </div>
+                    <div className='fieldContainer2'>
+                      <div className='fieldSubContainer' >
+                        <div className='fieldTitle' >
+                             Attachments
+                        </div>
+                       
+                        {fileError && (
+                          <Alert severity="error" sx={{ mb: 2 }}>
+                            {fileError}
+                          </Alert>
+                        )}
+                        
+                        <Box sx={{ 
+                          border: '1px solid #e0e0e0',
+                          borderRadius: '4px',
+                          height: formData.lead_attachment && formData.lead_attachment.length > 0 ? 'auto' : '38px',
+                          minHeight: formData.lead_attachment && formData.lead_attachment.length > 0 ? '100px' : '38px',
+                          maxHeight: '150px',
+                          overflowY: 'auto',
+                          backgroundColor: isEditable ? 'white' : '#f5f5f5',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          p: formData.lead_attachment && formData.lead_attachment.length > 0 ? 1 : 0
+                        }}>
+                          {/* Show existing attachments from lead_obj */}
+                          {formData.lead_attachment && formData.lead_attachment.length > 0 ? (
+                            <Box sx={{ p: 1 }}>
+                              {formData.lead_attachment.map((attachment: any, index: number) => {
+                                // Check if we have a file_path or use the attachment_url
+                                let url = attachment.file_path;
+                                
+                                // If file_path is encoded, decode it
+                                if (url && url.startsWith('/media/https%3A')) {
+                                  url = decodeURIComponent(url.replace('/media/', ''));
+                                }
+                                
+                                return (
+                                  <Box 
+                                    key={attachment.id || `existing-${index}`}
+                                    sx={{
+                                      p: 0.5,
+                                      mb: 0.5,
+                                      display: 'flex',
+                                      justifyContent: 'space-between',
+                                      alignItems: 'center',
+                                      borderRadius: '4px',
+                                      border: '1px solid #e0e0e0',
+                                      backgroundColor: '#f9f9f9',
+                                      '&:hover': {
+                                        backgroundColor: '#f0f0f0'
+                                      }
+                                    }}
+                                  >
+                                    <Box sx={{ display: 'flex', alignItems: 'center', flex: 1, overflow: 'hidden' }}>
+                                      <Avatar 
+                                        sx={{ 
+                                          mr: 1, 
+                                          width: 22, 
+                                          height: 22, 
+                                          bgcolor: 'action.hover',
+                                          fontSize: '0.75rem'
+                                        }}
+                                      >
+                                        {getFileIcon(attachment.file_name)}
+                                      </Avatar>
+                                      <Link 
+                                        href={url} 
+                                        target="_blank" 
+                                        rel="noopener"
+                                        sx={{ 
+                                          textDecoration: 'none', 
+                                          color: 'inherit',
+                                          fontSize: '0.875rem',
+                                          '&:hover': {
+                                            color: 'primary.main',
+                                            textDecoration: 'underline'
+                                          }
+                                        }}
+                                      >
+                                        {truncateFilename(attachment.file_name || `Attachment ${index + 1}`, 25)}
+                                      </Link>
+                                    </Box>
+                                    {isEditable && (
+                                      <IconButton
+                                        size="small"
+                                        color="error"
+                                        onClick={() => handleAttachmentDelete(attachment.id, attachment.file_name)}
+                                        disabled={fileUploading}
+                                        sx={{ 
+                                          p: '2px', 
+                                          mr: 0.5,
+                                          opacity: 0.7,
+                                          '&:hover': { opacity: 1 }
+                                        }}
+                                      >
+                                        <FaTimes size={12} />
+                                      </IconButton>
+                                    )}
+                                  </Box>
+                                );
+                              })}
+                              
+                              {/* Show temporary uploaded files that might not be reflected in lead_obj yet */}
+                              {tempUploadedFiles.map((file, index) => (
+                                <Box 
+                                  key={`temp-${index}`}
+                                  sx={{
+                                    p: 0.5,
+                                    mb: 0.5,
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    borderRadius: '4px',
+                                    border: '1px solid #bbdefb',
+                                    backgroundColor: '#e3f2fd',
+                                  }}
+                                >
+                                  <Box sx={{ display: 'flex', alignItems: 'center', flex: 1, overflow: 'hidden' }}>
+                                    <Avatar sx={{ mr: 1, width: 22, height: 22, bgcolor: '#bbdefb', fontSize: '0.75rem' }}>
+                                      {getFileIcon(file.name)}
+                                    </Avatar>
+                                    <Typography variant="body2" sx={{ fontStyle: 'italic', fontSize: '0.875rem' }}>
+                                      {truncateFilename(file.name, 25)} (uploading...)
+                                    </Typography>
+                                  </Box>
+                                  <CircularProgress size={14} sx={{ mr: 0.5 }} />
+                                </Box>
+                              ))}
+                            </Box>
+                          ) : (
+                            <Box sx={{ 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              justifyContent: 'center', 
+                              height: '100%',
+                              color: 'text.secondary',
+                              fontSize: '0.875rem'
+                            }}>
+                              No attachments
+                            </Box>
+                          )}
+                          
+                        </Box><Tooltip title={isEditable ? "Upload a new file attachment" : "Enable edit mode to upload files"}>
+                            <span>
+                              <Button 
+                                size="small" 
+                                color="primary" 
+                                variant={isEditable ? "contained" : "outlined"}
+                                startIcon={fileUploading ? <CircularProgress size={16} /> : <FaFileUpload />}
+                                onClick={handleFileUploadClick}
+                                disabled={!isEditable || fileUploading}
+                                sx={{ 
+                                  py: 0.5,
+                                  opacity: isEditable ? 1 : 0.6,
+                                  boxShadow: isEditable ? 2 : 0
+                                }}
+                              >
+                                Upload
+                              </Button>
+                            </span>
+                          </Tooltip>
+                        
+                         
+                      </div>
+                      <div className='fieldSubContainer'></div>
+                    </div>
+                    <div className='fieldContainer2'>
+                      <div className='fieldSubContainer'>
+                        {/* This field was moved to another section */}
+                      </div>
                     
+                    </div>
                   </Box>
                 </AccordionDetails>
               </Accordion>
@@ -1401,6 +1748,15 @@ export function EditLead() {
           {successMessage}
         </Alert>
       </Snackbar>
+      {/* Modals and Dialogs */}
+      <DeleteModal
+        open={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        DeleteItem={confirmAttachmentDelete}
+        modalTitle="Delete Attachment"
+        modalDialog={`Are you sure you want to delete${attachmentNameToDelete ? ` "${attachmentNameToDelete}"` : ' this attachment'} from this lead?`}
+      />
+      
     </Box >
   )
 }
