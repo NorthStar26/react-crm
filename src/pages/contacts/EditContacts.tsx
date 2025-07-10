@@ -560,7 +560,7 @@ function EditContact() {
       <Box sx={{ mt: '120px' }}>
         <form onSubmit={handleSubmit}>
           <div style={{ padding: '10px' }}>
-            {/* Общие ошибки */}
+            {/* */}
             <ErrorAlert
               open={!!error}
               message={error || ''}

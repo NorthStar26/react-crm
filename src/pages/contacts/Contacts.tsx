@@ -312,7 +312,7 @@ export default function Contacts() {
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
-      if (search !== undefined) {
+      {
         getContacts();
       }
     }, 500);
@@ -331,7 +331,9 @@ export default function Contacts() {
     try {
       const offset = (currentPage - 1) * recordsPerPage;
       let url = `${ContactUrl}/?offset=${offset}&limit=${recordsPerPage}`;
-      if (search) url += `&search=${search}`;
+      if (search.trim()) {
+        url += `&name=${encodeURIComponent(search.trim())}`;
+      }
       //   if (jobTitleFilter) url += `&title=${jobTitleFilter}`;
       if (languageFilter) url += `&language=${languageFilter}`;
       if (companyFilter) url += `&company=${companyFilter}`;
@@ -516,7 +518,7 @@ export default function Contacts() {
               ))}
             </Select> */}
           {/* </FormControl> */}
-          {/* Language Filter */}
+          {/* Language Filter
           <FormControl sx={{ minWidth: 160 }}>
             <Select
               displayEmpty
@@ -549,7 +551,7 @@ export default function Contacts() {
                 </MenuItem>
               ))}
             </Select>
-          </FormControl>
+          </FormControl> */}
           {/* Company Filter */}
           <FormControl sx={{ minWidth: 160 }}>
             <Select
