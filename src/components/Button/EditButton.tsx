@@ -14,15 +14,16 @@ interface EditButtonProps
  * EditButton - Reusable edit button
  * Based on CustomButton with preset styles
  *
- * @param text - Button text (default "Edit Company")
- * @param iconSize - Button text (default "Edit Company")
+ * @param text - Button text (default "Edit ")
+ * @param iconSize - Button text (default "Edit ")
  * @param variant -Button option (default "primary")
  */
+
 export const EditButton: React.FC<EditButtonProps> = ({
-  text = 'Edit Company',
+  text = 'Edit',
   iconSize = 16,
   variant = 'primary',
-  sx,
+  sx = { width: '164px' },
   ...rest
 }) => {
   return (
