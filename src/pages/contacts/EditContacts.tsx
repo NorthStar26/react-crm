@@ -199,44 +199,30 @@ function EditContact() {
     }
   };
 
-  // Обработка ответа API с возможными ошибками
-  const handleApiResponse = (response: any) => {
-    // Сброс предыдущих ошибок
-    setError(null);
-    setErrors({});
-
-    // Проверяем успех
-    if (!response.error) {
-      return true;
+  // Extract error message helper
+  const extractErrorMessage = (error: any): string => {
+    if (typeof error === 'string') {
+      return error;
     }
 
-    // Устанавливаем общее сообщение об ошибке из message
-    if (response.message) {
-      setError(response.message);
-    }
-
-    // Обрабатываем детали ошибок полей
-    if (response.details && typeof response.details === 'object') {
-      const fieldErrors: FormErrors = {};
-
-      Object.entries(response.details).forEach(([field, messages]) => {
-        // Все поле-специфичные ошибки добавляем в fieldErrors
-        fieldErrors[field] = Array.isArray(messages)
-          ? (messages as string[])
-          : [String(messages)];
-      });
-
-      if (Object.keys(fieldErrors).length > 0) {
-        setErrors(fieldErrors);
+    if (error && typeof error === 'object') {
+      if (error.string) {
+        return error.string;
+      }
+      if (error.message) {
+        return error.message;
+      }
+      if (error.toString && typeof error.toString === 'function') {
+        const str = error.toString();
+        const match = str.match(/ErrorDetail\(string='([^']+)'/);
+        if (match) {
+          return match[1];
+        }
+        return str;
       }
     }
 
-    // Если не установлено сообщение об ошибке, используем общее
-    if (!response.message && !error) {
-      setError('An error occurred while updating the contact.');
-    }
-
-    return false;
+    return String(error);
   };
 
   // Handle form submission
@@ -301,7 +287,7 @@ function EditContact() {
           backbtnHandle();
         }, 2000);
       } else {
-        // Handle field validation errors - similar to AddContacts
+        // Handle field validation errors
         if (res.details && typeof res.details === 'object') {
           console.log('Field errors received:', res.details);
           const newErrors: FormErrors = {};
@@ -311,9 +297,12 @@ function EditContact() {
             console.log(`Error for field ${field}:`, fieldErrors);
 
             if (Array.isArray(fieldErrors)) {
-              newErrors[field as keyof FormErrors] = fieldErrors;
+              newErrors[field as keyof FormErrors] =
+                fieldErrors.map(extractErrorMessage);
             } else {
-              newErrors[field as keyof FormErrors] = [String(fieldErrors)];
+              newErrors[field as keyof FormErrors] = [
+                extractErrorMessage(fieldErrors),
+              ];
             }
           });
 
@@ -332,7 +321,6 @@ function EditContact() {
     } catch (err: any) {
       console.error('API Error:', err);
 
-      //  error handling
       if (
         err.message &&
         err.message.includes('An unexpected error occurred:')
@@ -352,9 +340,12 @@ function EditContact() {
               console.log(`Error for field ${field}:`, fieldErrors);
 
               if (Array.isArray(fieldErrors)) {
-                newErrors[field as keyof FormErrors] = fieldErrors;
+                newErrors[field as keyof FormErrors] =
+                  fieldErrors.map(extractErrorMessage);
               } else {
-                newErrors[field as keyof FormErrors] = [String(fieldErrors)];
+                newErrors[field as keyof FormErrors] = [
+                  extractErrorMessage(fieldErrors),
+                ];
               }
             });
 
@@ -374,9 +365,12 @@ function EditContact() {
           const fieldErrors = err.data.details[field];
 
           if (Array.isArray(fieldErrors)) {
-            newErrors[field as keyof FormErrors] = fieldErrors;
+            newErrors[field as keyof FormErrors] =
+              fieldErrors.map(extractErrorMessage);
           } else {
-            newErrors[field as keyof FormErrors] = [String(fieldErrors)];
+            newErrors[field as keyof FormErrors] = [
+              extractErrorMessage(fieldErrors),
+            ];
           }
         });
 
@@ -398,9 +392,12 @@ function EditContact() {
               const fieldErrors = parsedError.details[field];
 
               if (Array.isArray(fieldErrors)) {
-                newErrors[field as keyof FormErrors] = fieldErrors;
+                newErrors[field as keyof FormErrors] =
+                  fieldErrors.map(extractErrorMessage);
               } else {
-                newErrors[field as keyof FormErrors] = [String(fieldErrors)];
+                newErrors[field as keyof FormErrors] = [
+                  extractErrorMessage(fieldErrors),
+                ];
               }
             });
 
@@ -485,7 +482,7 @@ function EditContact() {
   const crntPage = 'Edit Contact';
   const backBtn = 'Back to Contact Detail';
 
-  // Styling for form fields
+  // Updated styling for form fields - same as AddContacts
   const fieldStyles = {
     fieldContainer: {
       display: 'flex',
@@ -493,7 +490,7 @@ function EditContact() {
       gap: '150px',
       alignItems: 'flex-start',
       width: '100%',
-      marginBottom: '20px',
+      marginBottom: '10px',
     },
     fieldSubContainer: {
       width: '40%',
@@ -503,14 +500,16 @@ function EditContact() {
     fieldRow: {
       display: 'flex',
       flexDirection: 'row' as const,
-      alignItems: 'center',
-      marginBottom: '15px',
+      alignItems: 'flex-start',
+      minHeight: '56px',
+      marginBottom: '0px',
     },
     fieldTitle: {
       width: '130px',
       marginRight: '15px',
       marginBottom: 0,
       textAlign: 'right' as const,
+      paddingTop: '8px',
     },
     fieldInput: {
       flex: 1,
@@ -560,7 +559,7 @@ function EditContact() {
       <Box sx={{ mt: '120px' }}>
         <form onSubmit={handleSubmit}>
           <div style={{ padding: '10px' }}>
-            {/* Общие ошибки */}
+            {/* Error Alert */}
             <ErrorAlert
               open={!!error}
               message={error || ''}
@@ -628,7 +627,7 @@ function EditContact() {
                                 ))}
                               </Select>
                               <FormHelperText error={!!errors?.salutation?.[0]}>
-                                {errors?.salutation?.[0] || ''}
+                                {errors?.salutation?.[0] || ' '}
                               </FormHelperText>
                             </FormControl>
                           </div>
@@ -644,7 +643,7 @@ function EditContact() {
                               onChange={handleChange}
                               size="small"
                               fullWidth
-                              helperText={errors?.first_name?.[0] || ''}
+                              helperText={errors?.first_name?.[0] || ' '}
                               error={!!errors?.first_name?.[0]}
                               required
                             />
@@ -665,7 +664,7 @@ function EditContact() {
                               onChange={handleChange}
                               size="small"
                               fullWidth
-                              helperText={errors?.last_name?.[0] || ''}
+                              helperText={errors?.last_name?.[0] || ' '}
                               error={!!errors?.last_name?.[0]}
                               required
                             />
@@ -683,7 +682,7 @@ function EditContact() {
                               onChange={handleChange}
                               size="small"
                               fullWidth
-                              helperText={errors?.primary_email?.[0] || ''}
+                              helperText={errors?.primary_email?.[0] || ' '}
                               error={!!errors?.primary_email?.[0]}
                             />
                           </div>
@@ -691,7 +690,7 @@ function EditContact() {
                       </div>
                     </div>
 
-                    {/* Row 3: Company, Language, and Job Title */}
+                    {/* Row 3: Company and Job Title */}
                     <div style={fieldStyles.fieldContainer}>
                       <div style={fieldStyles.fieldSubContainer}>
                         <div style={fieldStyles.fieldRow}>
@@ -727,12 +726,33 @@ function EditContact() {
                                 ))}
                               </Select>
                               <FormHelperText error={!!errors?.company?.[0]}>
-                                {errors?.company?.[0] || ''}
+                                {errors?.company?.[0] || ' '}
                               </FormHelperText>
                             </FormControl>
                           </div>
                         </div>
-                        {/* Language field - сохранен в исходном формате */}
+                      </div>
+                      <div style={fieldStyles.fieldSubContainer}>
+                        <div style={fieldStyles.fieldRow}>
+                          <div style={fieldStyles.fieldTitle}>Job Title</div>
+                          <div style={fieldStyles.fieldInput}>
+                            <TextField
+                              name="title"
+                              value={formData.title}
+                              onChange={handleChange}
+                              size="small"
+                              fullWidth
+                              helperText={errors?.title?.[0] || ' '}
+                              error={!!errors?.title?.[0]}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Row 4: Language and Department */}
+                    <div style={fieldStyles.fieldContainer}>
+                      <div style={fieldStyles.fieldSubContainer}>
                         <div style={fieldStyles.fieldRow}>
                           <div style={fieldStyles.fieldTitle}>Language</div>
                           <div style={fieldStyles.fieldInput}>
@@ -767,7 +787,7 @@ function EditContact() {
                                 ))}
                               </Select>
                               <FormHelperText error={!!errors?.language?.[0]}>
-                                {errors?.language?.[0] || ''}
+                                {errors?.language?.[0] || ' '}
                               </FormHelperText>
                             </FormControl>
                           </div>
@@ -775,64 +795,41 @@ function EditContact() {
                       </div>
                       <div style={fieldStyles.fieldSubContainer}>
                         <div style={fieldStyles.fieldRow}>
-                          <div style={fieldStyles.fieldTitle}>Job Title</div>
+                          <div style={fieldStyles.fieldTitle}>Department</div>
                           <div style={fieldStyles.fieldInput}>
                             <TextField
-                              name="title"
-                              value={formData.title}
+                              name="department"
+                              value=""
                               onChange={handleChange}
                               size="small"
                               fullWidth
-                              helperText={errors?.title?.[0] || ''}
-                              error={!!errors?.title?.[0]}
+                              disabled
+                              placeholder="Coming soon"
+                              helperText=" "
+                              InputProps={{
+                                style: {
+                                  color: '#9e9e9e',
+                                },
+                              }}
+                              sx={{
+                                '& .MuiInputBase-input.Mui-disabled': {
+                                  WebkitTextFillColor: '#9e9e9e',
+                                  cursor: 'default',
+                                },
+                                '& .MuiOutlinedInput-root.Mui-disabled': {
+                                  '& > fieldset': {
+                                    borderColor: '#e0e0e0',
+                                  },
+                                },
+                              }}
                             />
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Row 4: Country and Phone Number */}
+                    {/* Row 5: Phone Number and Do not Call */}
                     <div style={fieldStyles.fieldContainer}>
-                      <div style={fieldStyles.fieldSubContainer}>
-                        <div style={fieldStyles.fieldRow}>
-                          <div style={fieldStyles.fieldTitle}>Country</div>
-                          <div style={fieldStyles.fieldInput}>
-                            <FormControl fullWidth>
-                              <Select
-                                name="country"
-                                value={formData.country}
-                                onOpen={() => setCountrySelectOpen(true)}
-                                onClose={() => setCountrySelectOpen(false)}
-                                open={countrySelectOpen}
-                                IconComponent={() => (
-                                  <div className="select-icon-background">
-                                    {countrySelectOpen ? (
-                                      <FiChevronUp className="select-icon" />
-                                    ) : (
-                                      <FiChevronDown className="select-icon" />
-                                    )}
-                                  </div>
-                                )}
-                                className={'select'}
-                                onChange={handleChange}
-                                error={!!errors?.country?.[0]}
-                              >
-                                <MenuItem value="">
-                                  <em>None</em>
-                                </MenuItem>
-                                {COUNTRIES.map(([code, name]) => (
-                                  <MenuItem key={code} value={code}>
-                                    {name}
-                                  </MenuItem>
-                                ))}
-                              </Select>
-                              <FormHelperText error={!!errors?.country?.[0]}>
-                                {errors?.country?.[0] || ''}
-                              </FormHelperText>
-                            </FormControl>
-                          </div>
-                        </div>
-                      </div>
                       <div style={fieldStyles.fieldSubContainer}>
                         <div style={fieldStyles.fieldRow}>
                           <div style={fieldStyles.fieldTitle}>Phone Number</div>
@@ -853,13 +850,6 @@ function EditContact() {
                             />
                           </div>
                         </div>
-                      </div>
-                    </div>
-
-                    {/* Row 5: Do not Call option */}
-                    <div style={fieldStyles.fieldContainer}>
-                      <div style={fieldStyles.fieldSubContainer}>
-                        {/* Empty left side */}
                       </div>
                       <div style={fieldStyles.fieldSubContainer}>
                         <div style={fieldStyles.fieldRow}>
