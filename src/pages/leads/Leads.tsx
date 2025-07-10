@@ -17,61 +17,52 @@ import { FiChevronLeft } from "@react-icons/all-files/fi/FiChevronLeft";
 import { FiChevronRight } from "@react-icons/all-files/fi/FiChevronRight";
 import { CustomTab, CustomToolbar, FabLeft, FabRight } from '../../styles/CssStyled';
 import '../../styles/style.css'
-
-// import css from './css';
-// import emotionStyled from '@emotion/styled';
-// import { styled } from '@mui/system';
-// import { css } from '@emotion/react';
+import { TextField } from '@mui/material';
+import { FaEdit } from 'react-icons/fa';
 
 
-
-// margin-bottom: -15px;
-//   display: flex;
-//   justify-content: space-between;
-//   background-color: #1A3353;
 export const CustomTablePagination = styled(TablePagination)`
-.MuiToolbar-root {
-  min-width: 100px;
-}
-.MuiTablePagination-toolbar {
-  background-color: #f0f0f0;
-  color: #333;
-}
-.MuiTablePagination-caption {
-  color: #999;
-}
-'.MuiTablePagination-displayedRows': {
-  display: none;
-}
-'.MuiTablePagination-actions': {
-  display: none;
-}
-'.MuiTablePagination-selectLabel': {
-  margin-top: 4px;
-  margin-left: -15px;
-}
-'.MuiTablePagination-select': {
+  .MuiToolbar-root {
+    min-width: 100px;
+  }
+  .MuiTablePagination-toolbar {
+    background-color: #f0f0f0;
+    color: #333;
+  }
+  .MuiTablePagination-caption {
+    color: #999;
+  }
+  '.MuiTablePagination-displayedRows': {
+    display: none;
+  }
+  '.MuiTablePagination-actions': {
+    display: none;
+  }
+  '.MuiTablePagination-selectLabel': {
+    margin-top: 4px;
+    margin-left: -15px;
+  }
+  '.MuiTablePagination-select': {
+    color: black;
+    margin-right: 0px;
+    margin-left: -12px;
+    margin-top: -6px;
+  }
+  '.MuiSelect-icon': {
+    color: black;
+    margin-top: -5px;
+  }
+  background-color: white;
+  border-radius: 1;
+  height: 10%;
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
+  width: 39%;
+  padding-bottom: 5;
   color: black;
-  margin-right: 0px;
-  margin-left: -12px;
-  margin-top: -6px;
-}
-'.MuiSelect-icon': {
-  color: black;
-  margin-top: -5px;
-}
-background-color: white;
-border-radius: 1;
-height: 10%;
-overflow: hidden;
-padding: 0;
-margin: 0;
-width: 39%;
-padding-bottom: 5;
-color: black;
-margin-right: 1;
+  margin-right: 1;
 `;
-
 
 export const Tabss = styled(Tab)({
   height: '34px',
@@ -89,31 +80,15 @@ export const ToolbarNew = styled(Toolbar)({
     }
   }
 });
-// export const formatDate = (dateString: any) => {
-//   const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' }
-//   return new Date(dateString).toLocaleDateString(undefined, options)
-// }
-// interface LeadList {
-//   drawer: number;
-// }
+
 export default function Leads(props: any) {
-  // const {drawer}=props
   const navigate = useNavigate()
-  const [tab, setTab] = useState('open');
   const [loading, setLoading] = useState(true);
-
-  const [leads, setLeads] = useState([])
-  const [valued, setValued] = useState(10)
-  const [rowsPerPage, setRowsPerPage] = useState(10)
-  const [page, setPage] = useState(0)
-  const [initial, setInitial] = useState(true)
-  const [order] = useState('asc')
-  const [orderBy] = useState('calories')
-
-  const [openLeads, setOpenLeads] = useState([])
-  const [openLeadsCount, setOpenLeadsCount] = useState(0)
-  const [closedLeads, setClosedLeads] = useState([])
-  const [openClosedCount, setClosedLeadsCount] = useState(0)
+  const [leads, setLeads] = useState([]);
+  const [leadsCount, setLeadsCount] = useState(0);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [recordsPerPage, setRecordsPerPage] = useState<number>(10);
+  const [totalPages, setTotalPages] = useState<number>(0);
   const [contacts, setContacts] = useState([])
   const [status, setStatus] = useState([])
   const [source, setSource] = useState([])
@@ -122,132 +97,143 @@ export default function Leads(props: any) {
   const [users, setUsers] = useState([])
   const [countries, setCountries] = useState([])
   const [industries, setIndustries] = useState([])
-
   const [selectOpen, setSelectOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [recordsPerPage, setRecordsPerPage] = useState<number>(10);
-  const [totalPages, setTotalPages] = useState<number>(0);
+  const [sortField, setSortField] = useState('created_date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [selectedStatus, setSelectedStatus] = useState('');
+  const [selectedSource, setSelectedSource] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [sourceFilter, setSourceFilter] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const handleSort = (field: string) => {
+  const newOrder = sortField === field && sortOrder === 'asc' ? 'desc' : 'asc';
+    setSortField(field);
+    setSortOrder(newOrder);
+  };
 
-  const [openCurrentPage, setOpenCurrentPage] = useState<number>(1);
-  const [openRecordsPerPage, setOpenRecordsPerPage] = useState<number>(10);
-  const [openTotalPages, setOpenTotalPages] = useState<number>(0);
-  const [openLoading, setOpenLoading] = useState(true);
-
-
-  const [closedCurrentPage, setClosedCurrentPage] = useState<number>(1);
-  const [closedRecordsPerPage, setClosedRecordsPerPage] = useState<number>(10);
-  const [closedTotalPages, setClosedTotalPages] = useState<number>(0);
-  const [closedLoading, setClosedLoading] = useState(true);
 
   const [deleteLeadModal, setDeleteLeadModal] = useState(false)
   const [selectedId, setSelectedId] = useState('')
 
-  useEffect(() => {
-    if (!!localStorage.getItem('org')) {
-      getLeads()
-    }
-  }, [!!localStorage.getItem('org')]);
+  const statusList = [
+      { value: '', label: 'Status' },
+      { value: 'assigned', label: 'Assigned' },
+      { value: 'in process', label: 'In Process' },
+      { value: 'converted', label: 'Converted' },
+      { value: 'recycled', label: 'Recycled' },
+      { value: 'closed', label: 'Closed' },
+    ];
 
-  useEffect(() => {
-    getLeads()
-  }, [openCurrentPage, openRecordsPerPage, closedCurrentPage, closedRecordsPerPage]);
-  const getLeads = async () => {
-    const Header = {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      Authorization: localStorage.getItem('Token'),
-      org: localStorage.getItem('org')
+  const sourceList = [
+      { value: '', label: 'Source' },
+      { value: 'call', label: 'Call' },
+      { value: 'email', label: 'Email' },
+      { value: 'existing customer', label: 'Existing Customer' },
+      { value: 'partner', label: 'Partner' },
+      { value: 'public relations', label: 'Public Relations' },
+      { value: 'compaign', label: 'Campaign' },
+      { value: 'other', label: 'Other' },
+    ];
+
+useEffect(() => {
+  getLeads();
+}, [currentPage, recordsPerPage, statusFilter, sourceFilter, searchTerm]);
+
+const getLeads = async () => {
+  const Header = {
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+    Authorization: localStorage.getItem('Token'),
+    org: localStorage.getItem('org')
+  };
+
+  try {
+    const offset = (currentPage - 1) * recordsPerPage;
+    const queryParams = new URLSearchParams({
+      offset: offset.toString(),
+      limit: recordsPerPage.toString(),
+    });
+
+    if (searchTerm) queryParams.append('search', searchTerm);
+    if (statusFilter) queryParams.append('status', statusFilter);
+    if (sourceFilter) queryParams.append('lead_source', sourceFilter);
+
+    const res = await fetchData(`${LeadUrl}/?${queryParams.toString()}`, 'GET', undefined, Header);
+
+    if (!res.error) {
+      const openLeads = res?.open_leads?.open_leads || [];
+      setLeads(openLeads);
+      setLeadsCount(res?.open_leads?.leads_count || openLeads.length);
+      setTotalPages(Math.ceil((res?.open_leads?.leads_count || openLeads.length) / recordsPerPage));
+
+
+      setContacts(res?.contacts || []);
+      setStatus(res?.status || []);
+      setSource(res?.source || []);
+      setCompanies(res?.companies || []);
+      setTags(res?.tags || []);
+      setUsers(res?.users || []);
+      setCountries(res?.countries || []);
+      setIndustries(res?.industries || []);
+      setLoading(false);
     }
-    try {
-      const openOffset = (openCurrentPage - 1) * openRecordsPerPage;
-      const closeOffset = (closedCurrentPage - 1) * closedRecordsPerPage;
-      await fetchData(`${LeadUrl}/?offset=${tab === "open" ? openOffset : closeOffset}&limit=${tab === "open" ? openRecordsPerPage : closedRecordsPerPage}`, 'GET', null as any, Header)
-        .then((res) => {
-          // console.log(res, 'leads')
-          if (!res.error) {
-            // if (initial) {
-            setOpenLeads(res?.open_leads?.open_leads)
-            setOpenLeadsCount(res?.open_leads?.leads_count)
-            setOpenTotalPages(Math.ceil(res?.open_leads?.leads_count / openRecordsPerPage));
-            setClosedLeads(res?.close_leads?.close_leads)
-            setClosedLeadsCount(res?.close_leads?.leads_count)
-            setClosedTotalPages(Math.ceil(res?.close_leads?.leads_count / closedRecordsPerPage));
-            setContacts(res?.contacts)
-            setStatus(res?.status)
-            setSource(res?.source)
-            setCompanies(res?.companies)
-            setTags(res?.tags)
-            setUsers(res?.users)
-            setCountries(res?.countries)
-            setIndustries(res?.industries)
-            setLoading(false)
-            // setLeadsList();
-            // setInitial(false)
-          }
-          // else {
-          //     // setContactList(Object.assign([], contacts, [data.contact_obj_list]))
-          //     setContactList(prevContactList => prevContactList.concat(data.contact_obj_list));
-          //     // setContactList(...contactList,data.contact_obj_list)
-          //     setLoading(false)
-          // }
-          // }
-        })
-    }
-    catch (error) {
-      console.error('Error fetching data:', error);
-    }
+  } catch (error) {
+    console.error('Error fetching data:', error);
   }
+};
 
-  const handleChangeTab = (e: SyntheticEvent, val: any) => {
-    setTab(val)
-  }
-  const handleRecordsPerPage = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    if (tab == 'open') {
-      setOpenLoading(true)
-      setOpenRecordsPerPage(parseInt(event.target.value));
-      setOpenCurrentPage(1);
-    } else {
-      setClosedLoading(true)
-      setClosedRecordsPerPage(parseInt(event.target.value));
-      setClosedCurrentPage(1);
-    }
 
-  };
-  const handlePreviousPage = () => {
-    if (tab == 'open') {
-      setOpenLoading(true)
-      setOpenCurrentPage((prevPage) => Math.max(prevPage - 1, 1));
-    } else {
-      setClosedLoading(true)
-      setClosedCurrentPage((prevPage) => Math.max(prevPage - 1, 1));
-    }
-  };
+const handleRecordsPerPage = (event: React.ChangeEvent<{ value: unknown }>) => {
+  setRecordsPerPage(event.target.value as number);
+  setCurrentPage(1);
+};
 
-  const handleNextPage = () => {
-    if (tab == 'open') {
-      setOpenLoading(true)
-      setOpenCurrentPage((prevPage) => Math.min(prevPage + 1, openTotalPages));
-    } else {
-      setClosedLoading(true)
-      setClosedCurrentPage((prevPage) => Math.min(prevPage + 1, closedTotalPages));
-    }
-  };
+
+const handlePreviousPage = () => {
+  setCurrentPage((prevPage) => Math.max(prevPage - 1, 1));
+};
+
+const handleNextPage = () => {
+  setCurrentPage((prevPage) => Math.min(prevPage + 1, totalPages));
+};
+
+
   const onAddHandle = () => {
     if (!loading) {
       navigate('/app/leads/add-leads', {
         state: {
           detail: false,
-          contacts: contacts || [], status: status || [], source: source || [], companies: companies || [], tags: tags || [], users: users || [], countries: countries || [], industries: industries || []
-          // status: leads.status, source: leads.source, industry: leads.industries, users: leads.users, tags: leads.tags, contacts: leads.contacts 
+          contacts: contacts || [], 
+          status: status || [], 
+          source: source || [], 
+          companies: companies || [], 
+          tags: tags || [], 
+          users: users || [], 
+          countries: countries || [], 
+          industries: industries || []
         }
       })
     }
   }
 
   const selectLeadList = (leadId: any) => {
-    navigate(`/app/leads/lead-details`, { state: { leadId, detail: true, contacts: contacts || [], status: status || [], source: source || [], companies: companies || [], tags: tags || [], users: users || [], countries: countries || [], industries: industries || [] } })
-    // navigate('/app/leads/lead-details', { state: { leadId: leadItem.id, edit: storeData, value } })
+    navigate(`/app/leads/lead-details`, { 
+      state: { 
+        leadId, 
+        detail: true, 
+        contacts: contacts || [], 
+        status: status || [], 
+        source: source || [], 
+        companies: companies || [], 
+        tags: tags || [], 
+        users: users || [], 
+        countries: countries || [], 
+        industries: industries || [] 
+      } 
+    })
   }
+
   const deleteLead = (deleteId: any) => {
     setDeleteLeadModal(true)
     setSelectedId(deleteId)
@@ -257,8 +243,6 @@ export default function Leads(props: any) {
     setDeleteLeadModal(false)
     setSelectedId('')
   }
-  const modalDialog = 'Are You Sure You want to delete selected Lead?'
-  const modalTitle = 'Delete Lead'
 
   const deleteItem = () => {
     const Header = {
@@ -269,7 +253,6 @@ export default function Leads(props: any) {
     }
     fetchData(`${LeadUrl}/${selectedId}/`, 'DELETE', null as any, Header)
       .then((res: any) => {
-        // console.log('delete:', res);
         if (!res.error) {
           deleteLeadModalClose()
           getLeads()
@@ -279,95 +262,75 @@ export default function Leads(props: any) {
       })
   }
 
-  const formatDate = (inputDate: string): string => {
-    const currentDate = new Date();
-    const targetDate = new Date(inputDate);
-    const timeDifference = currentDate.getTime() - targetDate.getTime();
-
-    const secondsDifference = Math.floor(timeDifference / 1000);
-    const minutesDifference = Math.floor(secondsDifference / 60);
-    const hoursDifference = Math.floor(minutesDifference / 60);
-    const daysDifference = Math.floor(hoursDifference / 24);
-    const monthsDifference = Math.floor(daysDifference / 30);
-
-    if (monthsDifference >= 12) {
-      const yearsDifference = Math.floor(monthsDifference / 12);
-      return `${yearsDifference} ${yearsDifference === 1 ? 'year' : 'years'} ago`;
-    } else if (monthsDifference >= 1) {
-      return `${monthsDifference} ${monthsDifference === 1 ? 'month' : 'months'} ago`;
-    } else if (daysDifference >= 1) {
-      return `${daysDifference} ${daysDifference === 1 ? 'day' : 'days'} ago`;
-    } else if (hoursDifference >= 1) {
-      return `${hoursDifference} ${hoursDifference === 1 ? 'hour' : 'hours'} ago`;
-    } else if (minutesDifference >= 1) {
-      return `${minutesDifference} ${minutesDifference === 1 ? 'minute' : 'minutes'} ago`;
-    } else {
-      return `${secondsDifference} ${secondsDifference === 1 ? 'second' : 'seconds'} ago`;
-    }
-  };
   const recordsList = [[10, '10 Records per page'], [20, '20 Records per page'], [30, '30 Records per page'], [40, '40 Records per page'], [50, '50 Records per page']]
-  const tag = ['account', 'leading', 'account', 'leading', 'account', 'leading', 'account', 'account', 'leading', 'account', 'leading', 'account', 'leading', 'leading', 'account', 'account', 'leading', 'account', 'leading', 'account', 'leading', 'account', 'leading', 'account', 'leading', 'account', 'leading']
+  
   return (
-    <Box sx={{
-      mt: '60px',
-      // width: '1370px' 
-    }}>
-
+    <Box sx={{ mt: '60px' }}>
       <CustomToolbar>
-        <Tabs defaultValue={tab} onChange={handleChangeTab} sx={{ mt: '26px' }}>
-          <CustomTab value="open" label="Open"
-            sx={{
-              backgroundColor: tab === 'open' ? '#F0F7FF' : '#284871',
-              color: tab === 'open' ? '#3f51b5' : 'white',
-            }} />
-          <CustomTab value="closed" label="Closed"
-            sx={{
-              backgroundColor: tab === 'closed' ? '#F0F7FF' : '#284871',
-              color: tab === 'closed' ? '#3f51b5' : 'white',
-              ml: '5px',
+        {/* 🔍 Search Field */}
+        <Box sx={{ ml: 2 }}>
+          <input
+            type="text"
+            placeholder="Search..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                setSearchTerm(searchInput);
+                setCurrentPage(1); // Optional: reset pagination
+              }
+            }}
+            style={{
+              height: '35px',
+              padding: '5px 10px',
+              borderRadius: '4px',
+              border: '1px solid #ccc',
+              fontSize: '14px'
             }}
           />
-        </Tabs>
+        </Box>
 
-        <Stack sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-          <Select
-            value={tab === 'open' ? openRecordsPerPage : closedRecordsPerPage}
-            onChange={(e: any) => handleRecordsPerPage(e)}
-            open={selectOpen}
-            onOpen={() => setSelectOpen(true)}
-            onClose={() => setSelectOpen(false)}
-            className={`custom-select`}
-            onClick={() => setSelectOpen(!selectOpen)}
-            IconComponent={() => (
-              <div onClick={() => setSelectOpen(!selectOpen)} className="custom-select-icon">
-                {selectOpen ? <FiChevronUp style={{ marginTop: '12px' }} /> : <FiChevronDown style={{ marginTop: '12px' }} />}
-              </div>
-            )}
-            sx={{
-              '& .MuiSelect-select': { overflow: 'visible !important' }
-            }}
+
+        {/* Status Filter */}
+        <Select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          size="small"
+          displayEmpty
+          sx={{ mr: 2 }}
+        >
+          {statusList.map((status) => (
+            <MenuItem key={status.value} value={status.value}>
+              {status.label}
+            </MenuItem>
+          ))}
+        </Select>
+
+        
+
+  
+
+        <Select
+            value={sourceFilter}
+            onChange={(e) => setSourceFilter(e.target.value)}
+            displayEmpty
           >
-            {recordsList?.length && recordsList.map((item: any, i: any) => (
-              <MenuItem key={i} value={item[0]}>
-                {item[1]}
+            {sourceList.map((source) => (
+              <MenuItem key={source.value} value={source.value}>
+                {source.label}
               </MenuItem>
             ))}
           </Select>
-          <Box sx={{ borderRadius: '7px', backgroundColor: 'white', height: '40px', minHeight: '40px', maxHeight: '40px', display: 'flex', flexDirection: 'row', alignItems: 'center', mr: 1, p: '0px' }}>
-            <FabLeft onClick={handlePreviousPage} disabled={tab === 'open' ? openCurrentPage === 1 : closedCurrentPage === 1}>
-              <FiChevronLeft style={{ height: '15px' }} />
-            </FabLeft>
-            <Typography sx={{ mt: 0, textTransform: 'lowercase', fontSize: '15px', color: '#1A3353', textAlign: 'center' }}>
-              {tab === 'open' ? `${openCurrentPage} to ${openTotalPages}` : `${closedCurrentPage} to ${closedTotalPages}`}
 
-            </Typography>
-            <FabRight onClick={handleNextPage} disabled={tab === 'open' ? (openCurrentPage === openTotalPages) : (closedCurrentPage === closedTotalPages)}>
-              <FiChevronRight style={{ height: '15px' }} />
-            </FabRight>
-          </Box>
+        
+        <Stack sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+
+
+
+
           <Button
-            variant='contained'
-            startIcon={<FiPlus className='plus-icon' />}
+            variant="contained"
+            startIcon={<FiPlus className="plus-icon" />}
             onClick={onAddHandle}
             className={'add-button'}
           >
@@ -376,184 +339,172 @@ export default function Leads(props: any) {
         </Stack>
       </CustomToolbar>
 
-      {tab === 'open' ?
-        <Box sx={{ p: '10px', mt: '5px' }}>
-          {
-            // leads.open && leads.open
-            //   ? stableSort(leads.open && leads.open, getComparator(order, orderBy)).slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((item, index) => (
-            // stableSort(openLeads, getComparator(order, orderBy)).slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((item: any, index: any) => (
-            //openLeads?.length ? openLeads.map((item: any, index: any) => (
-            openLeads?.length>0 ? openLeads.map((item: any, index: any) => (  
-              <Box key={index}>
-                <Box className='lead-box'>
-                  <Box className='lead-box1'>
-                    <Stack className='lead-row1'>
-                      <div style={{ color: '#1A3353', fontSize: '1rem', fontWeight: '500', cursor: 'pointer' }} onClick={() => selectLeadList(item?.id)}>
-                        {item?.title}
-                      </div>
-                      <div onClick={() => deleteLead(item?.id)}>
-                        <FaTrashAlt style={{ cursor: 'pointer', color: 'gray' }} />
-                      </div>
-                    </Stack>
-                    <Stack className='lead-row2'>
-                      <div className='lead-row2-col1'>
-                        <div style={{ color: 'gray', fontSize: '16px', textTransform: 'capitalize' }}>
-                          {item?.country || ''} - source <span style={{ color: '#1a3353', fontWeight: 500 }}>{item?.source || '--'}</span> - status <span style={{ color: '#1a3353', fontWeight: 500 }}>{item?.status || '--'}</span>
-                        </div>
-                        <Box sx={{
-                          ml: 1
-                          //  flexWrap: 'wrap', width: '50%' 
-                        }}>
-                          {
-                            item.tags.map((tagData: any, index: any) => (
-                              // tag.slice(0, 3).map((tagData: any, index: any) => (
-                              <Label tags={tagData} key={index} />
-                            ))
-                          }{item.tags.length > 4 ? <Link sx={{ ml: 1 }}>+{item.tags.length - 4}</Link> : ''}
-                        </Box>
-                        <Box sx={{ ml: 1 }}>
-                          <div style={{ display: 'flex' }}>
-                            <AvatarGroup
-                              // total={2}
-                              max={3}
-                            >
-                              {/* <Tooltip title={con.user.username}> */}
-                              {/* {tag.map((tagData: any, index: any) => ( */}
-                              {item?.team && item?.team?.map((team: any, index: any) => (
-                                <Avatar
-                                  alt={team}
-                                  src={team}
-                                >
-                                  {team}
-                                </Avatar>
-                              ))}
-                              {/* </Tooltip> */}
-                              {/* )} */}
-                            </AvatarGroup>
-                          </div>
 
-                        </Box>
-                        {/* {
-                          item.assigned_to.map((assignItem: any, index: any) => (
-                            assignItem.user_details.profile_pic
-                              ? <Avatar alt='Remy Sharp'
-                                src={assignItem.user_details.profile_pic}
-                              />
-                              : <Avatar alt='Remy Sharp'
-                                size='small'
-                              // sx={{ backgroundColor: 'deepOrange', color: 'white', textTransform: 'capitalize', mt: '-20px', ml: '10px' }}
-                              >
-                                {assignItem.user_details.first_name.charAt(0)}
-                              </Avatar>
-                          ))
-                        } */}
-                      </div>
-                      <div className='lead-row2-col2'>
-                        {/* created on {formatDate(item.created_on)} by   &nbsp;<span> */}
-                        created&nbsp; {FormateTime(item?.created_at)}&nbsp; by
-                        <Avatar
-                          alt={item?.first_name}
-                          src={item?.created_by?.profile_pic}
-                          sx={{ ml: 1 }}
-                        // style={{
-                        //   height: '20px',
-                        //   width: '20px'
-                        // }}
-                        /> &nbsp;&nbsp;{item?.first_name}&nbsp;{item?.last_name}
-                      </div>
-                    </Stack>
-                  </Box>
+          {/* to align */}
+          <Box sx={{ p: '10px', mt: '5px' }}>
+          {/* Table Headers */}
+          <Stack
+            direction="row"
+            sx={{
+              p: '10px',
+              backgroundColor: '#1A3353',
+              color: 'white',
+              borderRadius: '4px',
+              mb: '5px',
+              fontWeight: 'bold',
+              fontSize: '14px',
+              cursor: 'pointer'
+            }}
+          >
+            <Box sx={{ width: '28%', pl: 1, display: 'flex', alignItems: 'center' }} onClick={() => handleSort('lead_name')}>
+              Lead Name {sortField === 'lead_name' && (sortOrder === 'asc' ? <FiChevronUp /> : <FiChevronDown />)}
+            </Box>
+            <Box sx={{ width: '14%', display: 'flex',  justifyContent: 'center', alignItems: 'center' }} onClick={() => handleSort('contact_name')}>
+              Contact {sortField === 'contact_name' && (sortOrder === 'asc' ? <FiChevronUp /> : <FiChevronDown />)}
+            </Box>
+            <Box
+              sx={{ width: '20%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+              onClick={() => handleSort('company_name')}
+            >
+              Company
+              {sortField === 'company_name' && (sortOrder === 'asc' ? <FiChevronUp /> : <FiChevronDown />)}
+            </Box>
+            <Box sx={{ width: '16%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              Source
+            </Box>
+            <Box sx={{ width: '12%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              Status
+            </Box>
+
+            <Box
+              sx={{ width: '10%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+              onClick={() => handleSort('created_date')}
+            >
+              Creation Date
+              {sortField === 'created_date' && (sortOrder === 'asc' ? <FiChevronUp /> : <FiChevronDown />)}
+            </Box>
+            <Box sx={{ width: '5%', textAlign: 'right' }}>Actions</Box>
+          </Stack>
+
+          {/* Table Body */}
+          {leads?.length > 0 ? (
+            stableSort(leads, getComparator(sortOrder, sortField)).map((item: any, index: number) => (
+
+              <Box key={index} sx={{ mb: '5px' }}>
+                <Box sx={{ backgroundColor: 'white', borderRadius: '4px', boxShadow: '0px 0px 5px rgba(0,0,0,0.1)', p: '10px', fontSize: '14px' }}>
+                  <Stack direction="row" alignItems="center">
+                    <Box sx={{ width: '28%', pl: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {item?.lead_name || '--'}
+                    </Box>
+                    <Box sx={{ width: '14%', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {item?.contact_name || '--'}
+                    </Box>
+                    <Box sx={{ width: '20%', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {item?.company_name
+                        ? `${item.company_name.substring(0, 15)}${item.company_name.length > 15 ? '...' : ''}`
+                        : '--'}
+                    </Box>
+                    <Box sx={{ width: '16%', textAlign: 'center' }}>{item?.lead_source || '--'}</Box>
+                    <Box sx={{ width: '12%', textAlign: 'center' }}>
+                      <Typography sx={{ color: '#1A3353', fontWeight: 500, textTransform: 'capitalize' }}>
+                        {item?.status || '--'}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ width: '10%' }}>{item?.created_date || '--'}</Box>
+                    <Box sx={{ width: '5%', textAlign: 'right', pr: 1, display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                      <FaEdit
+                        onClick={() =>
+                          navigate(`/app/leads/lead-details`, { state: { leadId: item.id, detail: false } })
+                        }
+                        style={{ width: '18px', height: '18px', cursor: 'pointer', color: '#1A3353' }}
+                      />
+                      <FaTrashAlt
+                        onClick={() => deleteLead(item?.id)}
+                        style={{ cursor: 'pointer', color: 'red' }}
+                      />
+                    </Box>
+                  </Stack>
                 </Box>
               </Box>
-           // )) : <Spinner />
-            )) : (<div>No Records</div>)
-          }
+            ))
+          ) : (
+            <Typography sx={{ textAlign: 'center', mt: 2 }}>No Records Found</Typography>
+          )}
         </Box>
-        : <Box sx={{ p: '10px', mt: '5px' }}>
-          {
-            // stableSort(closedLeads?.length || [], getComparator(order, orderBy)).slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((item: any, index: any) => (
-            closedLeads?.length ? closedLeads.map((item: any, index: any) => (
-              <Box key={index}>
-                <Box className='lead-box'>
-                  <Box className='lead-box1'>
-                    <Stack className='lead-row1'>
-                      <div style={{ color: '#1A3353', fontSize: '1rem', fontWeight: '500', cursor: 'pointer' }} onClick={() => selectLeadList(item?.id)}>
-                        {item?.title}
-                      </div>
-                      <div onClick={() => deleteLead(item)}>
-                        <FaTrashAlt style={{ cursor: 'pointer', color: 'gray' }} />
-                      </div>
-                    </Stack>
-                    <Stack className='lead-row2'>
-                      <div className='lead-row2-col1'>
-                        <div style={{ color: 'gray', fontSize: '16px', textTransform: 'capitalize' }}>
-                          {item?.country || ''} - source <span style={{ color: '#1a3353', fontWeight: 500 }}>{item?.source || '--'}</span> - status <span style={{ color: '#1a3353', fontWeight: 500 }}>{item?.status || '--'}</span>
-                        </div>
-                        <Box sx={{ ml: 1 }}>
-                          {
-                            item.tags.map((tagData: any, index: any) => (
-                              // tag.slice(0, 3).map((tagData: any, index: any) => (
-                              <Label tags={tagData} key={index} />
-                            ))
-                          }{item.tags.length > 4 ? <Link sx={{ ml: 1 }}>+{item.tags.length - 4}</Link> : ''}
-                        </Box>
-                        <Box sx={{ ml: 1 }}>
-                          <div style={{ display: 'flex' }}>
-                            <AvatarGroup
-                              // total={2}
-                              max={3}
-                            >
-                              {/* {con.map((con) => */}
-                              {/* <Tooltip title={con.user.username}> */}
-                              {item?.team && item?.team?.map((team: any, index: any) => (
-                                <Avatar
-                                  alt={team}
-                                  src={team}
-                                >
-                                  {team}
-                                </Avatar>
-                              ))}
-                              {/* </Tooltip> */}
-                              {/* )} */}
-                            </AvatarGroup>
-                          </div>
+      
+ 
 
-                        </Box>
 
-                      </div>
-                      <div className='lead-row2-col2'>
-                        created&nbsp; {FormateTime(item?.created_at)}&nbsp; by
-                        <Avatar
-                          alt={item?.first_name}
-                          src={item?.created_by?.profile_pic}
-                          sx={{ ml: 1 }}
-                        /> &nbsp;&nbsp;{item?.first_name}&nbsp;{item?.last_name}
-                      </div>
-                    </Stack>
-                  </Box>
-                </Box>
-              </Box>
-            )) :
-              <Spinner />
-          }
-        </Box>}
-      {/* {loading &&
-        <Spinner />} */}
-      {/* <DeleteModal
-        onClose={deleteLeadModalClose}
-        open={deleteLeadModal}
-        id={selectedId}
-        modalDialog={modalDialog}
-        modalTitle={modalTitle}
-      /> */}
       <DeleteModal
         onClose={deleteLeadModalClose}
         open={deleteLeadModal}
         id={selectedId}
-        modalDialog={modalDialog}
-        modalTitle={modalTitle}
+        modalDialog={'Are You Sure You want to delete selected Lead?'}
+        modalTitle={'Delete Lead'}
         DeleteItem={deleteItem}
       />
+      <Box
+            sx={{
+              borderRadius: '7px',
+              backgroundColor: 'white',
+              height: '40px',
+              minHeight: '40px',
+              maxHeight: '40px',
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+              mr: 1,
+              p: '0px',
+            }}
+          >
+
+            <Select
+              value={recordsPerPage}
+              onChange={(e: any) => handleRecordsPerPage(e)}
+              open={selectOpen}
+              onOpen={() => setSelectOpen(true)}
+              onClose={() => setSelectOpen(false)}
+              className={`custom-select`}
+              onClick={() => setSelectOpen(!selectOpen)}
+              IconComponent={() => (
+                <div onClick={() => setSelectOpen(!selectOpen)} className="custom-select-icon">
+                  {selectOpen ? (
+                    <FiChevronUp style={{ marginTop: '12px' }} />
+                  ) : (
+                    <FiChevronDown style={{ marginTop: '12px' }} />
+                  )}
+                </div>
+              )}
+              sx={{
+                '& .MuiSelect-select': { overflow: 'visible !important' },
+              }}
+            >
+              {recordsList?.length &&
+                recordsList.map((item: any, i: any) => (
+                  <MenuItem key={i} value={item[0]}>
+                    {item[1]}
+                  </MenuItem>
+                ))}
+            </Select>
+
+            <FabLeft onClick={handlePreviousPage} disabled={currentPage === 1}>
+              <FiChevronLeft style={{ height: '15px' }} />
+            </FabLeft>
+            <Typography
+              sx={{
+                mt: 0,
+                textTransform: 'lowercase',
+                fontSize: '15px',
+                color: '#1A3353',
+                textAlign: 'center',
+              }}
+            >
+              {`${currentPage} to ${totalPages}`}
+            </Typography>
+            <FabRight onClick={handleNextPage} disabled={currentPage === totalPages}>
+              <FiChevronRight style={{ height: '15px' }} />
+            </FabRight>
+          </Box>
     </Box>
   )
 }
