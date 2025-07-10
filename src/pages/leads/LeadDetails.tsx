@@ -840,9 +840,14 @@ function LeadDetails() {
                                 </Box><Typography sx={{ flex: '0 0 33%', mb: 2 }}variant="body2" color="text.secondary">Description</Typography>
                                 <Box sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: '8px', bgcolor: 'white', mb: 3 }}>
                                 
-                                <Typography variant="body1">
-                                    {capitalizeFirstLetter(leadData?.lead_obj?.description) || 'It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout.'}
-                                </Typography>
+                                <Typography 
+                                    variant="body1" 
+                                    component="div"
+                                    dangerouslySetInnerHTML={{
+                                        __html: leadData?.lead_obj?.description || 'It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout.'
+                                    }}
+                                    sx={{ '& p': { margin: 0 } }} // Style for proper paragraph display
+                                />
                             </Box>
                             </Box>
                             
