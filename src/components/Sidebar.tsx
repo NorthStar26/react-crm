@@ -27,7 +27,7 @@ import {
   FaTachometerAlt,
   FaUserFriends,
   FaUsers,
-  FaUser
+  FaUser,
 } from 'react-icons/fa';
 import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { fetchData } from './FetchData';
@@ -67,7 +67,7 @@ import logo from '../assets/images/auth/img_logo.png';
 import { StyledListItemButton, StyledListItemText } from '../styles/CssStyled';
 import MyContext from '../context/Context';
 import { logout } from '../services/AuthService';
-import ProfileComponent from "../pages/profile/Profile";
+import ProfileComponent from '../pages/profile/Profile';
 import { useUser } from '../context/UserContext';
 
 export default function Sidebar(props: any) {
@@ -84,8 +84,8 @@ export default function Sidebar(props: any) {
   };
 
   useEffect(() => {
-    toggleScreen()
-  }, [navigate])
+    toggleScreen();
+  }, [navigate]);
 
   // useEffect(() => {
   // navigate('/leads')
@@ -103,23 +103,26 @@ export default function Sidebar(props: any) {
   // }, [])
   const toggleScreen = () => {
     // console.log(location.pathname.split('/'), 'll')
-    if (location.pathname.split('/')[1] === '' || location.pathname.split('/')[1] === undefined || location.pathname.split('/')[2] === 'leads') {
-      setScreen('leads')
+    if (
+      location.pathname.split('/')[1] === '' ||
+      location.pathname.split('/')[1] === undefined ||
+      location.pathname.split('/')[2] === 'leads'
+    ) {
+      setScreen('leads');
     } else if (location.pathname.split('/')[2] === 'contacts') {
-      setScreen('contacts')
+      setScreen('contacts');
     } else if (location.pathname.split('/')[2] === 'opportunities') {
-      setScreen('opportunities')
+      setScreen('opportunities');
     } else if (location.pathname.split('/')[2] === 'accounts') {
-      setScreen('accounts')
+      setScreen('accounts');
     } else if (location.pathname.split('/')[2] === 'companies') {
-      setScreen('companies')
+      setScreen('companies');
     } else if (location.pathname.split('/')[2] === 'users') {
-      setScreen('CRM-Admin Dashboard')
+      setScreen('CRM-Admin Dashboard');
     } else if (location.pathname.split('/')[2] === 'cases') {
-      setScreen('cases')
+      setScreen('cases');
     }
-  }
-
+  };
 
   const userProfile = () => {
     fetchData(`${ProfileUrl}/`, 'GET', null as any, Header1)
@@ -206,7 +209,7 @@ export default function Sidebar(props: any) {
   const id = open ? 'simple-popover' : undefined;
   const context = { drawerWidth: drawerWidth, screen: screen };
   const clickProfileHandeler = () => {
-    navigate("/app/profile");
+    navigate('/app/profile');
   };
   return (
     <>
@@ -271,11 +274,12 @@ export default function Sidebar(props: any) {
             }}
           >
             <IconButton onClick={handleClick} sx={{ mr: 3 }}>
-              <Avatar 
+              <Avatar
                 src={user?.user_details?.profile_pic}
                 sx={{ height: '27px', width: '27px' }}
               >
-                {user?.user_details?.first_name?.[0] || user?.user_details?.email?.[0]?.toUpperCase()}
+                {user?.user_details?.first_name?.[0] ||
+                  user?.user_details?.email?.[0]?.toUpperCase()}
               </Avatar>
             </IconButton>
             <Popover
@@ -318,9 +322,7 @@ export default function Sidebar(props: any) {
                   </StyledListItemButton>
                 </ListItem>
                 <ListItem disablePadding>
-                  <StyledListItemButton
-                    onClick={clickProfileHandeler}
-                  >
+                  <StyledListItemButton onClick={clickProfileHandeler}>
                     <ListItemIcon>
                       <FaUser fill="#3e79f7" />
                     </ListItemIcon>
@@ -391,7 +393,7 @@ export default function Sidebar(props: any) {
                 element={<AddCompany />}
               />
               <Route
-                path="/app/companies/edit-company"
+                path="/app/companies/edit-company/:companyId"
                 element={<EditCompany />}
               />
               <Route

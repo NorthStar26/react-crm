@@ -1,385 +1,577 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react';
 import {
-    Card,
-    Link,
-    Button,
-    Avatar,
-    Divider,
-    TextField,
-    Box,
-    AvatarGroup
-} from '@mui/material'
-import { Fa500Px, FaAccusoft, FaAd, FaAddressCard, FaEnvelope, FaRegAddressCard, FaStar } from 'react-icons/fa'
-import { CustomAppBar } from '../../components/CustomAppBar'
-import { useLocation, useNavigate } from 'react-router-dom'
-import { AntSwitch } from '../../styles/CssStyled'
-import { ContactUrl } from '../../services/ApiUrls'
-import { fetchData } from '../../components/FetchData'
-
-type response = {
-    created_by: string;
-    created_on: string;
-    created_on_arrow: string;
-    date_of_birth: string;
-    department: string;
-    description: string;
-    do_not_call: boolean;
-    facebook_url: string;
-    first_name: string;
-    lastname: string;
-    id: string;
-    is_active: boolean;
-    language: string;
-    last_name: string;
-    linked_in_url: string;
-    mobile_number: string;
-    organization: string;
-    primary_email: string;
-    salutation: string;
-    secondary_email: string;
-    secondary_number: string;
-    title: string;
-    twitter_username: string;
-    address_line: string;
-    city: string;
-    country: string;
-    postcode: string;
-    state: string;
-    street: string;
-    name: string;
-    website: string;
+  Card,
+  Link,
+  Avatar,
+  Box,
+  Typography,
+  Grid,
+  Stack,
+  Container,
+} from '@mui/material';
+import {
+  FaEnvelope,
+  FaPhone,
+  FaBuilding,
+  FaBriefcase,
+  FaEdit,
+  FaPhoneSlash,
+  FaTimes,
+} from 'react-icons/fa';
+import { CustomAppBar } from '../../components/CustomAppBar';
+import { EditButton } from '../../components/Button';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { ContactUrl } from '../../services/ApiUrls';
+import { fetchData } from '../../components/FetchData';
+import {
+  DoNotCallChip,
+  ContactDetailCard,
+  LanguageChip,
+} from '../../styles/CssStyled';
+import vectorImage from '../../assets/images/Vector.png';
+type ContactResponse = {
+  id: string;
+  salutation: string;
+  salutation_display: string;
+  first_name: string;
+  last_name: string;
+  title: string;
+  primary_email: string;
+  mobile_number: string;
+  language: string;
+  language_display: string;
+  do_not_call: boolean;
+  description: string;
+  company: any; // Объект компании
+  company_name: string; // Имя компании
+  country: string;
+  country_name: string;
+  department: string;
 };
 
 export const formatDate = (dateString: any) => {
-    const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' }
-    return new Date(dateString).toLocaleDateString(undefined, options)
-}
+  const options: Intl.DateTimeFormatOptions = {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  };
+  return new Date(dateString).toLocaleDateString(undefined, options);
+};
 
 export default function ContactDetails() {
-    const navigate = useNavigate()
-    const { state } = useLocation()
-    const [contactDetails, setContactDetails] = useState<response | null>(null)
-    const [addressDetails, setAddressDetails] = useState<response | null>(null)
-    const [org, setOrg] = useState<response | null>(null)
+  const navigate = useNavigate();
+  const { state } = useLocation();
+  const [contactDetails, setContactDetails] = useState<ContactResponse | null>(
+    null
+  );
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        getContactDetail(state.contactId.id)
-    }, [state.contactId.id])
-
-    const getContactDetail = (id: any) => {
-        const Header = {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-            Authorization: localStorage.getItem('Token'),
-            org: localStorage.getItem('org')
-          }
-        fetchData(`${ContactUrl}/${id}/`, 'GET', null as any, Header)
-            .then((res) => {
-                // console.log(res, 'res');
-                if (!res.error) {
-                    setContactDetails(res?.contact_obj)
-                    setAddressDetails(res?.address_obj)
-                    setOrg(res?.org)
-                }
-            })
+  useEffect(() => {
+    if (state?.contactId?.id) {
+      getContactDetail(state.contactId.id);
+    } else {
+      setError('Contact ID not provided');
+      setLoading(false);
     }
+  }, [state]);
 
-    //   useEffect(() => {
-    // navigate(-1)
-    //     fetchData(`${ContactUrl}/${state.contactId}/`, 'GET', null as any, Header)
-    //       .then((data) => {
-    //         if (!data.error) {
-    // setData(Object.assign({}, data, { cases: data.cases }));
+  const getContactDetail = (id: any) => {
+    setLoading(true);
+    const Header = {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      Authorization: localStorage.getItem('Token'),
+      org: localStorage.getItem('org'),
+    };
 
-    //           setContactDetails(data.contact_obj)
-    //           setNewaddress(...contactDetails, {
-    //             addreslane: data.contact_obj.address.address_line,
-    //             city: data.contact_obj.address.city,
-    //             state: data.contact_obj.address.state,
-    //             postcode: data.contact_obj.address.postcode,
-    //             country: data.contact_obj.address.country,
-    //             street: data.contact_obj.address.street
-    //           })
-    //         }
-    //       })
-    //   }, [])
+    fetchData(`${ContactUrl}/${id}/`, 'GET', null as any, Header)
+      .then((res) => {
+        console.log('Contact API response:', res);
 
-    const backbtnHandle = () => {
-        navigate('/app/contacts')
-    }
+        if (!res.error && res.contact) {
+          setContactDetails(res.contact);
+        } else {
+          setError(res.errors || 'Failed to fetch contact details');
+        }
+      })
+      .catch((err) => {
+        console.error('Error fetching contact:', err);
+        setError('Failed to fetch contact details');
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  };
 
-    const editHandle = () => {
-        // navigate('/contacts/edit-contacts', { state: { value: contactDetails, address: newAddress } })
-        navigate('/app/contacts/edit-contact', {
-            state: {
-                value: {
-                    salutation: contactDetails?.salutation,
-                    first_name: contactDetails?.first_name,
-                    last_name: contactDetails?.last_name,
-                    primary_email: contactDetails?.primary_email,
-                    secondary_email: contactDetails?.secondary_email,
-                    mobile_number: contactDetails?.mobile_number,
-                    secondary_number: contactDetails?.secondary_number,
-                    date_of_birth: contactDetails?.date_of_birth,
-                    organization: contactDetails?.organization,
-                    title: contactDetails?.title,
-                    language: contactDetails?.language,
-                    do_not_call: contactDetails?.do_not_call,
-                    department: contactDetails?.department,
-                    address: addressDetails?.address_line,
-                    street: addressDetails?.street,
-                    city: addressDetails?.city,
-                    state: addressDetails?.state,
-                    country: addressDetails?.country,
-                    postcode: addressDetails?.postcode,
-                    description: contactDetails?.description,
-                    linked_in_url: contactDetails?.linked_in_url,
-                    facebook_url: contactDetails?.facebook_url,
-                    twitter_username: contactDetails?.twitter_username
-                }, id: state?.contactId?.id, countries: state?.countries
-            }
-        })
-    }
+  const backbtnHandle = () => {
+    navigate('/app/contacts');
+  };
 
-    const module = 'Contacts'
-    const crntPage = 'Contact Detail'
-    const backBtn = 'Back To Contacts'
-    // console.log(state, 'contact');
+  const editHandle = () => {
+    if (!contactDetails) return;
 
+    navigate('/app/contacts/edit-contact', {
+      state: {
+        value: {
+          salutation: contactDetails.salutation,
+          first_name: contactDetails.first_name,
+          last_name: contactDetails.last_name,
+          primary_email: contactDetails.primary_email,
+          mobile_number: contactDetails.mobile_number,
+          title: contactDetails.title,
+          language: contactDetails.language,
+          do_not_call: contactDetails.do_not_call,
+          department: contactDetails.department,
+          country: contactDetails.country,
+          description: contactDetails.description,
+          company: contactDetails.company?.id,
+        },
+        id: state?.contactId?.id,
+        countries: state?.countries,
+      },
+    });
+  };
+
+  const module = 'Contacts';
+  const crntPage = 'Contact Detail';
+  const backBtn = 'Back To Contacts';
+
+  const fullName = contactDetails
+    ? `${contactDetails.first_name || ''} ${
+        contactDetails.last_name || ''
+      }`.trim()
+    : 'Loading...';
+
+  if (loading) {
     return (
-        <Box sx={{ mt: '60px' }}>
-            <div>
-                <CustomAppBar backbtnHandle={backbtnHandle} module={module} backBtn={backBtn} crntPage={crntPage} editHandle={editHandle} />
-                <Box sx={{ mt: '110px', p: '20px', display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                    <Box sx={{ width: '65%' }}>
-                        <Card sx={{ borderRadius: '7px' }}>
-                            <div style={{ padding: '20px', borderBottom: '1px solid lightgray', display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div style={{ fontWeight: 600, fontSize: '18px', color: '#1a3353f0' }}>
-                                    Contact Information
-                                </div>
-                                <div style={{ color: 'gray', fontSize: '16px', display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', marginRight: '15px', textTransform: 'capitalize' }}>
-                                        created on
-                                        {formatDate(contactDetails?.created_on)}
-                                        &nbsp;by &nbsp;&nbsp;
-                                        <span style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center' }}>
-                                            <Avatar
-                                                src='/broken-image.jpg'
-                                                style={{
-                                                    height: '24px',
-                                                    width: '24px'
-                                                }}
-                                            />
-                                        </span> &nbsp;&nbsp;
-                                        {contactDetails?.first_name}
-                                        {contactDetails?.last_name}
-                                    </div>
-                                    <div>Last update&nbsp;{contactDetails?.created_on_arrow}</div>
-                                </div>
-                            </div>
-                            <div style={{ padding: '20px', display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                                <div style={{ width: '32%' }}>
-                                    <div className='title2'>Account Title</div>
-                                    <div style={{ fontSize: '16px', color: 'gray', display: 'flex', flexDirection: 'row', marginTop: '5%' }}>
-                                        <div style={{ display: 'flex' }}>
-                                            {/* <AvatarGroup
-                                                total={2}
-                                                max={3}
-                                            >
-                                                <Tooltip title={con.user.username}>
-                                                    <Avatar alt={'sdf'}>
-                                                    </Avatar>
-                                                </Tooltip>
-                                            </AvatarGroup> */}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div style={{ padding: '20px', display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                                <div style={{ width: '32%' }}>
-                                    <div className='title2'>First Name</div>
-                                    <div className='title3'>
-                                        {contactDetails?.first_name || '----'}
-                                    </div>
-                                </div>
-                                <div style={{ width: '32%' }}>
-                                    <div className='title2'>Last Name</div>
-                                    <div className='title3'>
-                                        {contactDetails?.last_name || '----'}
-                                    </div>
-                                </div>
-                                <div style={{ width: '32%' }}>
-                                    <div className='title2'>Organization Name</div>
-                                    <div className='title3'>
-                                        {org?.name || '----'}
-                                    </div>
-                                </div>
-                            </div>
-                            <div style={{ padding: '20px', marginTop: '15px', display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                                <div style={{ width: '32%' }}>
-                                    <div className='title2'>Email Address</div>
-                                    <div style={{ fontSize: '16px', color: '#1E90FF', marginTop: '5%' }}>
-                                        <div>
-                                            {contactDetails?.primary_email ? <div><Link>{contactDetails?.primary_email}</Link><FaStar style={{ fontSize: '16px', fill: 'yellow' }} /></div> : '----'}<br />
-                                            {contactDetails?.secondary_email ? <Link>{contactDetails?.secondary_email}</Link> : ''}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div style={{ width: '32%' }}>
-                                    <div className='title2'>Mobile Number</div>
-                                    <div className='title3'>
-                                        <div>
-                                            {contactDetails?.mobile_number ? <div>{contactDetails?.mobile_number}{<FaStar style={{ fontSize: '16px', fill: 'yellow' }} />}</div> : '----'}<br />
-                                            {contactDetails?.secondary_number ? contactDetails?.secondary_number : ''}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div style={{ width: '32%' }}>
-                                    <div className='title2'>website</div>
-                                    <div className='title3'>
-                                        {contactDetails?.website ? <Link>{contactDetails?.website}</Link> : '----'}
-                                    </div>
-                                </div>
-                            </div>
-                            <div style={{ padding: '20px', marginTop: '15px', display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                                <div style={{ width: '32%' }}>
-                                    <div className='title2'>Department</div>
-                                    <div className='title3'>
-                                        {contactDetails?.department || '----'}
-                                    </div>
-                                </div>
-                                <div style={{ width: '32%' }}>
-                                    <div className='title2'>Language</div>
-                                    <div className='title3'>
-                                        {contactDetails?.language || '----'}
-                                    </div>
-                                </div>
-                                <div style={{ width: '32%' }}>
-                                    <div className='title2'>Do Not Call</div>
-                                    <div className='title3'>
-                                        <AntSwitch
-                                            checked={contactDetails?.do_not_call}
-                                            inputProps={{ 'aria-label': 'ant design' }} />
-                                    </div>
-                                </div>
-                            </div>
-                            {/* Address details */}
-                            <div style={{ marginTop: '15px' }}>
-                                <div style={{ padding: '20px', borderBottom: '1px solid lightgray', display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                                    <div style={{ fontWeight: 600, fontSize: '18px', color: '#1a3353f0' }}>
-                                        Address Details
-                                    </div>
-                                </div>
-                                <div style={{ padding: '20px', display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                                    <div style={{ width: '32%' }}>
-                                        <div className='title2'>Address Lane</div>
-                                        <div className='title3'>
-                                            {addressDetails?.address_line || '----'}
-                                        </div>
-                                    </div>
-                                    <div style={{ width: '32%' }}>
-                                        <div className='title2'>Street</div>
-                                        <div className='title3'>
-                                            {addressDetails?.street || '----'}
-                                        </div>
-                                    </div>
-                                    <div style={{ width: '32%' }}>
-                                        <div className='title2'>City</div>
-                                        <div className='title3'>
-                                            {addressDetails?.city || '----'}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div style={{ padding: '20px', marginTop: '15px', display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                                    <div style={{ width: '32%' }}>
-                                        <div className='title2'>Pincode</div>
-                                        <div className='title3'>
-                                            {addressDetails?.postcode || '----'}
-                                        </div>
-                                    </div>
-                                    <div style={{ width: '32%' }}>
-                                        <div className='title2'>State</div>
-                                        <div className='title3'>
-                                            {addressDetails?.state || '----'}
-                                        </div>
-                                    </div>
-                                    <div style={{ width: '32%' }}>
-                                        <div className='title2'>Country</div>
-                                        <div className='title3'>
-                                            {contactDetails?.country || '----'}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            {/* Description */}
-                            <div style={{ marginTop: '15px' }}>
-                                <div style={{ padding: '20px', borderBottom: '1px solid lightgray', display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                                    <div style={{ fontWeight: 600, fontSize: '18px', color: '#1a3353f0' }}>
-                                        Description
-                                    </div>
-                                </div>
-                                <Box sx={{ p: '15px' }}>
-                                    {contactDetails?.description ? <div dangerouslySetInnerHTML={{ __html: contactDetails?.description }} /> : '---'}
-                                </Box>
-                            </div>
-                        </Card>
-                    </Box>
-                    <Box sx={{ width: '34%' }}>
-                        <Card sx={{ borderRadius: '7px', p: '20px' }}>
-                            <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                                <div style={{ fontWeight: 600, fontSize: '16px', color: '#1a3353f0' }}>
-                                    Social
-                                </div>
-                                <div style={{ color: '#3E79F7', fontSize: '16px', fontWeight: 600 }}>
-                                    {/* Add Social #1E90FF */}
-                                    <Button
-                                        type='submit'
-                                        variant='text'
-                                        size='small'
-                                        startIcon={<FaEnvelope style={{ fill: '#3E79F7' }} />}
-                                        style={{ textTransform: 'capitalize', fontWeight: 600, fontSize: '16px' }}
-                                    >
-                                        Add Socials
-                                    </Button>
-                                </div>
-                            </div>
-                            <div style={{ fontSize: '16px', marginTop: '15px' }}>
-                                LinkedIn URL
-                            </div>
-                            <div style={{ paddingBottom: '10px', width: '80%', marginBottom: '10px' }}>
-                                <TextField
-                                    variant='outlined'
-                                    size='small'
-                                    value={contactDetails?.linked_in_url || '----'}
-                                    sx={{ height: '40px', width: '100%', mt: 1 }}
-                                />
-                            </div>
-                            <div style={{ fontSize: '16px' }}>
-                                Facebook URL
-                            </div>
-                            <div style={{ paddingBottom: '10px', width: '80%', marginBottom: '10px' }}>
-                                <TextField
-                                    variant='outlined'
-                                    size='small'
-                                    value={contactDetails?.facebook_url || '----'}
-                                    sx={{ height: '40px', width: '100%', mt: 1 }}
-                                />
-                            </div>
-                            <div style={{ fontSize: '16px', marginTop: '15px' }}>
-                                Twitter URL
-                            </div>
-                            <div style={{ paddingBottom: '10px', width: '80%', marginBottom: '10px' }}>
-                                <TextField
-                                    variant='outlined'
-                                    size='small'
-                                    value={contactDetails?.twitter_username || '----'}
-                                    sx={{ height: '40px', width: '100%', mt: 1 }}
-                                />
-                            </div>
-                        </Card>
-                    </Box>
+      <Box sx={{ mt: '120px', display: 'flex', justifyContent: 'center' }}>
+        <Typography>Loading contact details...</Typography>
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ mt: '120px', display: 'flex', justifyContent: 'center' }}>
+        <Typography color="error">{error}</Typography>
+      </Box>
+    );
+  }
+
+  return (
+    <Box sx={{ mt: '60px', backgroundColor: '#FAFAFB', minHeight: '100vh' }}>
+      {/* Header */}
+      <CustomAppBar module={module} crntPage={crntPage} variant="view" />
+
+      <Container maxWidth="lg" sx={{ mt: '120px', py: 3 }}>
+        {/* Main Contact Card */}
+        <ContactDetailCard
+          sx={{
+            mb: 3,
+            boxShadow:
+              '0px 2px 1px -1px rgba(0, 0, 0, 0.2), 0px 1px 1px rgba(0, 0, 0, 0.14), 0px 1px 3px rgba(0, 0, 0, 0.12)',
+          }}
+        >
+          <Box sx={{ p: 4 }}>
+            {/* Header Section */}
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                mb: 4,
+              }}
+            >
+              <Box>
+                <Typography
+                  variant="h3"
+                  sx={{
+                    fontFamily: 'Roboto',
+                    fontWeight: 700,
+                    color: '#101828',
+                    mb: 1,
+                    fontSize: '30px',
+                    lineHeight: '36px',
+                  }}
+                >
+                  {fullName}
+                </Typography>
+              </Box>
+
+              {/* Edit Button */}
+              <EditButton onClick={editHandle}>
+                <FaEdit style={{ marginRight: 8 }} />
+                Edit Contact
+              </EditButton>
+            </Box>
+            {/* Contact Info Section */}
+            <Grid container spacing={4} sx={{ mb: 4 }}>
+              {/* Email -  */}
+              <Grid item xs={12} md={4}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 2,
+                    bgcolor: '#F9FAFB',
+                    borderRadius: '4px',
+                    height: '40px',
+                    pl: 2,
+                  }}
+                >
+                  <FaEnvelope style={{ fontSize: '20px', color: '#4A5565' }} />
+                  <Typography
+                    component="a"
+                    href={`mailto:${contactDetails?.primary_email}`}
+                    sx={{
+                      fontFamily: 'Roboto',
+                      fontSize: '15px',
+                      fontWeight: 500,
+                      lineHeight: '18px',
+                      color: '#1A3353',
+                      textDecoration: 'none',
+                    }}
+                  >
+                    {contactDetails?.primary_email || 'No email'}
+                  </Typography>
                 </Box>
-            </div >
-        </Box >
-    )
+              </Grid>
+
+              {/* Phone - справа */}
+              <Grid item xs={12} md={6}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 2,
+                    height: '40px',
+                    borderRadius: '4px',
+                    bgcolor: '#F9FAFB',
+                    pl: 2,
+                  }}
+                >
+                  {contactDetails?.do_not_call ? (
+                    <FaPhoneSlash
+                      style={{ fontSize: '20px', color: '#d32f2f' }}
+                    />
+                  ) : (
+                    <FaPhone style={{ fontSize: '20px', color: '#4A5565' }} />
+                  )}
+                  <Typography
+                    sx={{
+                      fontFamily: 'Roboto',
+                      fontSize: '15px',
+                      fontWeight: 500,
+                      lineHeight: '18px',
+                      color: contactDetails?.do_not_call
+                        ? '#d32f2f'
+                        : '#1A3353',
+                    }}
+                  >
+                    {contactDetails?.mobile_number || 'No phone'}
+                  </Typography>
+
+                  {/*   Do Not Call - справа от номера телефона */}
+                  {contactDetails?.do_not_call && (
+                    <Box
+                      component="img"
+                      src={vectorImage}
+                      alt="Do not call"
+                      sx={{
+                        width: 24,
+                        height: 24,
+                        ml: 1,
+                        bgcolor: '#F9FAFB',
+                      }}
+                    />
+                  )}
+                  <FaTimes style={{ fontSize: '14px', color: 'white' }} />
+                </Box>
+              </Grid>
+            </Grid>
+            {/* Company, Department, Job Title Grid */}
+            <Grid container spacing={4} sx={{ mb: 4 }}>
+              {/* Company Name */}
+              <Grid item xs={12} md={4}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 1,
+                    mb: 1,
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontFamily: 'Roboto',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      color: '#6B7280',
+                    }}
+                  >
+                    Company
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 2,
+                      height: '40px',
+                      borderRadius: '4px',
+                      bgcolor: '#F9FAFB',
+                      pl: 2,
+                    }}
+                  >
+                    <FaBuilding
+                      style={{ fontSize: '16px', color: '#4A5565' }}
+                    />
+                    <Typography
+                      sx={{
+                        fontFamily: 'Roboto',
+                        fontSize: '15px',
+                        fontWeight: 500,
+                        color: '#1A3353',
+                      }}
+                    >
+                      {contactDetails?.company_name || 'Not specified'}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Grid>
+
+              {/* Department */}
+              <Grid item xs={12} md={4}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 1,
+                    mb: 1,
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontFamily: 'Roboto',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      color: '#6B7280',
+                    }}
+                  >
+                    Department
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 2,
+                      height: '40px',
+                      borderRadius: '4px',
+                      bgcolor: '#F9FAFB',
+                      pl: 2,
+                    }}
+                  >
+                    <FaBuilding
+                      style={{ fontSize: '16px', color: '#4A5565' }}
+                    />
+                    <Typography
+                      sx={{
+                        fontFamily: 'Roboto',
+                        fontSize: '15px',
+                        fontWeight: 500,
+                        color: '#1A3353',
+                      }}
+                    >
+                      {contactDetails?.department || 'Not specified'}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Grid>
+
+              {/* Job Title */}
+              <Grid item xs={12} md={4}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 1,
+                    mb: 1,
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontFamily: 'Roboto',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      color: '#6B7280',
+                    }}
+                  >
+                    Job Title
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 2,
+                      height: '40px',
+                      borderRadius: '4px',
+                      bgcolor: '#F9FAFB',
+                      pl: 2,
+                    }}
+                  >
+                    <FaBriefcase
+                      style={{ fontSize: '16px', color: '#4A5565' }}
+                    />
+                    <Typography
+                      sx={{
+                        fontFamily: 'Roboto',
+                        fontSize: '15px',
+                        fontWeight: 500,
+                        color: '#1A3353',
+                      }}
+                    >
+                      {contactDetails?.title || 'Not specified'}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Grid>
+            </Grid>
+            {/* Country */}
+            <Grid container spacing={4} sx={{ mb: 4 }}>
+              <Grid item xs={12} md={4}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 1,
+                    mb: 1,
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontFamily: 'Roboto',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      color: '#6B7280',
+                    }}
+                  >
+                    Country
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 2,
+                      height: '40px',
+                      borderRadius: '4px',
+                      bgcolor: '#F9FAFB',
+                      pl: 2,
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        fontFamily: 'Roboto',
+                        fontSize: '15px',
+                        fontWeight: 500,
+                        color: '#1A3353',
+                      }}
+                    >
+                      {contactDetails?.country_name || 'Not specified'}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Grid>
+            </Grid>{' '}
+            {/* Languages Section */}
+            <Box sx={{ mb: 4 }}>
+              <Typography
+                sx={{
+                  fontFamily: 'Roboto',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  color: '#6B7280',
+                  mb: 1,
+                }}
+              >
+                Languages
+              </Typography>
+              <Stack
+                direction="row"
+                spacing={1}
+                sx={{ flexWrap: 'wrap', gap: 1 }}
+              >
+                {contactDetails?.language ? (
+                  <LanguageChip
+                    sx={{
+                      fontFamily: 'Roboto',
+                      fontWeight: 500,
+                      fontSize: '15px',
+                      lineHeight: '18px',
+                      bgcolor: '#F9FAFB',
+                      color: '#1A3353',
+                    }}
+                  >
+                    {contactDetails.language_display || contactDetails.language}
+                  </LanguageChip>
+                ) : (
+                  <LanguageChip
+                    sx={{
+                      fontFamily: 'Roboto',
+                      fontWeight: 500,
+                      fontSize: '15px',
+                      lineHeight: '18px',
+                      bgcolor: '#F9FAFB',
+                      color: '#1A3353',
+                    }}
+                  >
+                    Not specified
+                  </LanguageChip>
+                )}
+              </Stack>
+            </Box>
+            {/* Description Section */}
+            <Box>
+              <Typography
+                sx={{
+                  fontFamily: 'Roboto',
+                  fontWeight: 500,
+                  fontSize: '14px',
+                  color: '#6B7280',
+                  mb: 1,
+                }}
+              >
+                Description
+              </Typography>
+              <Box
+                sx={{
+                  p: 2,
+                  minHeight: '70px',
+                  borderRadius: '4px',
+                  border: '1px solid #E0E0E0',
+                  bgcolor: '#F9FAFB',
+                }}
+              >
+                {contactDetails?.description ? (
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html: contactDetails.description,
+                    }}
+                  />
+                ) : (
+                  <Typography
+                    sx={{
+                      color: '#6B7280',
+                      fontStyle: 'italic',
+                    }}
+                  >
+                    No description provided
+                  </Typography>
+                )}
+              </Box>
+            </Box>
+          </Box>
+        </ContactDetailCard>
+      </Container>
+    </Box>
+  );
 }

@@ -2,6 +2,8 @@
 export { CustomButton } from './CustomButton';
 export { CustomIconButton } from './CustomIconButton';
 export { CustomFab } from './CustomFab';
+export { SuccessAlert } from './SuccessAlert';
+export { EditButton } from './EditButton';
 
 // Export types
 export type {
@@ -10,7 +12,7 @@ export type {
   CustomFabProps,
   ButtonVariant,
   ButtonSize,
-  ButtonShape
+  ButtonShape,
 } from './types';
 
 // Export styled components for advanced usage
@@ -18,5 +20,5 @@ export {
   StyledButton,
   StyledIconButton,
   StyledFab,
-  LoadingSpinner
+  LoadingSpinner,
 } from './styles';

@@ -1,0 +1,111 @@
+/* Контейнер таблицы */
+.contacts-table-container {
+  position: absolute;
+  width: 1196px;
+  left: calc(50% - 1196px / 2 + 100px);
+  top: 139px;
+  background: #fff;
+  box-shadow: 0px 2px 1px -1px rgba(0, 0, 0, 0.2),
+    0px 1px 1px rgba(0, 0, 0, 0.14), 0px 1px 3px rgba(0, 0, 0, 0.12);
+  border-radius: 4px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+/* AG Grid theme override */
+.ag-theme-alpine.contacts-ag-theme {
+  --ag-background-color: #f9fafb;
+  --ag-header-background-color: #2e4258;
+  --ag-header-foreground-color: #f3f8ff;
+  --ag-row-border-color: #d9ebfe;
+  --ag-row-hover-color: #f3f8ff;
+  --ag-odd-row-background-color: #f9fafb;
+  --ag-even-row-background-color: #f3f8ff;
+  border-radius: 20px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 16px;
+}
+
+/* Header */
+.ag-header-cell,
+.ag-header-group-cell {
+  background: #2e4258 !important;
+  color: #f3f8ff !important;
+  font-weight: 800;
+  font-size: 16px;
+  border-bottom: 1px solid #d9ebfe !important;
+  border-radius: 0 !important;
+}
+
+/* Row */
+.ag-row {
+  background: #f9fafb !important;
+  border-bottom: 1px solid #d9ebfe !important;
+  line-height: 0; /* увеличивает высоту строки */
+}
+.ag-row.even {
+  background: #f3f8ff !important;
+}
+
+/* Cell */
+.ag-cell {
+  color: #1a3353;
+  font-size: 16px;
+  font-weight: 500;
+  border: none !important;
+  padding: 10px 20px !important;
+  display: flex;
+  align-items: center;
+}
+.ag-theme-alpine .ag-cell {
+  padding-left: 2px !important;
+  padding-right: 2px !important;
+}
+
+/* Actions */
+.ag-cell[col-id='actions'] {
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+/* Checkbox */
+.ag-selection-checkbox {
+  background: #fff;
+  border: 1px solid #d9d9d9;
+  border-radius: 2px;
+  width: 16px;
+  height: 16px;
+}
+
+/* Pagination */
+.contacts-pagination {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  width: 1076px;
+  height: 32px;
+  margin: 0 auto;
+  gap: 498px;
+}
+.contacts-pagination .MuiSelect-root,
+.contacts-pagination .MuiTypography-root {
+  font-size: 14px;
+  color: #1a3353;
+  font-weight: 500;
+}
+.contacts-pagination .MuiButton-root {
+  min-width: 32px;
+  border-radius: 20px;
+  background: #fff;
+  border: 1px solid #f1f1f1;
+  color: #3b5571;
+}
+.contacts-pagination .MuiButton-contained {
+  background: #2b5075 !important;
+  color: #fff !important;
+  font-weight: 600;
+}
