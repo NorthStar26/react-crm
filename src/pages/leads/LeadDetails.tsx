@@ -66,6 +66,7 @@ type LeadResponse = {
         link: string;
         amount: string;
         probability: number;
+        lead_title:string;
         status: string;
         lead_source: string;
         notes: string;
@@ -277,12 +278,7 @@ function LeadDetails() {
     
 
     const editHandle = () => {
-        navigate('/app/leads/edit-lead', {
-            state: {
-                id: leadId,
-                leadData: leadData
-            }
-        })
+        navigate(`/app/leads/${leadId}/edit`);
     }
     
     // Handle lead deletion
@@ -586,7 +582,7 @@ function LeadDetails() {
                 isDelete={convertDialogOpen}
                 onClose={() => setConvertDialogOpen(false)}
                 onConfirm={handleConvertConfirm}
-                modalDialog={`Are you sure you want to convert ${leadData?.lead_obj?.contact?.first_name || ''} ${leadData?.lead_obj?.contact?.last_name || 'Doe'}'s lead to oppurtunity?` }
+                modalDialog={`Are you sure you want to convert ${leadData?.lead_obj?.lead_title || ''} 's lead to oppurtunity?` }
                 confirmText="Convert"
                 cancelText="Cancel"
             />
@@ -596,7 +592,7 @@ function LeadDetails() {
                 isDelete={addNoteDialogOpen}
                 onClose={() => setAddNoteDialogOpen(false)}
                 onConfirm={submitNote}
-                modalDialog={`Are you sure you want to add a note to ${leadData?.lead_obj?.contact?.first_name || ''} ${leadData?.lead_obj?.contact?.last_name || 'Doe'}'s lead?`}
+                modalDialog={`Are you sure you want to add a note to ${leadData?.lead_obj?.lead_title || ''}'s lead?`}
                 confirmText="Add"
                 cancelText="Cancel"
             />
@@ -607,7 +603,7 @@ function LeadDetails() {
                 onClose={closeDeleteLeadModal}
                 DeleteItem={confirmDeleteLead}
                 modalTitle="Delete Lead"
-                modalDialog={`Are you sure you want to delete ${leadData?.lead_obj?.contact?.first_name || ''} ${leadData?.lead_obj?.contact?.last_name || 'Doe'}'s lead? This action cannot be undone.`}
+                modalDialog={`Are you sure you want to delete ${leadData?.lead_obj?.lead_title || ''}'s lead? This action cannot be undone.`}
             />
             
             <Box>
@@ -661,7 +657,7 @@ function LeadDetails() {
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mt: 2 }}>
                             <Box>
                                 <Typography variant="h4" component="h1" sx={{ mb: 2 }}>
-                                    {capitalizeFirstLetter(leadData?.lead_obj?.contact?.first_name)} {capitalizeFirstLetter(leadData?.lead_obj?.contact?.last_name) || 'Doe'} Lead
+                                    {capitalizeFirstLetter(leadData?.lead_obj?.lead_title)} Lead
                                 </Typography>
                                 <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
                                     {/* First row: Status and Email */}

@@ -220,9 +220,12 @@ const handleNextPage = () => {
   const selectLeadList = (leadId: any) => {
     // Use the new path parameter based navigation
     navigate(`/app/leads/${leadId}`)
-    // Keep state for any additional data that might be needed
-    // navigate(`/app/leads/lead-details`, { state: { leadId, detail: true, contacts: contacts || [], status: status || [], source: source || [], companies: companies || [], tags: tags || [], users: users || [], countries: countries || [], industries: industries || [] } })
-    // navigate('/app/leads/lead-details', { state: { leadId: leadItem.id, edit: storeData, value } })
+    
+  }
+  const redirectToEditLead = (leadId: any) => {
+    // Use the new path parameter based navigation
+    navigate(`/app/leads/${leadId}/edit`)
+    
   }
 
   const deleteLead = (deleteId: any) => {
@@ -347,7 +350,7 @@ const handleNextPage = () => {
               cursor: 'pointer'
             }}
           >
-            <Box sx={{ width: '28%', pl: 1, display: 'flex', alignItems: 'center' }} onClick={() => handleSort('lead_name')}>
+            <Box sx={{ width: '28%', pl: 1, display: 'flex', alignItems: 'center' }} onClick={() => handleSort('lead_title')}>
               Lead Name {sortField === 'lead_name' && (sortOrder === 'asc' ? <FiChevronUp /> : <FiChevronDown />)}
             </Box>
             <Box sx={{ width: '14%', display: 'flex',  justifyContent: 'center', alignItems: 'center' }} onClick={() => handleSort('contact_name')}>
@@ -398,7 +401,7 @@ const handleNextPage = () => {
                 >
                   <Stack direction="row" alignItems="center">
                     <Box sx={{ width: '28%', pl: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {item?.lead_name || '--'}
+                      {item?.lead_title || '--'}
                     </Box>
                     <Box sx={{ width: '14%', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {item?.contact_name || '--'}
@@ -431,7 +434,7 @@ const handleNextPage = () => {
                       onClick={(e) => e.stopPropagation()}
                     >
                       <FaEdit
-                        onClick={() => selectLeadList(item.id)}
+                        onClick={() => redirectToEditLead(item.id)}
                         style={{ width: '18px', height: '18px', cursor: 'pointer', color: '#1A3353' }}
                       />
                       <FaTrashAlt

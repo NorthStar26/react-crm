@@ -385,7 +385,7 @@ export default function Sidebar(props: any) {
               <Route index element={<Leads />} />
               <Route path="/app/leads" element={<Leads />} />
               <Route path="/app/leads/add-leads" element={<AddLeads />} />
-              <Route path="/app/leads/edit-lead" element={<EditLead />} />
+              <Route path="/app/leads/:leadId/edit" element={<EditLead />} />
               <Route path="/app/leads/:leadId" element={<LeadDetails />} />
               {/* Keep old route for backward compatibility */}
               <Route path="/app/leads/lead-details" element={<LeadDetails />} />
