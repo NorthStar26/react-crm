@@ -8,6 +8,7 @@ import {
     TextField,
     Tooltip,
 } from '@mui/material'
+import StatusLabel from '../../components/StatusLabel'
 import { 
     FaPlus, 
     FaPaperclip, 
@@ -640,9 +641,7 @@ function LeadDetails() {
                                 <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
                                     {/* First row: Status and Email */}
                                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                        <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
-                                            {capitalizeFirstLetter(leadData?.lead_obj?.status) || 'Qualified'}
-                                        </Typography>
+                                        <StatusLabel status={leadData?.lead_obj?.status || 'Qualified'} />
                                     </Box>
                                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                         <FaEnvelope style={{ marginRight: '8px', color: '#666' }} size={14} />
