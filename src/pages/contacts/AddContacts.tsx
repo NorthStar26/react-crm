@@ -464,7 +464,7 @@ function AddContact() {
       gap: '150px',
       alignItems: 'flex-start',
       width: '100%',
-      marginBottom: '20px',
+      marginBottom: '10px', //  spacing between rows
     },
     fieldSubContainer: {
       width: '40%',
@@ -474,14 +474,16 @@ function AddContact() {
     fieldRow: {
       display: 'flex',
       flexDirection: 'row' as const,
-      alignItems: 'center',
-      marginBottom: '15px',
+      alignItems: 'flex-start',
+      minHeight: '56px',
+      marginBottom: '0px', //  initial margin bottom
     },
     fieldTitle: {
       width: '130px',
       marginRight: '15px',
       marginBottom: 0,
       textAlign: 'right' as const,
+      paddingTop: '8px',
     },
     fieldInput: {
       flex: 1,
@@ -567,7 +569,7 @@ function AddContact() {
                                 ))}
                               </Select>
                               <FormHelperText error={!!errors?.salutation?.[0]}>
-                                {errors?.salutation?.[0] || ''}
+                                {errors?.salutation?.[0] || ' '}
                               </FormHelperText>
                             </FormControl>
                           </div>
@@ -583,7 +585,7 @@ function AddContact() {
                               onChange={handleChange}
                               size="small"
                               fullWidth
-                              helperText={errors?.first_name?.[0] || ''}
+                              helperText={errors?.first_name?.[0] || ' '}
                               error={!!errors?.first_name?.[0]}
                               required
                             />
@@ -604,7 +606,7 @@ function AddContact() {
                               onChange={handleChange}
                               size="small"
                               fullWidth
-                              helperText={errors?.last_name?.[0] || ''}
+                              helperText={errors?.last_name?.[0] || ' '}
                               error={!!errors?.last_name?.[0]}
                               required
                             />
@@ -622,7 +624,7 @@ function AddContact() {
                               onChange={handleChange}
                               size="small"
                               fullWidth
-                              helperText={errors?.primary_email?.[0] || ''}
+                              helperText={errors?.primary_email?.[0] || ' '}
                               error={!!errors?.primary_email?.[0]}
                             />
                           </div>
@@ -630,7 +632,7 @@ function AddContact() {
                       </div>
                     </div>
 
-                    {/* Row 3 */}
+                    {/* Row 3 - Company и Job Title */}
                     <div style={fieldStyles.fieldContainer}>
                       <div style={fieldStyles.fieldSubContainer}>
                         <div style={fieldStyles.fieldRow}>
@@ -666,12 +668,33 @@ function AddContact() {
                                 ))}
                               </Select>
                               <FormHelperText error={!!errors?.company?.[0]}>
-                                {errors?.company?.[0] || ''}
+                                {errors?.company?.[0] || ' '}
                               </FormHelperText>
                             </FormControl>
                           </div>
                         </div>
-                        {/* Language field */}
+                      </div>
+                      <div style={fieldStyles.fieldSubContainer}>
+                        <div style={fieldStyles.fieldRow}>
+                          <div style={fieldStyles.fieldTitle}>Job Title</div>
+                          <div style={fieldStyles.fieldInput}>
+                            <TextField
+                              name="title"
+                              value={formData.title}
+                              onChange={handleChange}
+                              size="small"
+                              fullWidth
+                              helperText={errors?.title?.[0] || ' '}
+                              error={!!errors?.title?.[0]}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Row 4 - Language и Department */}
+                    <div style={fieldStyles.fieldContainer}>
+                      <div style={fieldStyles.fieldSubContainer}>
                         <div style={fieldStyles.fieldRow}>
                           <div style={fieldStyles.fieldTitle}>Language</div>
                           <div style={fieldStyles.fieldInput}>
@@ -706,7 +729,7 @@ function AddContact() {
                                 ))}
                               </Select>
                               <FormHelperText error={!!errors?.language?.[0]}>
-                                {errors?.language?.[0] || ''}
+                                {errors?.language?.[0] || ' '}
                               </FormHelperText>
                             </FormControl>
                           </div>
@@ -714,61 +737,41 @@ function AddContact() {
                       </div>
                       <div style={fieldStyles.fieldSubContainer}>
                         <div style={fieldStyles.fieldRow}>
-                          <div style={fieldStyles.fieldTitle}>Job Title</div>
+                          <div style={fieldStyles.fieldTitle}>Department</div>
                           <div style={fieldStyles.fieldInput}>
                             <TextField
-                              name="title"
-                              value={formData.title}
+                              name="department"
+                              value=""
                               onChange={handleChange}
                               size="small"
                               fullWidth
-                              helperText={errors?.title?.[0] || ''}
-                              error={!!errors?.title?.[0]}
+                              disabled
+                              placeholder="Coming soon"
+                              helperText=" "
+                              InputProps={{
+                                style: {
+                                  color: '#9e9e9e',
+                                },
+                              }}
+                              sx={{
+                                '& .MuiInputBase-input.Mui-disabled': {
+                                  WebkitTextFillColor: '#9e9e9e',
+                                  cursor: 'default',
+                                },
+                                '& .MuiOutlinedInput-root.Mui-disabled': {
+                                  '& > fieldset': {
+                                    borderColor: '#e0e0e0',
+                                  },
+                                },
+                              }}
                             />
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Row 4 */}
+                    {/* Row 5 - Phone Number и Do not Call */}
                     <div style={fieldStyles.fieldContainer}>
-                      <div style={fieldStyles.fieldSubContainer}>
-                        <div style={fieldStyles.fieldRow}>
-                          <div style={fieldStyles.fieldTitle}>Country</div>
-                          <div style={fieldStyles.fieldInput}>
-                            <FormControl fullWidth>
-                              <Select
-                                name="country"
-                                value={formData.country}
-                                onOpen={() => setCountrySelectOpen(true)}
-                                onClose={() => setCountrySelectOpen(false)}
-                                open={countrySelectOpen}
-                                IconComponent={() => (
-                                  <div className="select-icon-background">
-                                    {countrySelectOpen ? (
-                                      <FiChevronUp className="select-icon" />
-                                    ) : (
-                                      <FiChevronDown className="select-icon" />
-                                    )}
-                                  </div>
-                                )}
-                                className={'select'}
-                                onChange={handleChange}
-                                error={!!errors?.country?.[0]}
-                              >
-                                {COUNTRIES.map(([code, name]) => (
-                                  <MenuItem key={code} value={code}>
-                                    {name}
-                                  </MenuItem>
-                                ))}
-                              </Select>
-                              <FormHelperText error={!!errors?.country?.[0]}>
-                                {errors?.country?.[0] || ''}
-                              </FormHelperText>
-                            </FormControl>
-                          </div>
-                        </div>
-                      </div>
                       <div style={fieldStyles.fieldSubContainer}>
                         <div style={fieldStyles.fieldRow}>
                           <div style={fieldStyles.fieldTitle}>Phone Number</div>
@@ -789,13 +792,6 @@ function AddContact() {
                             />
                           </div>
                         </div>
-                      </div>
-                    </div>
-
-                    {/* Row 5 - Do not Call - moved under Phone Number */}
-                    <div style={fieldStyles.fieldContainer}>
-                      <div style={fieldStyles.fieldSubContainer}>
-                        {/* Empty left side */}
                       </div>
                       <div style={fieldStyles.fieldSubContainer}>
                         <div style={fieldStyles.fieldRow}>
