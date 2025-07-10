@@ -21,7 +21,8 @@ import {
   Button,
   Avatar,
   Stack,
-  CircularProgress
+  CircularProgress,
+  Alert
 } from '@mui/material'
 import { useQuill } from 'react-quilljs';
 import 'quill/dist/quill.snow.css';
@@ -33,11 +34,12 @@ import { fetchContactOptions, ContactOption } from '../../services/contactServic
 import { fetchUserOptions, UserOption } from '../../services/userService'
 import { useDebounce } from '../../hooks/useDebounce'
 import { CustomAppBar } from '../../components/CustomAppBar'
-import { FaArrowDown, FaCheckCircle, FaFileUpload, FaPalette, FaPercent, FaPlus, FaTimes, FaTimesCircle, FaUpload } from 'react-icons/fa'
+import { FaArrowDown, FaCheckCircle, FaFileUpload, FaPalette, FaPercent, FaPlus, FaTimes, FaTimesCircle, FaUpload, FaFilePdf, FaFileWord, FaFileExcel, FaFilePowerpoint, FaFileImage, FaFileArchive, FaFileAlt, FaFileCode, FaFile } from 'react-icons/fa'
 import { useForm } from '../../components/UseForm'
 import { CustomPopupIcon, CustomSelectField, RequiredTextField, StyledSelect } from '../../styles/CssStyled'
 import { FiChevronDown } from '@react-icons/all-files/fi/FiChevronDown'
 import { FiChevronUp } from '@react-icons/all-files/fi/FiChevronUp'
+import { isFileTypeAllowed, uploadFileToCloudinary, attachFileToLead } from '../../utils/uploadFileToCloudinary'
 
 // Define interfaces for mock data
 interface Contact {
@@ -93,6 +95,7 @@ type FormErrors = {
   file?: string[],
   link?: string[],
   title?: string[],
+  lead_title?: string[], // Adding lead_title for backend compatibility
 };
 interface FormData {
   // Main lead fields
@@ -106,10 +109,76 @@ interface FormData {
   tags: string[],
   company: string,
   probability: number,
-  lead_attachment: string | null,
+  lead_attachment: any[],
   file: string | null,
   link: string
 }
+
+const getFileIcon = (fileName: string) => {
+  if (!fileName) return <FaFile />;
+  
+  const extension = fileName.split('.').pop()?.toLowerCase() || '';
+  
+  switch (extension) {
+    case 'pdf':
+      return <FaFilePdf style={{ color: '#f40f02' }} />;
+    case 'doc':
+    case 'docx':
+      return <FaFileWord style={{ color: '#2b579a' }} />;
+    case 'xls':
+    case 'xlsx':
+    case 'csv':
+      return <FaFileExcel style={{ color: '#217346' }} />;
+    case 'ppt':
+    case 'pptx':
+      return <FaFilePowerpoint style={{ color: '#d24726' }} />;
+    case 'jpg':
+    case 'jpeg':
+    case 'png':
+    case 'gif':
+    case 'bmp':
+    case 'webp':
+    case 'tiff':
+    case 'svg':
+      return <FaFileImage style={{ color: '#7e4dd2' }} />;
+    case 'zip':
+    case 'rar':
+    case '7z':
+    case 'tar':
+    case 'gz':
+      return <FaFileArchive style={{ color: '#ffc107' }} />;
+    case 'txt':
+    case 'rtf':
+      return <FaFileAlt style={{ color: '#5a6268' }} />;
+    case 'html':
+    case 'css':
+    case 'js':
+    case 'jsx':
+    case 'ts':
+    case 'tsx':
+    case 'json':
+      return <FaFileCode style={{ color: '#0099e5' }} />;
+    default:
+      return <FaFile style={{ color: '#6c757d' }} />;
+  }
+};
+
+// Function to truncate long filenames
+const truncateFilename = (fileName: string, maxLength: number = 20) => {
+  if (!fileName) return '';
+  if (fileName.length <= maxLength) return fileName;
+  
+  const extension = fileName.includes('.') ? fileName.split('.').pop() : '';
+  const nameWithoutExtension = fileName.includes('.') 
+    ? fileName.substring(0, fileName.lastIndexOf('.')) 
+    : fileName;
+  
+  // Calculate how much of the name we can show
+  const availableChars = maxLength - 3; // 3 characters for ellipsis
+  const truncatedName = nameWithoutExtension.substring(0, availableChars) + '...';
+  
+  return extension ? `${truncatedName}.${extension}` : truncatedName;
+};
 
 export function AddLeads() {
   const navigate = useNavigate()
@@ -118,6 +187,18 @@ export function AddLeads() {
 
   const autocompleteRef = useRef<any>(null);
   const [error, setError] = useState(false)
+  
+  // File handling state variables
+  const [uploadedFiles, setUploadedFiles] = useState<Array<{
+    url: string;
+    originalUrl: string;
+    fileName: string;
+    fileType: string;
+  }>>([]);
+  const [fileUploading, setFileUploading] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [tempUploadedFiles, setTempUploadedFiles] = useState<File[]>([]);
+  
   const [sourceSelectOpen, setSourceSelectOpen] = useState(false)
   const [statusSelectOpen, setStatusSelectOpen] = useState(false)
   const [companySelectOpen, setCompanySelectOpen] = useState(false)
@@ -127,7 +208,7 @@ export function AddLeads() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [formData, setFormData] = useState<FormData>({
     title: '',
-    lead_attachment: null,
+    lead_attachment: [],
     amount: '',
     description: '',
     assigned_to: '', // Single string
@@ -359,6 +440,7 @@ export function AddLeads() {
           setErrors(prev => {
             const newErrors = { ...prev };
             delete newErrors.title;
+            delete newErrors.lead_title; // Also clear the lead_title error
             return newErrors;
           });
         }
@@ -366,12 +448,82 @@ export function AddLeads() {
     }
   };
 
+  // Handle file upload button click
+  const handleFileUploadClick = () => {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    // Accept all the file types we support
+    fileInput.accept = '.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.csv,.rtf,.zip,.rar,.7z,.tar,.gz,.psd,.ai,.eps,.ttf,.otf,.woff,.woff2,.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.ico,.heic,.svg,.avif,.jfif';
+    
+    fileInput.addEventListener('change', async (event: any) => {
+      const files = event.target.files;
+      if (files && files[0]) {
+        const file = files[0];
+        
+        // Check if file type is allowed
+        if (!isFileTypeAllowed(file)) {
+          setFileError('This file type is not supported. Please select a different file.');
+          return;
+        }
+        
+        // Show loading indicator
+        setFileUploading(true);
+        setFileError(null);
+        
+        try {
+          // Add the file to temp uploaded files for UI feedback
+          setTempUploadedFiles(prev => [...prev, file]);
+          
+          // Upload file to Cloudinary (but don't attach yet)
+          const result = await uploadFileToCloudinary(file);
+          
+          if (result.success) {
+            // Store the uploaded file info
+            setUploadedFiles(prev => [...prev, {
+              url: result.url,
+              originalUrl: result.originalUrl || result.url,
+              fileName: file.name,
+              fileType: file.type
+            }]);
+            
+            // Remove from temp files
+            setTempUploadedFiles(prev => prev.filter(f => f.name !== file.name));
+          } else {
+            setFileError(`Failed to upload file: ${result.error}`);
+            
+            // Remove from temp files if upload fails
+            setTempUploadedFiles(prev => prev.filter(f => f.name !== file.name));
+          }
+        } catch (error) {
+          console.error('Error uploading file:', error);
+          setFileError('An error occurred while uploading the file.');
+          
+          // Remove from temp files if upload fails
+          setTempUploadedFiles(prev => prev.filter(f => f.name !== file.name));
+        } finally {
+          // Hide loading indicator
+          setFileUploading(false);
+        }
+      }
+    });
+    
+    fileInput.click();
+  };
+
+  // Remove file from uploaded files
+  const removeUploadedFile = (index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+  
+  // This is kept for compatibility with existing code, but we'll use the new handleFileUploadClick instead
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    // This is now deprecated in favor of our new upload system
     const file = event.target.files?.[0] || null;
     if (file) {
+      // Instead of using this function, we now use handleFileUploadClick
+      // but keeping this for backward compatibility
       const reader = new FileReader();
       reader.onload = () => {
-        // setFormData({ ...formData, lead_attachment: reader.result as string });
         setFormData({ ...formData, file: reader.result as string });
       };
       reader.readAsDataURL(file);
@@ -400,6 +552,7 @@ export function AddLeads() {
     // Check required fields
     if (!formData.title || formData.title.trim() === '') {
       newErrors.title = ['Lead Title is required'];
+      newErrors.lead_title = ['Lead Title is required']; // Add error for lead_title as well for API validation
       hasErrors = true;
     }
     
@@ -436,8 +589,7 @@ export function AddLeads() {
       : '';
     
     const data = {
-      title: formData.title,
-      lead_attachment: formData.file,
+      lead_title: formData.title, // Changed from title to lead_title to match backend API
       amount: formattedAmount !== '' ? Number(formattedAmount) : null,
       description: formData.description,
       // The API expects a single UUID string for assigned_to
@@ -461,26 +613,63 @@ export function AddLeads() {
     fetchData(`${LeadUrl}/`, 'POST', JSON.stringify(data), Header)
       .then((res: any) => {
         console.log('Lead created successfully:', res);
+        
         if (!res.error) {
-          resetForm()
-          navigate('/app/leads')
-        }
-        if (res.error) {
-          setError(true)
-          setErrors(res?.errors)
+          const newLeadId = res.id; // Get the new lead ID
+          
+          // If we have uploaded files, attach them to the newly created lead
+          if (uploadedFiles.length > 0) {
+            // Show a loading message or indicator
+            setFileUploading(true);
+            
+            // Attach each uploaded file to the new lead
+            const attachPromises = uploadedFiles.map(file => {
+              return attachFileToLead(
+                newLeadId,
+                file.originalUrl,
+                file.fileName,
+                file.fileType,
+                Header
+              );
+            });
+            
+            // Wait for all attachment operations to complete
+            Promise.all(attachPromises)
+              .then(() => {
+                // Navigate to leads page after all files are attached
+                resetForm();
+                navigate('/app/leads');
+              })
+              .catch(err => {
+                console.error('Error attaching files to lead:', err);
+                // Still navigate to leads page even if some attachments fail
+                resetForm();
+                navigate('/app/leads');
+              })
+              .finally(() => {
+                setFileUploading(false);
+              });
+          } else {
+            // No files to attach, just navigate
+            resetForm();
+            navigate('/app/leads');
+          }
+        } else {
+          setError(true);
+          setErrors(res?.errors);
         }
       })
       .catch((error) => {
         console.error('Error creating lead:', error);
         setError(true);
-      })
+      });
   };
 
   const resetForm = () => {
     setFormData({
       title: '',
-      lead_attachment: null,
-      amount: '', // Empty string for initial state
+      lead_attachment: [],
+      amount: '',
       description: '',
       assigned_to: '',
       contact: '',
@@ -501,6 +690,18 @@ export function AddLeads() {
     setSelectedUsers([]);
     setUserSearchTerm('');
     setUserOptions([]);
+    
+    // Clear file upload states
+    setUploadedFiles([]);
+    setTempUploadedFiles([]);
+    setFileError(null);
+    setFileUploading(false);
+    
+    // Reset Quill editor
+    if (quill && initialContentRef.current !== null) {
+      quill.clipboard.dangerouslyPasteHTML('');
+    }
+    
     // No longer need to reset selectedAssignTo and selectedTags as we're using direct state in formData
     // if (autocompleteRef.current) {
     //   console.log(autocompleteRef.current,'ccc')
@@ -686,8 +887,7 @@ export function AddLeads() {
                                   ),
                                 }}
                               />
-                            )}
-                            renderOption={(props, option) => (
+                            )}renderOption={(props, option) => (
                               <li {...props}>
                                 <Stack direction="row" spacing={1} alignItems="center">
                                   <Avatar sx={{ bgcolor: '#284871', width: 28, height: 28, fontSize: 14 }}>
@@ -754,8 +954,7 @@ export function AddLeads() {
                                   ),
                                 }}
                               />
-                            )}
-                            renderOption={(props, option) => (
+                            )}renderOption={(props, option) => (
                               <li {...props}>
                                 <Stack direction="row" spacing={1} alignItems="center">
                                   <Avatar sx={{ bgcolor: '#284871', width: 28, height: 28, fontSize: 14 }}>
@@ -906,41 +1105,140 @@ export function AddLeads() {
                       </div>
                       
                     </div>
-                    <div className='fieldContainer2'><div className='fieldSubContainer'>
-                        <div className='fieldTitle'>Lead Attachment</div>
-                        <TextField
-                          name='lead_attachment'
-                          value={formData.lead_attachment}
-                          InputProps={{
-                            endAdornment: (
-                              <InputAdornment position='end'>
-                                <IconButton disableFocusRipple
-                                  disableTouchRipple
-                                  sx={{ width: '40px', height: '40px', backgroundColor: 'whitesmoke', borderRadius: '0px', mr: '-13px', cursor: 'pointer' }}
-                                >
-                                  <label htmlFor='icon-button-file'>
-                                    <input
-                                      hidden
-                                      accept='image/*'
-                                      id='icon-button-file'
-                                      type='file'
-                                      name='account_attachment'
-                                      onChange={(e: any) => {
-                                        //  handleChange(e); 
-                                        handleFileChange(e)
+                    <div className='fieldContainer2'>
+                      <div className='fieldSubContainer' >
+                        <div className='fieldTitle'>
+                          Attachments
+                        </div>
+                        
+                        {fileError && (
+                          <Alert severity="error" sx={{ mb: 2 }}>
+                            {fileError}
+                          </Alert>
+                        )}
+                        
+                        <Box sx={{display:'flex', flexDirection: 'column', gap:'5px'}}>
+                          <Box sx={{ 
+                            border: '1px solid #e0e0e0',
+                            borderRadius: '4px',
+                            height: uploadedFiles.length > 0 || tempUploadedFiles.length > 0 ? 'auto' : '38px',
+                            minHeight: uploadedFiles.length > 0 || tempUploadedFiles.length > 0 ? '100px' : '38px',
+                            maxHeight: '150px',
+                            overflowY: 'auto',
+                            backgroundColor: 'white',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            p: uploadedFiles.length > 0 || tempUploadedFiles.length > 0 ? 1 : 0
+                          }}>
+                            {/* Show uploaded files */}
+                            {(uploadedFiles.length > 0 || tempUploadedFiles.length > 0) ? (
+                              <Box sx={{ p: 1 }}>
+                                {/* Show successfully uploaded files */}
+                                {uploadedFiles.map((file, index) => (
+                                  <Box 
+                                    key={`file-${index}`}
+                                    sx={{
+                                      p: 0.5,
+                                      mb: 0.5,
+                                      display: 'flex',
+                                      justifyContent: 'space-between',
+                                      alignItems: 'center',
+                                      borderRadius: '4px',
+                                      border: '1px solid #e0e0e0',
+                                      backgroundColor: '#f9f9f9',
+                                      '&:hover': {
+                                        backgroundColor: '#f0f0f0'
+                                      }
+                                    }}
+                                  >
+                                    <Box sx={{ display: 'flex', alignItems: 'center', flex: 1, overflow: 'hidden' }}>
+                                      <Avatar 
+                                        sx={{ 
+                                          mr: 1, 
+                                          width: 22, 
+                                          height: 22, 
+                                          bgcolor: 'action.hover',
+                                          fontSize: '0.75rem'
+                                        }}
+                                      >
+                                        {getFileIcon(file.fileName)}
+                                      </Avatar>
+                                      <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
+                                        {truncateFilename(file.fileName, 25)}
+                                      </Typography>
+                                    </Box>
+                                    <IconButton
+                                      size="small"
+                                      color="error"
+                                      onClick={() => removeUploadedFile(index)}
+                                      disabled={fileUploading}
+                                      sx={{ 
+                                        p: '2px', 
+                                        mr: 0.5,
+                                        opacity: 0.7,
+                                        '&:hover': { opacity: 1 }
                                       }}
-                                    />
-                                    <FaUpload color='primary' style={{ fontSize: '15px', cursor: 'pointer' }} />
-                                  </label>
-                                </IconButton>
-                              </InputAdornment>
-                            )
-                          }}
-                          sx={{ width: '70%' }}
-                          size='small'
-                          helperText={errors?.lead_attachment?.[0] ? errors?.lead_attachment[0] : ''}
-                          error={!!errors?.lead_attachment?.[0]}
-                        />
+                                    >
+                                      <FaTimes size={12} />
+                                    </IconButton>
+                                  </Box>
+                                ))}
+                                
+                                {/* Show temporary files being uploaded */}
+                                {tempUploadedFiles.map((file, index) => (
+                                  <Box 
+                                    key={`temp-${index}`}
+                                    sx={{
+                                      p: 0.5,
+                                      mb: 0.5,
+                                      display: 'flex',
+                                      justifyContent: 'space-between',
+                                      alignItems: 'center',
+                                      borderRadius: '4px',
+                                      border: '1px solid #bbdefb',
+                                      backgroundColor: '#e3f2fd',
+                                    }}
+                                  >
+                                    <Box sx={{ display: 'flex', alignItems: 'center', flex: 1, overflow: 'hidden' }}>
+                                      <Avatar sx={{ mr: 1, width: 22, height: 22, bgcolor: '#bbdefb', fontSize: '0.75rem' }}>
+                                        {getFileIcon(file.name)}
+                                      </Avatar>
+                                      <Typography variant="body2" sx={{ fontStyle: 'italic', fontSize: '0.875rem' }}>
+                                        {truncateFilename(file.name, 25)} (uploading...)
+                                      </Typography>
+                                    </Box>
+                                    <CircularProgress size={14} sx={{ mr: 0.5 }} />
+                                  </Box>
+                                ))}
+                              </Box>
+                            ) : (
+                              <Box sx={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'center', 
+                                height: '100%',
+                                color: 'text.secondary',
+                                fontSize: '0.875rem'
+                              }}>
+                                No attachments
+                              </Box>
+                            )}
+                          </Box>
+                          
+                          <Box sx={{width: '100%', display: 'flex', mt: 1, justifyContent:'space-between', alignItems: 'center'}}>
+                            <Button 
+                              size="small" 
+                              color="primary" 
+                              variant="contained"
+                              startIcon={fileUploading ? <CircularProgress size={16} /> : <FaFileUpload />}
+                              onClick={handleFileUploadClick}
+                              disabled={fileUploading}
+                              sx={{ py: 0.5 }}
+                            >
+                              Upload File
+                            </Button>
+                          </Box>
+                        </Box>
                       </div>
                       <div className='fieldSubContainer'>
                         <div className='fieldTitle'>Link</div>
