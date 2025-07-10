@@ -71,47 +71,11 @@ const MOCK_SOURCES: [string, string][] = [
   ['referral', 'Referral']
 ];
 
-// const useStyles = makeStyles({
-//   btnIcon: {
-//     height: '14px',
-//     color: '#5B5C63'
-//   },
-//   breadcrumbs: {
-//     color: 'white'
-//   },
-//   fields: {
-//     height: '5px'
-//   },
-//   chipStyle: {
-//     backgroundColor: 'red'
-//   },
-//   icon: {
-//     '&.MuiChip-deleteIcon': {
-//       color: 'darkgray'
-//     }
-//   }
-// })
 
-// const textFieldStyled = makeStyles(() => ({
-//   root: {
-//     borderLeft: '2px solid red',
-//     height: '35px'
-//   },
-//   fieldHeight: {
-//     height: '35px'
-//   }
-// }))
-
-// function getStyles (name, personName, theme) {
-//   return {
-//     fontWeight:
-//       theme.typography.fontWeightRegular
-//   }
-// }
 
 type FormErrors = {
   lead_attachment?: string[],
-  opportunity_amount?: string[],
+  amount?: string[],
   description?: string[],
   assigned_to?: string[],
   contacts?: string[],
@@ -127,7 +91,7 @@ type FormErrors = {
 interface FormData {
   // Main lead fields
   title: string,
-  opportunity_amount: number | '', // Using number or empty string to handle initial state
+  amount: number | '', // Using number or empty string to handle initial state
   description: string,
   assigned_to: string, // Single UUID string, not an array
   contact: string, // Singular, not plural - single UUID string
@@ -158,7 +122,7 @@ export function AddLeads() {
   const [formData, setFormData] = useState<FormData>({
     title: '',
     lead_attachment: null,
-    opportunity_amount: '',
+    amount: '',
     description: '',
     assigned_to: '', // Single string
     contact: '', // Singular field, single string
@@ -347,7 +311,7 @@ export function AddLeads() {
     else if (type === 'checkbox') {
       setFormData({ ...formData, [name]: checked });
     }
-    else if (name === 'opportunity_amount') {
+    else if (name === 'amount') {
       // Only allow numbers and decimal point
       // Remove any non-numeric characters except decimal point
       // Also ensure only one decimal point is allowed
@@ -404,15 +368,15 @@ export function AddLeads() {
     console.log('Selected users:', selectedUsers);
     // console.log('Form data:', formData.lead_attachment,'sfs', formData.file);
   // Prepare data according to Swagger example
-  // Format opportunity_amount to 2 decimal places if it exists
-  const formattedAmount = formData.opportunity_amount !== '' 
-    ? Number(formData.opportunity_amount).toFixed(2) 
+  // Format amount to 2 decimal places if it exists
+  const formattedAmount = formData.amount !== '' 
+    ? Number(formData.amount).toFixed(2) 
     : '';
     
   const data = {
     title: formData.title,
     lead_attachment: formData.file,
-    opportunity_amount: formattedAmount !== '' ? Number(formattedAmount) : null,
+    amount: formattedAmount !== '' ? Number(formattedAmount) : null,
     description: formData.description,
     // The API expects a single UUID string for assigned_to
     assigned_to: formData.assigned_to || null, 
@@ -454,7 +418,7 @@ export function AddLeads() {
     setFormData({
       title: '',
       lead_attachment: null,
-      opportunity_amount: '', // Empty string for initial state
+      amount: '', // Empty string for initial state
       description: '',
       assigned_to: '',
       contact: '',
@@ -782,8 +746,8 @@ export function AddLeads() {
                     <div className='fieldContainer2'><div className='fieldSubContainer'>
                         <div className='fieldTitle'>Amount</div>
                         <TextField
-                          name='opportunity_amount'
-                          value={formData.opportunity_amount}
+                          name='amount'
+                          value={formData.amount}
                           onChange={handleChange}
                           style={{ width: '70%' }}
                           size='small'
@@ -797,7 +761,7 @@ export function AddLeads() {
                             const isAllowedKey = allowedKeys.includes(e.key);
                             
                             // Prevent more than one decimal point
-                            if (isDecimal && String(formData.opportunity_amount).includes('.')) {
+                            if (isDecimal && String(formData.amount).includes('.')) {
                               e.preventDefault();
                               return;
                             }
@@ -808,8 +772,8 @@ export function AddLeads() {
                             }
                           }}
                           
-                          helperText={errors?.opportunity_amount?.[0] ? errors?.opportunity_amount[0] : ''}
-                          error={!!errors?.opportunity_amount?.[0]}
+                          helperText={errors?.amount?.[0] ? errors?.amount[0] : ''}
+                          error={!!errors?.amount?.[0]}
                         />
                       </div>
                       
