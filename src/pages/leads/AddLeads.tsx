@@ -310,6 +310,15 @@ export function AddLeads() {
     // const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, files, type, checked, id } = e.target;
     
+    // Clear error message for the field being changed
+    if (errors[name as keyof FormErrors]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name as keyof FormErrors];
+        return newErrors;
+      });
+    }
+    
     if (type === 'file') {
       setFormData({ ...formData, [name]: e.target.files?.[0] || null });
     }
@@ -342,6 +351,17 @@ export function AddLeads() {
     }
     else {
       setFormData({ ...formData, [name]: value });
+      
+      // For title field, validate dynamically
+      if (name === 'title') {
+        if (value.trim() !== '') {
+          setErrors(prev => {
+            const newErrors = { ...prev };
+            delete newErrors.title;
+            return newErrors;
+          });
+        }
+      }
     }
   };
 
@@ -371,33 +391,69 @@ export function AddLeads() {
   }
   const submitForm = () => {
     console.log('Selected users:', selectedUsers);
-    // console.log('Form data:', formData.lead_attachment,'sfs', formData.file);
-  // Prepare data according to Swagger example
-  // Format amount to 2 decimal places if it exists
-  const formattedAmount = formData.amount !== '' 
-    ? Number(formData.amount).toFixed(2) 
-    : '';
     
-  const data = {
-    title: formData.title,
-    lead_attachment: formData.file,
-    amount: formattedAmount !== '' ? Number(formattedAmount) : null,
-    description: formData.description,
-    // The API expects a single UUID string for assigned_to
-    assigned_to: formData.assigned_to || null, 
-    // The field should be contact (singular), not contacts (plural)
-    contact: formData.contact || null,
-    status: formData.status,
-    source: formData.source, // In Swagger this is lead_source but we'll stick with source for now
-    tags: formData.tags,
-    company: formData.company,
-    // Ensure probability is a number between 0 and 100
-    probability: Number(formData.probability),
-    link: formData.link
-  }
-  
-  // Log the final data being sent to the API
-  console.log('Final data being sent to API:', JSON.stringify(data, null, 2));
+    // Validate required fields
+    const newErrors: FormErrors = {};
+    let hasErrors = false;
+    
+    // Check required fields
+    if (!formData.title || formData.title.trim() === '') {
+      newErrors.title = ['Lead Title is required'];
+      hasErrors = true;
+    }
+    
+    if (!formData.company) {
+      newErrors.company = ['Company is required'];
+      hasErrors = true;
+    }
+    
+    if (!formData.contact) {
+      newErrors.contacts = ['Contact is required'];
+      hasErrors = true;
+    }
+    
+    if (!formData.assigned_to) {
+      newErrors.assigned_to = ['Assignment is required'];
+      hasErrors = true;
+    }
+    
+    if (!formData.description || formData.description === '<p><br></p>') {
+      newErrors.description = ['Description is required'];
+      hasErrors = true;
+    }
+    
+    // If validation fails, update errors and stop form submission
+    if (hasErrors) {
+      setError(true);
+      setErrors(newErrors);
+      return;
+    }
+    
+    // Format amount to 2 decimal places if it exists
+    const formattedAmount = formData.amount !== '' 
+      ? Number(formData.amount).toFixed(2) 
+      : '';
+    
+    const data = {
+      title: formData.title,
+      lead_attachment: formData.file,
+      amount: formattedAmount !== '' ? Number(formattedAmount) : null,
+      description: formData.description,
+      // The API expects a single UUID string for assigned_to
+      assigned_to: formData.assigned_to,
+      // The field should be contact (singular), not contacts (plural)
+      contact: formData.contact,
+      status: formData.status,
+      source: formData.source, // In Swagger this is lead_source but we'll stick with source for now
+      tags: formData.tags,
+      company: formData.company,
+      // Ensure probability is a number between 0 and 100
+      probability: Number(formData.probability),
+      link: formData.link
+    }
+    
+    // Log the final data being sent to the API
+    console.log('Final data being sent to API:', JSON.stringify(data, null, 2));
     console.log('Submitting assigned_to:', data.assigned_to);
 
     // Making a direct POST request to LeadUrl, independent from other pages
@@ -484,7 +540,7 @@ export function AddLeads() {
                   >
                     <div className='fieldContainer2'>
                       <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>Lead Title</div>
+                        <div className='fieldTitle'>Lead Title <span style={{ color: 'red' }}>*</span></div>
                         <TextField
                           name='title'
                           value={formData.title}
@@ -493,10 +549,11 @@ export function AddLeads() {
                           size='small'
                           helperText={errors?.title?.[0] ? errors?.title[0] : ''}
                           error={!!errors?.title?.[0]}
+                          required
                         />
                       </div>
                       <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>Assign To</div>
+                        <div className='fieldTitle'>Assign To <span style={{ color: 'red' }}>*</span></div>
                         <FormControl sx={{ width: '70%' }}>
                           <Autocomplete
                             // Remove multiple selection since API expects a single user
@@ -511,6 +568,16 @@ export function AddLeads() {
                                 ...formData,
                                 assigned_to: newValue ? newValue.id : ''
                               });
+                              
+                              // Clear error message if a valid selection is made
+                              if (newValue && errors.assigned_to) {
+                                setErrors(prev => {
+                                  const newErrors = { ...prev };
+                                  delete newErrors.assigned_to;
+                                  return newErrors;
+                                });
+                              }
+                              
                               console.log('Selected user for assignment:', newValue ? {
                                 id: newValue.id,
                                 user_details_id: newValue.user_details?.id
@@ -574,7 +641,7 @@ export function AddLeads() {
                     </div>
                     <div className='fieldContainer2'>
                       <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>Company</div>
+                        <div className='fieldTitle'>Company <span style={{ color: 'red' }}>*</span></div>
                         <FormControl sx={{ width: '70%' }}>
                           <Autocomplete
                             id="company-autocomplete"
@@ -587,6 +654,15 @@ export function AddLeads() {
                                 ...formData,
                                 company: newValue ? newValue.id : ''
                               });
+                              
+                              // Clear error message if a valid selection is made
+                              if (newValue && errors.company) {
+                                setErrors(prev => {
+                                  const newErrors = { ...prev };
+                                  delete newErrors.company;
+                                  return newErrors;
+                                });
+                              }
                             }}
                             onInputChange={(event, newInputValue) => {
                               setCompanySearchTerm(newInputValue);
@@ -631,7 +707,7 @@ export function AddLeads() {
                         </FormControl>
                       </div>
                       <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>Contact</div>
+                        <div className='fieldTitle'>Contact <span style={{ color: 'red' }}>*</span></div>
                         <FormControl sx={{ width: '70%' }}>
                           <Autocomplete
                             // Remove multiple selection since API expects a single contact
@@ -645,6 +721,15 @@ export function AddLeads() {
                                 ...formData,
                                 contact: newValue ? newValue.id : ''
                               });
+                              
+                              // Clear error message if a valid selection is made
+                              if (newValue && errors.contacts) {
+                                setErrors(prev => {
+                                  const newErrors = { ...prev };
+                                  delete newErrors.contacts;
+                                  return newErrors;
+                                });
+                              }
                             }}
                             onInputChange={(event, newInputValue) => {
                               setContactSearchTerm(newInputValue);
@@ -921,9 +1006,17 @@ export function AddLeads() {
                     autoComplete='off'
                   >
                     <div className='DescriptionDetail'>
-                      <div className='descriptionTitle'>Description</div>
+                      <div className='descriptionTitle'>Description <span style={{ color: 'red' }}>*</span></div>
                       <div style={{ width: '100%', marginBottom: '3%' }}>
-                        <div ref={quillRef} />
+                        <div 
+                          ref={quillRef} 
+                          style={{ 
+                            border: errors?.description ? '1px solid red' : undefined 
+                          }} 
+                        />
+                        {errors?.description && (
+                          <FormHelperText error>{errors.description[0]}</FormHelperText>
+                        )}
                       </div>
                     </div>
                     <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', mt: 1.5 }}>
@@ -939,7 +1032,14 @@ export function AddLeads() {
                       </Button>
                       <Button
                         className='header-button'
-                        onClick={() => setFormData({ ...formData, description: quillRef.current.firstChild.innerHTML })}
+                        onClick={() => {
+                          const content = quillRef.current.firstChild.innerHTML;
+                          setFormData({ ...formData, description: content });
+                          // Clear description error if content is now valid
+                          if (content && content !== '<p><br></p>') {
+                            setErrors(prev => ({...prev, description: undefined}));
+                          }
+                        }}
                         variant='contained'
                         size='small'
                         startIcon={<FaCheckCircle style={{ fill: 'white', width: '16px', marginLeft: '2px' }} />}
