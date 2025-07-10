@@ -858,8 +858,17 @@ export function AddLeads() {
                               setSelectedCompany(newValue);
                               setFormData({
                                 ...formData,
-                                company: newValue ? newValue.id : ''
+                                company: newValue ? newValue.id : '',
+                                // Clear contact when company is cleared
+                                contact: newValue ? formData.contact : ''
                               });
+                              
+                              // When company is cleared, also clear contact-related states
+                              if (!newValue) {
+                                setSelectedContacts([]);
+                                setContactSearchTerm('');
+                                setContactOptions([]);
+                              }
                               
                               // Clear error message if a valid selection is made
                               if (newValue && errors.company) {
