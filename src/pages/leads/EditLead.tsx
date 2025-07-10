@@ -1004,17 +1004,8 @@ export function EditLead() {
   return (
     <Box sx={{ mt: '60px' }}>
       <CustomAppBar backbtnHandle={backbtnHandle} module={module} backBtn={backBtn} crntPage={crntPage} onCancel={onCancel} onSubmit={handleSubmit} />
-      {/* Success Message */}
-      <Snackbar 
-        open={!!successMessage} 
-        autoHideDuration={2000} 
-        onClose={() => setSuccessMessage('')}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-      >
-        <Alert severity="success" variant="filled" sx={{ width: '100%' }}>
-          {successMessage}
-        </Alert>
-      </Snackbar>
+      
+      
       {/* Edit Mode Toggle */}
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mt: 18, mx: 3 }}>
         {/* Prominent Edit Button */}
@@ -1502,8 +1493,7 @@ export function EditLead() {
                             {fileError}
                           </Alert>
                         )}
-                        
-                        <Box sx={{ 
+                        <Box sx={{display:'flex',flexDirection: 'column',gap:'5px'}}><Box sx={{ 
                           border: '1px solid #e0e0e0',
                           borderRadius: '4px',
                           height: formData.lead_attachment && formData.lead_attachment.length > 0 ? 'auto' : '38px',
@@ -1633,7 +1623,8 @@ export function EditLead() {
                             </Box>
                           )}
                           
-                        </Box><Tooltip title={isEditable ? "Upload a new file attachment" : "Enable edit mode to upload files"}>
+                        </Box><Box sx={{width: '100%', display: 'flex',  mt: 1,justifyContent:'space-between', alignItems: 'center'}}>
+                          <Tooltip title={isEditable ? "Upload a new file attachment" : "Enable edit mode to upload files"}>
                             <span>
                               <Button 
                                 size="small" 
@@ -1652,6 +1643,11 @@ export function EditLead() {
                               </Button>
                             </span>
                           </Tooltip>
+                        </Box>
+                        
+                          </Box>
+                        
+                        
                         
                          
                       </div>
