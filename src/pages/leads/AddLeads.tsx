@@ -85,7 +85,8 @@ type FormErrors = {
   assigned_to?: string[],
   contacts?: string[],
   status?: string[],
-  source?: string[],
+  lead_source?: string[], // Updated to match API field name
+  source?: string[], // Keep for backward compatibility
   tags?: string[],
   company?: string[],
   probability?: number[],
@@ -444,7 +445,7 @@ export function AddLeads() {
       // The field should be contact (singular), not contacts (plural)
       contact: formData.contact,
       status: formData.status,
-      source: formData.source, // In Swagger this is lead_source but we'll stick with source for now
+      lead_source: formData.source, // Swagger API expects 'lead_source' not 'source'
       tags: formData.tags,
       company: formData.company,
       // Ensure probability is a number between 0 and 100
@@ -792,7 +793,7 @@ export function AddLeads() {
                             )}
                             className={'select'}
                             onChange={handleChange}
-                            error={!!errors?.source?.[0]}
+                            error={!!errors?.lead_source?.[0] || !!errors?.source?.[0]}
                           >
                             {MOCK_SOURCES.map((option: any) => (
                               <MenuItem key={option[0]} value={option[0]}>
@@ -800,7 +801,7 @@ export function AddLeads() {
                               </MenuItem>
                             ))}
                           </Select>
-                          <FormHelperText>{errors?.source?.[0] ? errors?.source[0] : ''}</FormHelperText>
+                          <FormHelperText>{errors?.lead_source?.[0] || errors?.source?.[0] || ''}</FormHelperText>
                         </FormControl>
                       </div>                      <div className='fieldSubContainer'>
                         <div className='fieldTitle'>Tags</div>
