@@ -334,18 +334,22 @@ export function AddLeads() {
   
   // Reset contact when company changes
   useEffect(() => {
-    const prevCompany = formData.company;
-    
-    // If company has changed, clear selected contact
-    if (prevCompany && prevCompany !== formData.company) {
-      setFormData(prev => ({
-        ...prev,
-        contact: ''
-      }));
-      setSelectedContacts([]);
-      setContactSearchTerm('');
+    // Watch for changes to the selected company
+    if (selectedCompany) {
+      // If current company ID is different from the one in formData
+      if (selectedCompany.id !== formData.company) {
+        // Reset contact-related fields
+        setFormData(prev => ({
+          ...prev,
+          contact: '', // Clear contact ID
+          company: selectedCompany.id // Update company ID
+        }));
+        setSelectedContacts([]); // Clear selected contacts
+        setContactSearchTerm(''); // Clear search term
+        setContactOptions([]); // Clear contact options
+      }
     }
-  }, [formData.company]);
+  }, [selectedCompany]);
   
   // Load users when the component mounts or search term changes
   useEffect(() => {
@@ -955,7 +959,7 @@ export function AddLeads() {
                                 }}
                               />
                             )}renderOption={(props, option) => (
-                              <li {...props}>
+                             <li  {...props}>
                                 <Stack direction="row" spacing={1} alignItems="center">
                                   <Avatar sx={{ bgcolor: '#284871', width: 28, height: 28, fontSize: 14 }}>
                                     {option.first_name?.charAt(0).toUpperCase() || 'C'}

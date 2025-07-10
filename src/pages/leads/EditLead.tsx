@@ -1222,9 +1222,21 @@ export function EditLead() {
                               />
                             )}
                             renderOption={(props, option) => (
-                              <li>
-                                
-                              </li>
+                             <li {...props}>
+                                                             <Stack direction="row" spacing={1} alignItems="center">
+                                                               <Avatar sx={{ bgcolor: '#284871', width: 28, height: 28, fontSize: 14 }}>
+                                                                 {option.name?.charAt(0).toUpperCase() || 'C'}
+                                                               </Avatar>
+                                                               <div>
+                                                                 <Typography variant="body1">{option.name}</Typography>
+                                                                 {option.email && (
+                                                                   <Typography variant="caption" color="text.secondary">
+                                                                     {option.email}
+                                                                   </Typography>
+                                                                 )}
+                                                               </div>
+                                                             </Stack>
+                                                           </li>
                             )}
                             disabled={!isEditable}
                           />
@@ -1282,9 +1294,21 @@ export function EditLead() {
                               />
                             )}
                             renderOption={(props, option) => (
-                              <li {...props}>
-                                {option.first_name} {option.last_name}
-                              </li>
+                              <li  {...props}>
+                                                              <Stack direction="row" spacing={1} alignItems="center">
+                                                                <Avatar sx={{ bgcolor: '#284871', width: 28, height: 28, fontSize: 14 }}>
+                                                                  {option.first_name?.charAt(0).toUpperCase() || 'C'}
+                                                                </Avatar>
+                                                                <div>
+                                                                  <Typography variant="body1">{`${option.first_name} ${option.last_name}`.trim()}</Typography>
+                                                                  {option.primary_email && (
+                                                                    <Typography variant="caption" color="text.secondary">
+                                                                      {option.primary_email}
+                                                                    </Typography>
+                                                                  )}
+                                                                </div>
+                                                              </Stack>
+                                                            </li>
                             )}
                             disabled={!isEditable || !formData.company}                          />
                         </FormControl>
