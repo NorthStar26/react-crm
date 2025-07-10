@@ -1,124 +1,253 @@
-import React, { ChangeEvent, useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
-    Card,
-    Link,
     Button,
     Avatar,
-    Divider,
-    TextField,
     Box,
-    MenuItem,
-    Snackbar,
-    Alert,
-    Stack,
-    List,
-    ListItem,
-    ListItemAvatar,
-    ListItemText,
     Typography,
-    IconButton,
-    Grid,
-    Popover,
-    ListItemIcon
+    Link,
+    TextField,
+    Tooltip,
+    CircularProgress,
 } from '@mui/material'
-import { FaEllipsisV, FaPaperclip, FaPlus, FaRegAddressCard, FaStar, FaTimes } from 'react-icons/fa'
+import StatusLabel from '../../components/StatusLabel'
+import { 
+    FaPlus, 
+    FaPaperclip, 
+    FaExchangeAlt, 
+    FaSyncAlt, 
+    FaPen, 
+    FaFilePdf, 
+    FaFileWord, 
+    FaFileExcel, 
+    FaFilePowerpoint, 
+    FaFileImage, 
+    FaFileArchive, 
+    FaFile,
+    FaFileAlt,
+    FaFileCode,
+    FaTimes,
+    FaEnvelope,
+    FaBuilding,
+    FaIdBadge
+} from 'react-icons/fa'
+import { DeleteModal } from '../../components/DeleteModal'
+import { SuccessAlert, AlertType } from '../../components/Button/SuccessAlert'
+import { DialogModal } from '../../components/DialogModal'
 import { CustomAppBar } from '../../components/CustomAppBar'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { LeadUrl } from '../../services/ApiUrls'
 import { fetchData } from '../../components/FetchData'
-import { Label } from '../../components/Label'
-import { AntSwitch, CustomInputBoxWrapper, CustomSelectField, CustomSelectField1, StyledListItemButton, StyledListItemText } from '../../styles/CssStyled'
 import FormateTime from '../../components/FormateTime'
-import { formatFileSize } from '../../components/FormatSize'
 import '../../styles/style.css'
+import { uploadFileToCloudinary, uploadAndAttachFileToLead, isFileTypeAllowed } from '../../utils/uploadFileToCloudinary'
 
 export const formatDate = (dateString: any) => {
     const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' }
     return new Date(dateString).toLocaleDateString(undefined, options)
 }
 
-type response = {
-    created_by: {
-        email: string;
-        id: string;
-        profile_pic: string;
-    };
-    user_details: {
-        email: string;
-        id: string;
-        profile_pic: string;
-    };
-    created_at: string;
-    created_on: string;
-    created_on_arrow: string;
-    date_of_birth: string;
-    title: string;
-    first_name: string;
-    last_name: string;
-    account_name: string;
-    phone: string;
-    email: string;
-    lead_attachment: string;
-    opportunity_amount: string;
-    website: string;
-    description: string | '';
-    teams: string;
-    assigned_to: string;
-    contacts: string;
-    status: string;
-    source: string;
-    address_line: string;
-    street: string;
-    city: string;
-    state: string;
-    postcode: string;
-    country: string;
-    tags: [];
-    company: string;
-    probability: string;
-    industry: string;
-    skype_ID: string;
-    file: string;
+// Helper function to capitalize the first letter of each word in a string
+const capitalizeFirstLetter = (string: string | undefined | null): string => {
+    if (!string) return '';
+    
+    // For URL links, don't capitalize
+    if (string.startsWith('http')) return string;
+    
+    return string
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+}
 
-    close_date: string;
-    organization: string;
-    created_from_site: boolean;
-    id: string;
-};
-function LeadDetails(props: any) {
-    const { state } = useLocation()
-    const navigate = useNavigate();
-    const [leadDetails, setLeadDetails] = useState<response | null>(null)
-    const [usersDetails, setUsersDetails] = useState<Array<{
+type LeadResponse = {
+    lead_obj: {
+        id: string;
+        description: string;
+        link: string;
+        amount: string;
+        probability: number;
+        lead_title:string;
+        status: string;
+        lead_source: string;
+        notes: string;
+        assigned_to: {
+            id: string;
+            user_details: {
+                email: string;
+                id: string;
+                is_active: boolean;
+                profile_pic: string;
+                first_name: string;
+                last_name: string;
+            };
+        };
+        contact: {
+            id: string;
+            salutation: string;
+            first_name: string;
+            last_name: string;
+            title: string;
+            primary_email: string;
+            mobile_number: string;
+            description: string;
+            company?: {
+                id: string;
+                name: string;
+                email: string;
+                phone: string;
+                website: string;
+            };
+        };
+        company: {
+            id: string;
+            name: string;
+            email: string;
+            phone: string;
+            website: string;
+        };
+        created_at: string;
+        created_by: {
+            id: string;
+            email: string;
+            profile_pic: string;
+        };
+        organization: {
+            id: string;
+            name: string;
+            api_key: string;
+        };
+        lead_attachment: any[];
+    };
+    attachments: any[];
+    comments: any[];
+    users: Array<{
+        id: string;
         user_details: {
             email: string;
             id: string;
+            is_active: boolean;
             profile_pic: string;
-        }
-    }>>([]);
-    const [attachments, setAttachments] = useState<string[]>([]);
-    const [attachmentList, setAttachmentList] = useState<File[]>([]);
-    const [tags, setTags] = useState([])
-    const [countries, setCountries] = useState<string[][]>([])
-    const [source, setSource] = useState([])
-    const [status, setStatus] = useState([])
-    const [industries, setIndustries] = useState([])
-    const [contacts, setContacts] = useState([])
-    const [users, setUsers] = useState([])
-    const [teams, setTeams] = useState([])
-    const [comments, setComments] = useState([])
-    const [commentList, setCommentList] = useState('Recent Last')
-    const [note, setNote] = useState('')
-    const [selectedFile, setSelectedFile] = useState()
-    const [inputValue, setInputValue] = useState<string>('');
-    const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
-    const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
+            first_name: string;
+            last_name: string;
+        };
+    }>;
+    source: Array<[string, string]>;
+    status: Array<[string, string]>;
+    countries: Array<[string, string]>;
+};
+
+// Function to get the appropriate icon based on file extension
+const getFileIcon = (fileName: string) => {
+    if (!fileName) return <FaFile />;
+    
+    const extension = fileName.split('.').pop()?.toLowerCase() || '';
+    
+    switch (extension) {
+        case 'pdf':
+            return <FaFilePdf style={{ color: '#f40f02' }} />;
+        case 'doc':
+        case 'docx':
+            return <FaFileWord style={{ color: '#2b579a' }} />;
+        case 'xls':
+        case 'xlsx':
+        case 'csv':
+            return <FaFileExcel style={{ color: '#217346' }} />;
+        case 'ppt':
+        case 'pptx':
+            return <FaFilePowerpoint style={{ color: '#d24726' }} />;
+        case 'jpg':
+        case 'jpeg':
+        case 'png':
+        case 'gif':
+        case 'bmp':
+        case 'webp':
+        case 'tiff':
+        case 'svg':
+            return <FaFileImage style={{ color: '#7e4dd2' }} />;
+        case 'zip':
+        case 'rar':
+        case '7z':
+        case 'tar':
+        case 'gz':
+            return <FaFileArchive style={{ color: '#ffc107' }} />;
+        case 'txt':
+        case 'rtf':
+            return <FaFileAlt style={{ color: '#5a6268' }} />;
+        case 'html':
+        case 'css':
+        case 'js':
+        case 'jsx':
+        case 'ts':
+        case 'tsx':
+        case 'json':
+            return <FaFileCode style={{ color: '#0099e5' }} />;
+        default:
+            return <FaFile style={{ color: '#6c757d' }} />;
+    }
+};
+
+// Function to truncate long filenames
+const truncateFilename = (fileName: string, maxLength: number = 20) => {
+    if (!fileName) return '';
+    if (fileName.length <= maxLength) return fileName;
+    
+    const extension = fileName.includes('.') ? fileName.split('.').pop() : '';
+    const nameWithoutExtension = fileName.includes('.') 
+        ? fileName.substring(0, fileName.lastIndexOf('.')) 
+        : fileName;
+    
+    // Calculate how much of the name we can show
+    const availableChars = maxLength - 3; // 3 characters for ellipsis
+    const truncatedName = nameWithoutExtension.substring(0, availableChars) + '...';
+    
+    return extension ? `${truncatedName}.${extension}` : truncatedName;
+};
+
+function LeadDetails() {
+    const navigate = useNavigate();
+    // Get leadId from URL parameters
+    const { leadId } = useParams<{ leadId: string }>();
+    const [leadData, setLeadData] = useState<LeadResponse | null>(null);
+    const [loading, setLoading] = useState(true); // Add loading state
+    const [note, setNote] = useState('');
+    const [noteError, setNoteError] = useState('');
+    const [noteSubmitting, setNoteSubmitting] = useState(false);
+    const [attachments, setAttachments] = useState<File[]>([]);
+    const [commentsToShow, setCommentsToShow] = useState(5);
+    const [attachmentUploading, setAttachmentUploading] = useState(false);
+    const [attachmentError, setAttachmentError] = useState<string | null>(null);
+    
+    // Alert states
+    const [alertOpen, setAlertOpen] = useState(false);
+    const [alertMessage, setAlertMessage] = useState('');
+    const [alertType, setAlertType] = useState<AlertType>('success');
+    
+    // Delete modal states
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [attachmentToDelete, setAttachmentToDelete] = useState<string | null>(null);
+    const [attachmentNameToDelete, setAttachmentNameToDelete] = useState<string>('');
+    
+    // Convert modal states
+    const [convertDialogOpen, setConvertDialogOpen] = useState(false);
+    
+    // Add Note modal states
+    const [addNoteDialogOpen, setAddNoteDialogOpen] = useState(false);
+    
+    // Delete Lead modal states
+    const [deleteLeadModal, setDeleteLeadModal] = useState(false);
 
     useEffect(() => {
-        getLeadDetails(state.leadId)
-    }, [state.leadId])
+        if (leadId) {
+            getLeadDetails(leadId, true) // Pass true for initial load
+        }
+    }, [leadId])
 
-    const getLeadDetails = (id: any) => {
+    const getLeadDetails = (id: string, isInitialLoad = false) => {
+        // Only set loading to true for initial load
+        if (isInitialLoad) {
+            setLoading(true);
+        }
+        
         const Header = {
             Accept: 'application/json',
             'Content-Type': 'application/json',
@@ -128,693 +257,717 @@ function LeadDetails(props: any) {
         fetchData(`${LeadUrl}/${id}/`, 'GET', null as any, Header)
             .then((res) => {
                 if (!res.error) {
-                    setLeadDetails(res?.lead_obj)
-                    setUsers(res?.users)
-                    setAttachments(res?.attachments)
-                    setTags(res?.tags)
-                    setCountries(res?.countries)
-                    setIndustries(res?.industries)
-                    setStatus(res?.status)
-                    setSource(res?.source)
-                    setUsers(res?.users)
-                    setContacts(res?.contacts)
-                    setTeams(res?.teams)
-                    setComments(res?.comments)
+                    setLeadData(res);
                 }
             })
             .catch((err) => {
-                // console.error('Error:', err)
-                < Snackbar open={err} autoHideDuration={4000} onClose={() => navigate('/app/leads')} >
-                    <Alert onClose={() => navigate('/app/leads')} severity="error" sx={{ width: '100%' }}>
-                        Failed to load!
-                    </Alert>
-                </Snackbar >
+                console.error('Error:', err);
+            })
+            .finally(() => {
+                if (isInitialLoad) {
+                    setLoading(false);
+                }
             })
     }
-    const sendComment = () => {
+
+
+    const backbtnHandle = () => {
+        navigate('/app/leads')
+    }
+
+    
+
+    const editHandle = () => {
+        navigate(`/app/leads/${leadId}/edit`);
+    }
+    
+    // Handle lead deletion
+    const handleDeleteLead = () => {
+        setDeleteLeadModal(true);
+    }
+    
+    // Close delete lead modal
+    const closeDeleteLeadModal = () => {
+        setDeleteLeadModal(false);
+    }
+    
+    // Confirm and execute lead deletion
+    const confirmDeleteLead = () => {
         const Header = {
             Accept: 'application/json',
             'Content-Type': 'application/json',
             Authorization: localStorage.getItem('Token'),
             org: localStorage.getItem('org')
         }
-        // const formData = new FormData();
-        // formData.append('inputValue', inputValue);
-        // attachedFiles.forEach((file, index) => {
-        //   formData.append(`file_${index}`, file);
-        // });
-
-        // const data = { comment: note }
-        // const data = { comment:  inputValue }
-        // const data = { comment: inputValue, attachedFiles }
-        const data = { Comment: inputValue || note, lead_attachment: attachments }
-        // fetchData(`${LeadUrl}/comment/${state.leadId}/`, 'PUT', JSON.stringify(data), Header)
-        fetchData(`${LeadUrl}/${state.leadId}/`, 'POST', JSON.stringify(data), Header)
+        
+        fetchData(`${LeadUrl}/${leadId}/`, 'DELETE', null as any, Header)
             .then((res: any) => {
-                // console.log('Form data:', res);
                 if (!res.error) {
-                    resetForm()
-                    getLeadDetails(state?.leadId)
+                    setAlertType('success');
+                    setAlertMessage('Lead deleted successfully');
+                    setAlertOpen(true);
+                    
+                    // Navigate back to leads list after a short delay
+                    setTimeout(() => {
+                        navigate('/app/leads');
+                    }, 1500);
+                } else {
+                    setAlertType('error');
+                    setAlertMessage('Failed to delete lead');
+                    setAlertOpen(true);
                 }
+                closeDeleteLeadModal();
             })
-            .catch(() => {
-            })
-    }
-
-    const backbtnHandle = () => {
-        navigate('/app/leads')
-    }
-    const resetForm = () => {
-        setNote('')
-        setInputValue('')
-        setAttachmentList([])
-        setAttachedFiles([])
-        setAttachments([])
-    }
-
-    const editHandle = () => {
-        // navigate('/contacts/edit-contacts', { state: { value: contactDetails, address: newAddress } })
-        let country: string[] | undefined;
-        for (country of countries) {
-            if (Array.isArray(country) && country.includes(leadDetails?.country || '')) {
-                const firstElement = country[0];
-                break;
-            }
-        }
-        navigate('/app/leads/edit-lead', {
-            state: {
-                value: {
-                    title: leadDetails?.title,
-                    first_name: leadDetails?.first_name,
-                    last_name: leadDetails?.last_name,
-                    account_name: leadDetails?.account_name,
-                    phone: leadDetails?.phone,
-                    email: leadDetails?.email,
-                    lead_attachment: leadDetails?.lead_attachment,
-                    opportunity_amount: leadDetails?.opportunity_amount,
-                    website: leadDetails?.website,
-                    description: leadDetails?.description,
-                    teams: leadDetails?.teams,
-                    assigned_to: leadDetails?.assigned_to,
-                    contacts: leadDetails?.contacts,
-                    status: leadDetails?.status,
-                    source: leadDetails?.source,
-                    address_line: leadDetails?.address_line,
-                    street: leadDetails?.street,
-                    city: leadDetails?.city,
-                    state: leadDetails?.state,
-                    postcode: leadDetails?.postcode,
-                    country: country?.[0],
-                    tags: leadDetails?.tags,
-                    company: leadDetails?.company,
-                    probability: leadDetails?.probability,
-                    industry: leadDetails?.industry,
-                    skype_ID: leadDetails?.skype_ID,
-                    file: leadDetails?.file,
-                    close_date: leadDetails?.close_date,
-                    organization: leadDetails?.organization,
-                    created_from_site: leadDetails?.created_from_site,
-                }, id: state?.leadId, tags, countries, source, status, industries, users, contacts, teams, comments
-            }
-        }
-        )
+            .catch((error) => {
+                setAlertType('error');
+                setAlertMessage('An error occurred while deleting the lead');
+                setAlertOpen(true);
+                closeDeleteLeadModal();
+            });
     }
 
     const handleAttachmentClick = () => {
         const fileInput = document.createElement('input');
         fileInput.type = 'file';
-        fileInput.addEventListener('change', handleFileInputChange);
+        // Accept all the file types we support
+        fileInput.accept = '.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.csv,.rtf,.zip,.rar,.7z,.tar,.gz,.psd,.ai,.eps,.ttf,.otf,.woff,.woff2,.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.ico,.heic,.svg,.avif,.jfif';
+        
+        fileInput.addEventListener('change', async (event: any) => {
+            const files = event.target.files;
+            if (files && files[0]) {
+                const file = files[0];
+                
+                // Check if file type is allowed
+                if (!isFileTypeAllowed(file)) {
+                    setAttachmentError('This file type is not supported. Please select a different file.');
+                    return;
+                }
+                
+                // Show loading indicator
+                setAttachmentUploading(true);
+                setAttachmentError(null);
+                
+                try {
+                    // Prepare headers for API request
+                    const headers = {
+                        Accept: 'application/json',
+                        'Content-Type': 'application/json',
+                        Authorization: localStorage.getItem('Token'),
+                        org: localStorage.getItem('org')
+                    };
+                    
+                    // Upload and attach the file
+                    const result = await uploadAndAttachFileToLead(leadId as string, file, headers);
+                    
+                    if (result.success) {
+                        // Add to local state
+                        setAttachments(prev => [...prev, file]);
+                        // Refresh lead details to show the new attachment (not initial load)
+                        getLeadDetails(leadId as string, false);
+                        
+                        // Show success alert
+                        setAlertMessage(`File "${file.name}" was successfully uploaded`);
+                        setAlertType('success');
+                        setAlertOpen(true);
+                    } else {
+                        setAttachmentError(`Failed to upload file: ${result.error}`);
+                        
+                        // Show error alert
+                        setAlertMessage(`Failed to upload file: ${result.error}`);
+                        setAlertType('error');
+                        setAlertOpen(true);
+                    }
+                } catch (error) {
+                    console.error('Error uploading file:', error);
+                    setAttachmentError('An error occurred while uploading the file.');
+                    
+                    // Show error alert
+                    setAlertMessage('An error occurred while uploading the file.');
+                    setAlertType('error');
+                    setAlertOpen(true);
+                } finally {
+                    // Hide loading indicator
+                    setAttachmentUploading(false);
+                }
+            }
+        });
+        
         fileInput.click();
     };
 
-    const handleFileInputChange = (event: any) => {
-        const files = event.target.files;
-        if (files) {
-            setAttachedFiles((prevFiles: any) => [...prevFiles, ...Array.from(files)]);
+    // Open add note dialog
+    const handleAddNoteClick = () => {
+        if (!note.trim()) {
+            setNoteError('Note cannot be empty');
+            return;
         }
+        
+        // Clear any previous errors
+        setNoteError('');
+        
+        // Open confirmation dialog
+        setAddNoteDialogOpen(true);
     };
-    const addAttachments = (e: any) => {
-        // console.log(e.target.files?.[0], 'e');
-        const files = e.target.files;
-        if (files) {
-            const reader = new FileReader();
-            reader.onload = () => {
-                setAttachments((attachments: string[]) => [...(attachments || []), reader.result as string]);
-            };
-            reader.readAsDataURL(files[0]);
-        }
-        if (files) {
-            const filesArray = Array.from(files);
-            setAttachmentList((prevFiles: any) => [...prevFiles, ...filesArray]);
-        }
-    }
+    
+    // Submit note after confirmation
+    const submitNote = () => {
+        // Close the dialog first
+        setAddNoteDialogOpen(false);
+        
+        setNoteSubmitting(true);
+        
+        const Header = {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            Authorization: localStorage.getItem('Token'),
+            org: localStorage.getItem('org')
+        };
 
+        const data = JSON.stringify({
+            comment: note,
+        });
 
-    const handleClickFile = (event: React.MouseEvent<HTMLButtonElement>, pic: any) => {
-        setSelectedFile(pic)
-        setAnchorEl(event.currentTarget);
+        fetchData(`${LeadUrl}/${leadId}/`, 'POST', data, Header)
+            .then((res) => {
+                if (!res.error) {
+                    // Refresh lead details to show the new comment (not initial load)
+                    getLeadDetails(leadId as string, false);
+                    setNote('');
+                    setNoteError('');
+                    
+                    // Show success alert
+                    setAlertMessage('Note added successfully');
+                    setAlertType('success');
+                    setAlertOpen(true);
+                } else {
+                    // Show error alert
+                    setAlertMessage(res.errors || 'Failed to add note');
+                    setAlertType('error');
+                    setAlertOpen(true);
+                }
+            })
+            .catch((err) => {
+                console.error('Error submitting note:', err);
+                setNoteError('Failed to submit note. Please try again.');
+                
+                // Show error alert
+                setAlertMessage('Failed to add note. Please try again.');
+                setAlertType('error');
+                setAlertOpen(true);
+            })
+            .finally(() => {
+                setNoteSubmitting(false);
+            });
     };
 
-    const handleCloseFile = () => {
-        setAnchorEl(null);
+    const handleShowMoreComments = () => {
+        setCommentsToShow(prev => prev + 5);
+    };
+    
+    // Handler for closing the alert
+    const handleAlertClose = () => {
+        setAlertOpen(false);
+    };
+    
+    // Handle convert button click
+    const handleConvertClick = () => {
+        setConvertDialogOpen(true);
+    };
+    
+    // Handle convert confirmation
+    const handleConvertConfirm = () => {
+        // Close the dialog
+        setConvertDialogOpen(false);
+        
+        // Here you would add the actual conversion logic
+        // For now, we'll just show a success alert
+        setAlertMessage('Lead successfully converted');
+        setAlertType('success');
+        setAlertOpen(true);
+        
+        // In a real implementation, you might navigate to the newly created
+        // opportunity or account after successful conversion
     };
 
-    const deleteFile = () => {
-        setAttachmentList(prevItems => prevItems.filter((item, i) => i !== selectedFile));
-        setAttachments(prevItems => prevItems.filter((item, i) => i !== selectedFile));
-        handleCloseFile()
-    }
-
-    const open = Boolean(anchorEl);
-    const id = open ? 'simple-popover' : undefined;
-    // console.log(attachedFiles, 'dsfsd', attachmentList, 'aaaaa', attachments);
+    // Open delete confirmation modal
+    const handleAttachmentDelete = (attachmentId: string, fileName: string = '') => {
+        setAttachmentToDelete(attachmentId);
+        setAttachmentNameToDelete(fileName);
+        setDeleteModalOpen(true);
+    };
+    
+    // Handle actual deletion after confirmation
+    const confirmAttachmentDelete = () => {
+        if (!attachmentToDelete) return;
+        
+        // Show loading indicator
+        setAttachmentUploading(true);
+        setAttachmentError(null);
+        
+        // Use the Header object consistent with other API calls
+        const Header = {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            Authorization: localStorage.getItem('Token'),
+            org: localStorage.getItem('org')
+        };
+        
+        // Close the modal first
+        setDeleteModalOpen(false);
+        
+        // Use fetchData function like other API calls
+        // API endpoint should be /api/leads/attachment/ID/ not /leads/attachment/
+        fetchData(`/${LeadUrl}/attachment/${attachmentToDelete}/`, 'DELETE', null as any, Header)
+            .then((res) => {
+                if (!res.error) {
+                    // Success - refresh lead details to update the UI (not initial load)
+                    getLeadDetails(leadId as string, false);
+                    
+                    // Show success alert
+                    setAlertMessage('Attachment was successfully deleted');
+                    setAlertType('success');
+                    setAlertOpen(true);
+                } else {
+                    setAttachmentError(res.errors || "Error deleting attachment");
+                    
+                    // Show error alert
+                    setAlertMessage(res.errors || "Error deleting attachment");
+                    setAlertType('error');
+                    setAlertOpen(true);
+                }
+            })
+            .catch((err) => {
+                console.error("Error deleting attachment:", err);
+                setAttachmentError("Failed to delete attachment. Please try again.");
+                
+                // Show error alert
+                setAlertMessage("Failed to delete attachment. Please try again.");
+                setAlertType('error');
+                setAlertOpen(true);
+            })
+            .finally(() => {
+                setAttachmentUploading(false);
+                setAttachmentToDelete(null);
+                setAttachmentNameToDelete('');
+            });
+    };
 
     const module = 'Leads'
     const crntPage = 'Lead Details'
     const backBtn = 'Back To Leads'
-    // console.log(tags, countries, source, status, industries, users, contacts, 'leaddetail')
+    
     return (
         <Box sx={{ mt: '60px' }}>
-            <div>
-                <CustomAppBar backbtnHandle={backbtnHandle} module={module} backBtn={backBtn} crntPage={crntPage} editHandle={editHandle} />
-                <Box sx={{ mt: '110px', p: '20px', display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                    <Box sx={{ width: '65%' }}>
-                        <Box sx={{ borderRadius: '10px', border: '1px solid #80808038', backgroundColor: 'white' }}>
-                            <div style={{ padding: '20px', borderBottom: '1px solid lightgray', display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div style={{ fontWeight: 600, fontSize: '18px', color: '#1a3353f0' }}>
-                                    Lead Information
-                                </div>
-                                <div style={{ color: 'gray', fontSize: '16px', display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', marginRight: '15px' }}>
-                                        created &nbsp;
-                                        {FormateTime(leadDetails?.created_at)} &nbsp; by   &nbsp;
-                                        <Avatar
-                                            src={leadDetails?.created_by?.profile_pic}
-                                            alt={leadDetails?.created_by?.email}
-                                        />
-                                        &nbsp;
-                                        &nbsp;
-                                        {leadDetails?.first_name}&nbsp;
-                                        {leadDetails?.last_name}
-                                    </div>
-
-                                </div>
-                            </div>
-                            <div style={{ padding: '20px', display: 'flex', flexDirection: 'row', marginTop: '10px' }}>
-                                <div className='title2'>
-                                    {leadDetails?.title}
-                                    {/* {console.log(users?.length && users.length,'lll')} */}
-                                    <Stack sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', mt: 1 }}>
-                                        {/* {
-                                                lead.assigned_to && lead.assigned_to.map((assignItem) => (
-                                                    assignItem.user_details.profile_pic
-                                                        ? */}
-
-                                        {usersDetails?.length ? usersDetails.map((val: any, i: any) =>
-                                            <Avatar
-                                                key={i}
-                                                alt={val?.user_details?.email}
-                                                src={val?.user_details?.profile_pic}
-                                                sx={{ mr: 1 }}
-                                            />
-                                        ) : ''
-                                        }
-                                    </Stack>
-                                </div>
-                                <Stack sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                                    {leadDetails?.tags?.length ? leadDetails?.tags.map((tagData: any) => (
-                                        <Label
-                                            tags={tagData}
-                                        />)) : ''}
-                                </Stack>
-                            </div>
-                            <div style={{ padding: '20px', display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                                <div style={{ width: '32%' }}>
-                                    <div className='title2' >Expected close date</div>
-                                    <div className='title3'>
-                                        {leadDetails?.close_date || '---'}
-                                    </div>
-                                </div>
-                                <div style={{ width: '32%' }}>
-                                    <div className='title2'>Account Name</div>
-                                    <div className='title3'>
-                                        {leadDetails?.account_name}
-                                    </div>
-                                </div>
-                                <div style={{ width: '32%' }}>
-                                    <div className='title2'>Organization Name</div>
-                                    <div className='title3'>
-                                        {leadDetails?.organization || '---'}
-                                    </div>
-                                </div>
-                            </div>
-                            <div className='detailList'>
-                                <div style={{ width: '32%' }}>
-                                    <div className='title2'>Created from site</div>
-                                    <div className='title3'>
-                                        {/* {lead.pipeline ? lead.pipeline : '------'} */}
-                                        {/* {leadDetails?.created_from_site} */}
-                                        <AntSwitch checked={leadDetails?.created_from_site} />
-                                    </div>
-                                </div>
-                                <div style={{ width: '32%' }}>
-                                    <div className='title2'>Probability</div>
-                                    <div className='title3'>
-                                        {leadDetails?.probability || '---'}
-                                    </div>
-                                </div>
-                                <div style={{ width: '32%' }}>
-                                    <div className='title2'>website</div>
-                                    <div className='title3'>
-                                        {leadDetails?.website ? <Link>
-                                            {leadDetails?.website}
-                                        </Link> : '---'}
-
-                                    </div>
-                                </div>
-                            </div>
-                            <div className='detailList'>
-                                <div style={{ width: '32%' }}>
-                                    <div className='title2'>Industry</div>
-                                    <div className='title3'>
-                                        {leadDetails?.industry || '---'}
-                                    </div>
-                                </div>
-                                <div style={{ width: '32%' }}>
-                                    <div className='title2'>SkypeID</div>
-                                    <div className='title3'>
-                                        {leadDetails?.skype_ID ? <Link>
-                                            {leadDetails?.skype_ID}
-                                        </Link> : '---'}
-                                    </div>
-                                </div>
-                                <div style={{ width: '32%' }}>
-                                    <div style={{ fontSize: '16px', fontWeight: 600 }}>&nbsp;</div>
-                                    <div style={{ fontSize: '16px', color: 'gray' }}>&nbsp;</div>
-                                </div>
-                            </div>
-                            {/* </div> */}
-                            {/* Contact details */}
-                            <div style={{ marginTop: '2%' }}>
-                                <div style={{ padding: '20px', borderBottom: '1px solid lightgray', display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                                    <div style={{ fontWeight: 600, fontSize: '18px', color: '#1a3353f0' }}>
-                                        Contact Details
-                                    </div>
-                                </div>
-                                <div style={{ padding: '20px', display: 'flex', flexDirection: 'row', justifyContent: 'space-between', marginTop: '10px' }}>
-                                    <div style={{ width: '32%' }}>
-                                        <div className='title2'>First Name</div>
-                                        <div className='title3'>
-                                            {leadDetails?.first_name || '---'}
-                                        </div>
-                                    </div>
-                                    <div style={{ width: '32%' }}>
-                                        <div className='title2'>Last Name</div>
-                                        <div className='title3'>
-                                            {leadDetails?.last_name || '---'}
-                                        </div>
-                                    </div>
-                                    <div style={{ width: '32%' }}>
-                                        <div className='title2'>Job Title</div>
-                                        <div className='title3'>
-                                            {leadDetails?.title || '---'}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className='detailList'>
-                                    <div style={{ width: '32%' }}>
-                                        <div className='title2'>Email Address</div>
-                                        <div className='title3'>
-                                            {leadDetails?.email ? <Link>
-                                                {leadDetails?.email}
-                                                <FaStar style={{ fontSize: '16px', fill: 'yellow' }} />
-                                            </Link> : '---'}
-                                        </div>
-                                    </div>
-                                    <div style={{ width: '32%' }}>
-                                        <div className='title2'>Mobile Number</div>
-                                        <div className='title3'>
-                                            {leadDetails?.phone ? `${leadDetails?.phone}
-                                                <FaStar style={{ fontSize: '16px', fill: 'yellow' }} /><br />` : '---'}
-                                        </div>
-                                    </div>
-                                    <div style={{ width: '32%' }}>
-                                        <div style={{ fontSize: '16px', fontWeight: 600 }} />
-                                        <div className='title3'>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            {/* Address details */}
-                            <div style={{ marginTop: '2%' }}>
-                                <div style={{ padding: '20px', borderBottom: '1px solid lightgray', display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                                    <div style={{ fontWeight: 600, fontSize: '18px', color: '#1a3353f0' }}>
-                                        Address Details
-                                    </div>
-                                </div>
-                                <div style={{ padding: '20px', display: 'flex', flexDirection: 'row', justifyContent: 'space-between', marginTop: '10px' }}>
-                                    <div style={{ width: '32%' }}>
-                                        <div className='title2'>Address Lane</div>
-                                        <div className='title3'>
-                                            {leadDetails?.address_line || '---'}
-                                        </div>
-                                    </div>
-                                    <div style={{ width: '32%' }}>
-                                        <div className='title2'>Street</div>
-                                        <div className='title3'>
-                                            {leadDetails?.street || '---'}
-                                        </div>
-                                    </div>
-                                    <div style={{ width: '32%' }}>
-                                        <div className='title2'>City</div>
-                                        <div className='title3'>
-                                            {leadDetails?.city || '---'}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className='detailList'>
-                                    <div style={{ width: '32%' }}>
-                                        <div className='title2'>Pincode</div>
-                                        <div className='title3'>
-                                            {leadDetails?.postcode || '---'}
-                                        </div>
-                                    </div>
-                                    <div style={{ width: '32%' }}>
-                                        <div className='title2'>State</div>
-                                        <div className='title3'>
-                                            {leadDetails?.state || '---'}
-                                        </div>
-                                    </div>
-                                    <div style={{ width: '32%' }}>
-                                        <div className='title2'>Country</div>
-                                        <div className='title3'>
-                                            {leadDetails?.country || '---'}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            {/* Description */}
-                            <div style={{ marginTop: '3%' }}>
-                                <div style={{ padding: '20px', borderBottom: '1px solid lightgray', display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                                    <div style={{ fontWeight: 600, fontSize: '18px', color: '#1a3353f0' }}>
-                                        Description
-                                    </div>
-                                </div>
-                                {/* <p style={{ fontSize: '16px', color: 'gray', padding: '15px' }}> */}
-                                <Box sx={{ p: '15px' }}>
-                                    {leadDetails?.description ? <div dangerouslySetInnerHTML={{ __html: leadDetails?.description }} /> : '---'}
-                                </Box>
-                                {/* </p> */}
-                            </div>
-                            <div style={{ marginTop: '2%' }}>
-                                <div style={{ padding: '20px', borderBottom: '1px solid lightgray', display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                                    <div style={{ fontWeight: 600, fontSize: '18px', color: 'red' }}>
-                                        Lost Reason
-                                    </div>
-                                </div>
-                                <p style={{ fontSize: '16px', color: 'gray', padding: '15px', marginTop: '5%' }}>
-                                    {/* {lead && lead.description} */}
-                                    {/* fhj */}
-                                </p>
-                            </div>
-
-                        </Box>
+            {/* Success/Error Alert for attachments */}
+            <SuccessAlert
+                open={alertOpen}
+                message={alertMessage}
+                onClose={handleAlertClose}
+                type={alertType}
+                autoHideDuration={4000}
+                showCloseButton={true}
+            />
+            
+            {/* Delete Confirmation Modal */}
+            <DeleteModal
+                open={deleteModalOpen}
+                onClose={() => setDeleteModalOpen(false)}
+                DeleteItem={confirmAttachmentDelete}
+                modalTitle="Delete Attachment"
+                modalDialog={`Are you sure you want to delete${attachmentNameToDelete ? ` "${attachmentNameToDelete}"` : ' this attachment'} from ${leadData?.lead_obj?.contact?.first_name || ''} ${leadData?.lead_obj?.contact?.last_name || 'Doe'}'s lead?`}
+            />
+            
+            {/* Convert Lead Dialog */}
+            <DialogModal
+                isDelete={convertDialogOpen}
+                onClose={() => setConvertDialogOpen(false)}
+                onConfirm={handleConvertConfirm}
+                modalDialog={`Are you sure you want to convert ${leadData?.lead_obj?.lead_title || ''} 's lead to oppurtunity?` }
+                confirmText="Convert"
+                cancelText="Cancel"
+            />
+            
+            {/* Add Note Dialog */}
+            <DialogModal
+                isDelete={addNoteDialogOpen}
+                onClose={() => setAddNoteDialogOpen(false)}
+                onConfirm={submitNote}
+                modalDialog={`Are you sure you want to add a note to ${leadData?.lead_obj?.lead_title || ''}'s lead?`}
+                confirmText="Add"
+                cancelText="Cancel"
+            />
+            
+            {/* Delete Lead Dialog */}
+            <DeleteModal
+                open={deleteLeadModal}
+                onClose={closeDeleteLeadModal}
+                DeleteItem={confirmDeleteLead}
+                modalTitle="Delete Lead"
+                modalDialog={`Are you sure you want to delete ${leadData?.lead_obj?.lead_title || ''}'s lead? This action cannot be undone.`}
+            />
+            
+            <Box>
+                <CustomAppBar 
+                    backbtnHandle={backbtnHandle} 
+                    module={module} 
+                    backBtn="Back to list" 
+                    crntPage={crntPage} 
+                    editHandle={editHandle}
+                    variant="detail"
+                    customButtons={
+                        <Button
+                            size="small"
+                            className="header-button"
+                            onClick={handleDeleteLead}
+                            variant="contained"
+                            sx={{
+                                backgroundColor: '#d32f2f',
+                                color: 'white',
+                                textTransform: 'capitalize',
+                                fontWeight: 'bold',
+                                fontSize: '16px',
+                                ':hover': { backgroundColor: '#b71c1c' }
+                            }}
+                        >
+                            Delete Lead
+                        </Button>
+                    }
+                />
+                
+                {loading ? (
+                    // Show loading spinner while data is being fetched
+                    <Box sx={{ 
+                        display: 'flex', 
+                        justifyContent: 'center', 
+                        alignItems: 'center', 
+                        minHeight: '60vh',
+                        mt: '40px'
+                    }}>
+                        <CircularProgress size={60} />
                     </Box>
-                    <Box sx={{ width: '34%' }}>
-                        <Box sx={{ borderRadius: '10px', border: '1px solid #80808038', backgroundColor: 'white' }}>
-                            <div style={{ padding: '20px', borderBottom: '1px solid lightgray', display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div style={{ fontWeight: 600, fontSize: '18px', color: '#1a3353f0' }}>
-                                    Attachments
-                                </div>
-                                {/* Add Social #1E90FF */}
-                                <Button component="label" variant="text"
-                                    startIcon={<FaPlus style={{ fill: '#3E79F7', width: '12px' }} />}
-                                    style={{ textTransform: 'capitalize', fontWeight: 600, fontSize: '16px' }}
-                                >
-                                    <input type="file" style={{ display: 'none' }} onChange={(e: any) => addAttachments(e)} />
-                                    Add Attachments
-                                </Button>
-                            </div>
-                            <div style={{ padding: '20px', marginTop: '2%', maxHeight: '500px', minHeight: '150px', overflowY: 'scroll' }}>
-                                {/* {lead && lead.lead_attachment} */}
-                                <Box sx={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'flex-start', flexWrap: 'wrap', alignContent: 'flex-start' }}>
-                                    {attachmentList?.length ? attachmentList.map((pic: any, i: any) =>
-                                        <Box key={i} sx={{ width: '45%', height: '35%', border: '0.5px solid #ccc', borderRadius: '3px', overflow: 'hidden', alignSelf: 'auto', flexShrink: 1, mr: 2.5, mb: 2 }}>
-                                            <img src={URL.createObjectURL(pic)} alt={pic?.name} style={{ width: '100%', height: '50%' }} />
-                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                                <Box sx={{ ml: 1 }}>
-                                                    <Typography sx={{ overflow: 'hidden' }}>{pic?.name}</Typography><br /><Typography sx={{ color: 'gray' }}>{formatFileSize(pic?.size)}</Typography>
-                                                </Box>
-                                                <IconButton onClick={(e: any) => handleClickFile(e, i)}>
-                                                    <FaEllipsisV />
-                                                </IconButton>
-                                            </Box>
-                                        </Box>
-
-                                    ) : ''}
-                                    {/* {attachments?.length ? attachments.map((pic: any, i: any) => <img src={pic} />) : ''} */}
-                                </Box>
-                                {/* {attachments?.length ? attachments.map((pic: any, i: any) =>
-                                    <Box key={i} sx={{ width: '100px', height: '100px', border: '0.5px solid gray', borderRadius: '5px' }}>
-                                        <img src={pic} alt={pic} />
+                ) : (
+                    // Only render content when data is loaded
+                    <Box sx={{ mt: '40px', p: '80px 40px' }}>
+                    
+                    
+                    <Box sx={{ display: 'flex', gap: 3 }}>
+                        <Box sx={{ flex: 3 }}>
+                            <Box sx={{ mb: 3 ,p: 2, border: '1px solid #e0e0e0', borderRadius: '8px', bgcolor: 'white'}}>
+                        
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mt: 2 }}>
+                            <Box>
+                                <Typography variant="h4" component="h1" sx={{ mb: 2 }}>
+                                    {capitalizeFirstLetter(leadData?.lead_obj?.lead_title)} Lead
+                                </Typography>
+                                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                                    {/* First row: Status and Email */}
+                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                        <StatusLabel status={leadData?.lead_obj?.status || 'Qualified'} />
                                     </Box>
-                                ) : ''} */}
-                            </div>
+                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                        <FaEnvelope style={{ marginRight: '8px', color: '#666' }} size={14} />
+                                        <Typography variant="body1">
+                                            {leadData?.lead_obj?.contact?.primary_email}
+                                        </Typography>
+                                    </Box>
+                                    
+                                    {/* Second row: Company and Job Title */}
+                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                        <FaBuilding style={{ marginRight: '8px', color: '#666' }} size={14} />
+                                        <Typography variant="body1" color="text.secondary">
+                                            {capitalizeFirstLetter(leadData?.lead_obj?.contact?.company?.name)}
+                                        </Typography>
+                                    </Box>
+                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                        <FaIdBadge style={{ marginRight: '8px', color: '#666' }} size={14} />
+                                        <Typography variant="body1" color="text.secondary">
+                                            {capitalizeFirstLetter(leadData?.lead_obj?.contact?.title)}
+                                        </Typography>
+                                    </Box>
+                                </Box>
+                            </Box>
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, width: '180px' }}>
+                                <Button 
+                                    variant="contained" 
+                                    color="primary" 
+                                    sx={{ borderRadius: '4px', width: '100%', textTransform: 'capitalize' }}
+                                    startIcon={<FaSyncAlt />}
+                                    onClick={handleConvertClick}
+                                >
+                                    Convert
+                                </Button>
+                                
+                                
+                                
+                                <Button variant="outlined"
+                                     
+                                    
+                                    startIcon={<FaPaperclip />}
+                                    sx={{ borderRadius: '4px', width: '100%', textTransform: 'capitalize' }}
+                                    onClick={handleAttachmentClick}
+                                    disabled={attachmentUploading}
+                                >
+                                    {attachmentUploading ? 'Uploading...' : 'Add attachment'}
+                                </Button>
+                            </Box>
                         </Box>
-                        <Box sx={{ borderRadius: '10px', mt: '15px', border: '1px solid #80808038', backgroundColor: 'white' }}>
-                            <div style={{ padding: '20px', borderBottom: '1px solid lightgray', display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div style={{ fontWeight: 600, fontSize: '16px', color: '#1a3353f0' }}>
-                                    Notes
-                                </div>
-                                <CustomSelectField1
-                                    name='industry'
-                                    select
-                                    value={commentList}
-                                    InputProps={{
-                                        style: {
-                                            height: '32px',
-                                            maxHeight: '32px',
-                                            borderRadius: '10px'
-                                        }
+                        
+                        {attachmentError && (
+                            <Box sx={{ mt: 1, color: 'error.main' }}>
+                                <Typography variant="body2" color="error">
+                                    {attachmentError}
+                                </Typography>
+                            </Box>
+                        )}
+                    </Box>
+                            {/* Left column - Lead Information */}
+                            <Box sx={{ mb: 3, p: 2, border: '1px solid #e0e0e0', borderRadius: '8px', bgcolor: 'white' }}>
+                                <Typography variant="h6" sx={{ mb: 2 }}>Lead Information</Typography>
+                                
+                                
+                                
+                                <Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
+                                    <Box sx={{ flex: '0 0 33%', mb: 2 }}>
+                                        <Typography variant="body2" color="text.secondary">Link</Typography>
+                                        <Typography variant="body1">{leadData?.lead_obj?.link || 'https://link.com'}</Typography>
+                                    </Box>
+                                    
+                                    <Box sx={{ flex: '0 0 33%', mb: 2 }}>
+                                        <Typography variant="body2" color="text.secondary">Lead Source</Typography>
+                                        <Typography variant="body1">{capitalizeFirstLetter(leadData?.lead_obj?.lead_source) || 'Web'}</Typography>
+                                    </Box>
+                                    
+                                    <Box sx={{ flex: '0 0 33%', mb: 2 }}>
+                                        <Typography variant="body2" color="text.secondary">Industry</Typography>
+                                        <Typography variant="body1">Technology</Typography>
+                                    </Box>
+                                    
+                                    <Box sx={{ flex: '0 0 33%', mb: 2 }}>
+                                        <Typography variant="body2" color="text.secondary">Lead Owner</Typography>
+                                        <Typography variant="body1">
+                                            {capitalizeFirstLetter(leadData?.lead_obj?.assigned_to?.user_details?.first_name) || 'Johny'} {' '}
+                                            {capitalizeFirstLetter(leadData?.lead_obj?.assigned_to?.user_details?.last_name) || 'User'}
+                                        </Typography>
+                                    </Box>
+                                    
+                                    <Box sx={{ flex: '0 0 33%', mb: 2 }}>
+                                        <Typography variant="body2" color="text.secondary">Created</Typography>
+                                        <Typography variant="body1">{new Date(leadData?.lead_obj?.created_at || '').toLocaleDateString()}</Typography>
+                                    </Box>
+                                    
+                                    <Box sx={{ flex: '0 0 33%', mb: 2 }}>
+                                        <Typography variant="body2" color="text.secondary">Attachments</Typography>
+                                        {leadData?.lead_obj?.lead_attachment && leadData.lead_obj.lead_attachment.length > 0 ? (
+                                            <Box sx={{ 
+                                                display: 'flex', 
+                                                flexDirection: 'column', 
+                                                gap: 1, 
+                                                mt: 1, 
+                                                maxHeight: '200px', 
+                                                overflowY: 'auto',
+                                                pr: 1
+                                            }}>
+                                                {leadData.lead_obj.lead_attachment.map((attachment, index) => {
+                                                    // Check if we have a file_path or use the attachment_url
+                                                    let url = attachment.file_path;
+                                                    
+                                                    // If file_path is encoded, decode it
+                                                    if (url && url.startsWith('/media/https%3A')) {
+                                                        url = decodeURIComponent(url.replace('/media/', ''));
+                                                    }
+                                                    
+                                                    const isPdf = attachment.file_name && attachment.file_name.toLowerCase().endsWith('.pdf');
+                                                    const isDoc = attachment.file_name && (attachment.file_name.toLowerCase().endsWith('.doc') || attachment.file_name.toLowerCase().endsWith('.docx'));
+                                                    const isXls = attachment.file_name && (attachment.file_name.toLowerCase().endsWith('.xls') || attachment.file_name.toLowerCase().endsWith('.xlsx'));
+                                                    const isPpt = attachment.file_name && (attachment.file_name.toLowerCase().endsWith('.ppt') || attachment.file_name.toLowerCase().endsWith('.pptx'));
+                                                    const isImage = attachment.file_name && (attachment.file_name.toLowerCase().endsWith('.jpg') || attachment.file_name.toLowerCase().endsWith('.jpeg') || attachment.file_name.toLowerCase().endsWith('.png') || attachment.file_name.toLowerCase().endsWith('.gif'));
+                                                    const isArchive = attachment.file_name && (attachment.file_name.toLowerCase().endsWith('.zip') || attachment.file_name.toLowerCase().endsWith('.rar') || attachment.file_name.toLowerCase().endsWith('.7z'));
+                                                    
+                                                    // If it's a PDF, add download parameter
+                                                    if (isPdf && url && !url.includes('?')) {
+                                                        url = url + '?dl=1';
+                                                    }
+                                                    
+                                                    return (
+                                                        <Box 
+                                                            key={index} 
+                                                            sx={{ 
+                                                                display: 'flex', 
+                                                                alignItems: 'center',
+                                                                justifyContent: 'space-between',
+                                                                p: 1, 
+                                                                border: '1px solid #e0e0e0',
+                                                                borderRadius: '4px',
+                                                                transition: 'all 0.2s ease',
+                                                                '&:hover': {
+                                                                    backgroundColor: '#f5f5f5',
+                                                                    borderColor: '#d0d0d0'
+                                                                }
+                                                            }}
+                                                        >
+                                                            <Box sx={{ display: 'flex', alignItems: 'center', flex: 1, overflow: 'hidden' }}>
+                                                                <Tooltip title={attachment.file_name} arrow>
+                                                                    <Avatar sx={{ mr: 1.5, width: 28, height: 28, bgcolor: 'action.hover', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+                                                                        {getFileIcon(attachment.file_name)}
+                                                                    </Avatar>
+                                                                </Tooltip>
+                                                                <Link 
+                                                                    href={url} 
+                                                                    target="_blank" 
+                                                                    rel="noopener"
+                                                                    download={isPdf ? attachment.file_name || `document-${index}.pdf` : undefined}
+                                                                    style={{ textDecoration: 'none', color: 'inherit', flex: 1 }}
+                                                                >
+                                                                    <Typography variant="body1" sx={{ 
+                                                                        display: 'inline-flex', 
+                                                                        alignItems: 'center',
+                                                                        maxWidth: '220px',
+                                                                        overflow: 'hidden',
+                                                                        textOverflow: 'ellipsis',
+                                                                        whiteSpace: 'nowrap'
+                                                                    }}>
+                                                                        {truncateFilename(attachment.file_name || `Attachment ${index + 1}`, 35)}
+                                                                    </Typography>
+                                                                </Link>
+                                                            </Box>
+                                                            <Tooltip title="Delete attachment" arrow>
+                                                                <Button 
+                                                                    onClick={() => handleAttachmentDelete(attachment.id, attachment.file_name)} 
+                                                                    size="small"
+                                                                    color="error"
+                                                                    sx={{ 
+                                                                        minWidth: 'auto', 
+                                                                        ml: 1,
+                                                                        p: '4px 8px',
+                                                                        opacity: 0.8,
+                                                                        '&:hover': { 
+                                                                            opacity: 1,
+                                                                            backgroundColor: '#ffebee'
+                                                                        }
+                                                                    }}
+                                                                    disabled={attachmentUploading}
+                                                                >
+                                                                    <FaTimes size={14} />
+                                                                </Button>
+                                                            </Tooltip>
+                                                        </Box>
+                                                    );
+                                                })}
+                                            </Box>
+                                        ) : (
+                                            <Typography variant="body1">No attachments</Typography>
+                                        )}
+                                    </Box>
+                                </Box><Typography sx={{ flex: '0 0 33%', mb: 2 }}variant="body2" color="text.secondary">Description</Typography>
+                                <Box sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: '8px', bgcolor: 'white', mb: 3 }}>
+                                
+                                <Typography 
+                                    variant="body1" 
+                                    component="div"
+                                    dangerouslySetInnerHTML={{
+                                        __html: leadData?.lead_obj?.description || 'It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout.'
                                     }}
-                                    onChange={(e: any) => setCommentList(e.target.value)}
-                                    sx={{ width: '27%' }}
-                                // helperText={errors?.industry?.[0] ? errors?.industry[0] : ''}
-                                // error={!!errors?.industry?.[0]}
-                                >
-                                    {['Recent Last', 'Recent Last'].map((option: any) => (
-                                        <MenuItem key={option} value={option}>
-                                            {option}
-                                        </MenuItem>
-                                    ))}
-                                </CustomSelectField1>
-                            </div>
-                            <List sx={{ maxWidth: '500px' }}>
-                                {comments?.length ? comments.map((val: any, i: any) =>
-                                    <ListItem alignItems="flex-start">
-                                        <ListItemAvatar>
-                                            <Avatar alt="testing" src="test" />
-                                        </ListItemAvatar>
-                                        <ListItemText
-                                            primary={
-                                                <Stack sx={{ display: 'flex', flexDirection: 'column' }}>
-                                                    <Typography>{val.comment}</Typography>
-                                                    <Avatar alt="testing" src="test" sx={{ mt: 1, mb: 1 }} />
-                                                </Stack>}
-                                            secondary={
-                                                <React.Fragment >
-                                                    <Stack sx={{ mt: 3, display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                                        <Typography>
-                                                            {val?.lead}
-                                                            test
-                                                            &nbsp;-&nbsp;
-                                                            {val?.commented_by}
-                                                            test
-                                                            &nbsp;-&nbsp;<span style={{ textDecoration: 'underline' }}>reply</span>
-                                                        </Typography>
-                                                        <Typography sx={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start' }}>{FormateTime(val?.commented_on)}&nbsp;-&nbsp;test
-                                                            {val?.commented_by}
-                                                        </Typography>
-                                                    </Stack>
-                                                </React.Fragment>
-                                            }
-                                        />
-                                        <Stack sx={{ display: 'flex', alignItems: 'flex-start', mr: -1.5 }}>
-                                            <IconButton aria-label="comments" >
-                                                <FaEllipsisV style={{ width: '7px' }} />
-                                            </IconButton>
-                                        </Stack>
-                                    </ListItem>
-                                ) : ''}
-                            </List>
-                            {/* <div style={{ padding: '10px', marginTop: '15px', display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                                <div style={{ display: 'flex', flexDirection: 'row', marginTop: '5%' }}>
-                                    <div>
-                                        <Avatar
-                                            src='/broken-image.jpg'
-                                            style={{
-                                                height: '30px',
-                                                width: '30px'
-                                            }}
-                                        />
-                                    </div>
-                                    <div style={{ fontSize: '16px', marginLeft: '10px', marginRight: '10px', textAlign: 'justify' }}>
-                                        Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.
-                                    </div>
-                                </div>
-                            </div>
-                            <div style={{ padding: '10px' }}>Attachments</div> */}
-                            {/* <div style={{ paddingLeft: '10px', paddingBottom: '10px', paddingRight: '10px', width: '100%', marginBottom: '10px' }}>
-                                <div style={{
-                                    border: '1px solid gray',
-                                    padding: '10px',
-                                    // paddingBottom: '10px',
-                                    borderRadius: '5px',
-                                    // paddingLeft: '5px',
-                                    marginRight: '20px'
-                                }}
-                                >
+                                    sx={{ '& p': { margin: 0 } }} // Style for proper paragraph display
+                                />
+                            </Box>
+                            </Box>
+                            
+                            {/* Description section */}
+                            
+                        </Box>
+                        
+                        <Box sx={{ flex: 1 }}>
+                            {/* Right column - Activities and Notes */}
+                            <Box sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: '8px', bgcolor: 'white' }}>
+                                <Typography variant="h6" sx={{ mb: 2 }}>Activities and Notes</Typography>
+                                
+                               
+                                
+                                {/* Note input field */}
+                                <Box sx={{ mb: 3 }}>
                                     <TextField
                                         fullWidth
-                                        label='Add Note'
-                                        id='fullWidth'
-                                        InputProps={{ disableUnderline: true }}
+                                        multiline
+                                        rows={3}
+                                        variant="outlined"
+                                        placeholder="Write a note..."
+                                        value={note}
+                                        onChange={(e) => setNote(e.target.value)}
+                                        error={!!noteError}
+                                        helperText={noteError}
+                                        sx={{ mb: 1 }}
                                     />
-                                </div>
-                            </div> */}
-                            <div style={{ padding: '20px', marginBottom: '10px' }}>
-                                <TextField
-                                    label='Add Note'
-                                    id='fullWidth'
-                                    value={note}
-                                    onChange={(e: any) => setNote(e.target.value)}
-                                    InputProps={{ style: { borderRadius: '10px' } }}
-                                    sx={{ mb: '30px', width: '100%', borderRadius: '10px' }}
-                                // InputProps={{ disableUnderline: true }}
-                                />
-                                <CustomInputBoxWrapper
-                                    aria-label='qwe'
-                                    // className='CustomInputBoxWrapper'
-                                    contentEditable="true"
-                                    onInput={(e: any) => setInputValue(e.currentTarget.innerText)}
-                                // onInput={(e: React.SyntheticEvent<HTMLDivElement>) => setInputValue(e.currentTarget.innerText)}
-                                // onInput={(e) => setInputValue(e.target.innerText)}
-                                >
-                                    {attachedFiles.length > 0 && (
-                                        <div>
-                                            {attachedFiles.map((file, index) => (
-                                                <div key={index}>
-                                                    <div>{file.name}</div>
-                                                    <img src={URL.createObjectURL(file)} alt={file.name} style={{ maxWidth: '100%', maxHeight: '100px', marginTop: '8px' }} />
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </CustomInputBoxWrapper>
-                                <Box sx={{
-                                    pt: '10px', display: 'flex', justifyContent: 'space-between', border: '1px solid #ccc', borderTop: 'none', mt: '-5px',
-                                    borderBottomLeftRadius: '8px', borderBottomRightRadius: '8px', pb: '10px'
-                                }}>
-                                    <Button component='label' onClick={handleAttachmentClick} sx={{ ml: '5px' }}>
-                                        <FaPaperclip style={{ fill: 'gray' }} />
-                                    </Button>
-                                    <Grid container justifyContent="flex-end">
+                                    <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                                         <Button
-                                            variant='contained'
-                                            size='small'
-                                            color='inherit'
-                                            disableFocusRipple
-                                            disableRipple
-                                            disableTouchRipple
-                                            sx={{ backgroundColor: '#808080b5', borderRadius: '8px', color: 'white', textTransform: 'none', ml: '8px', '&:hover': { backgroundColor: '#C0C0C0' } }}
-                                            onClick={resetForm}
+                                            variant="contained"
+                                            color="primary"
+                                            onClick={handleAddNoteClick}
+                                            disabled={noteSubmitting || !note.trim()}
+                                            sx={{ textTransform: 'capitalize' }}
                                         >
-                                            Cancel
+                                            {noteSubmitting ? 'Submitting...' : 'Add note'}
                                         </Button>
-                                        <Button variant='contained' size='small'
-                                            sx={{ backgroundColor: '#1976d2', borderRadius: '8px', textTransform: 'none', ml: '8px', mr: '12px' }}
-                                            onClick={sendComment}
-                                        >
-                                            Send
-                                        </Button>
-                                    </Grid>
+                                    </Box>
                                 </Box>
-                                {/* {attachedFiles.length > 0 && (
-                                    <div>
-                                        <strong>Attached Files:</strong>
-                                        <ul>
-                                            {attachedFiles.map((file: any, index) => (
-                                                <li key={index}>{file.name}</li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                )} */}
-                            </div>
+                                
+                                
+                                
+                                {/* Activity items */}
+                                <Box sx={{ mt: 3 }}>
+                                    {/* Display comments from API response */}
+                                    {leadData?.comments && leadData.comments.length > 0 ? (
+                                        <>
+                                            {[...leadData.comments]
+                                                .sort((a, b) => new Date(b.commented_on).getTime() - new Date(a.commented_on).getTime())
+                                                .slice(0, commentsToShow)
+                                                .map((comment: any, index: number) => (
+                                                    <Box key={index} sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
+                                                        <Avatar sx={{ mr: 1, width: 32, height: 32 }} src={comment.commented_by_user?.profile_pic} />
+                                                        <Box>
+                                                            <Typography variant="body2" fontWeight="bold">
+                                                                {capitalizeFirstLetter(comment.commented_by_user?.first_name) || ''} {capitalizeFirstLetter(comment.commented_by_user?.last_name) || ''}
+                                                            </Typography>
+                                                            <Typography variant="body2">{comment.comment}</Typography>
+                                                        </Box>
+                                                        <Typography variant="caption" color="text.secondary" sx={{ ml: 'auto' }}>
+                                                            {new Date(comment.commented_on).toLocaleString()}
+                                                        </Typography>
+                                                    </Box>
+                                                ))
+                                            }
+                                            
+                                            {/* Show More button for pagination */}
+                                            {leadData.comments.length > commentsToShow && (
+                                                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                                                    <Button 
+                                                        variant="outlined" 
+                                                        size="small" 
+                                                        onClick={handleShowMoreComments}
+                                                        sx={{ textTransform: 'capitalize' }}
+                                                    >
+                                                        Show more
+                                                    </Button>
+                                                </Box>
+                                            )}
+                                        </>
+                                    ) : (
+                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, justifyContent: 'center', p: 2 }}>
+                                            <Typography variant="body2" color="text.secondary">
+                                                No notes yet. Add a note to start .
+                                            </Typography>
+                                        </Box>
+                                    )}
+                                    
+                                    
+                                </Box>
+                            </Box>
                         </Box>
                     </Box>
-                </Box>
-            </div>
-            <Popover
-                anchorOrigin={{
-                    vertical: 'bottom',
-                    horizontal: 'right'
-                }}
-                transformOrigin={{
-                    vertical: 'top',
-                    horizontal: 'right'
-                }}
-                id={id}
-                open={open}
-                anchorEl={anchorEl}
-                onClose={handleCloseFile}
-            >
-                <List disablePadding>
-                    <ListItem disablePadding>
-                        <StyledListItemButton
-                            onClick={deleteFile}
-                        >
-                            <ListItemIcon > <FaTimes fill='#3e79f7' /></ListItemIcon>
-                            <StyledListItemText primary={'Remove'} sx={{ ml: '-20px', color: '#3e79f7' }} />
-                        </StyledListItemButton>
-                    </ListItem>
-                </List>
-            </Popover>
+                    </Box>
+                )}
+            </Box>
         </Box>
     )
 }
+
 export default LeadDetails;
-{/* <form>
-                                    <div style={{
-                                        border: '1px solid gray',
-                                        padding: '10px',
-                                        borderRadius: '5px',
-                                        marginRight: '20px'
-                                    }}
-                                    >
-                                        <TextField
-                                            fullWidth label='Add Note'
-                                            id='fullWidth' style={{ marginBottom: '30px' }}
-                                            InputProps={{ disableUnderline: true }}
-                                        /> 
-                                        <Divider light style={{ marginTop: '30px' }} />
-                                        <div className='bottom-box' style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '10px', paddingTop: '9px' }}>
-                                            <div>
-                                                <Button component='label'>
-                                                    <FaRegAddressCard style={{ fill: 'gray' }} />
-                                                    <input
-                                                        type='file'
-                                                        hidden
-                                                    />
-                                                </Button>
-                                            </div>
-                                            <div>
-                                                <Button variant='contained' size='small' style={{ backgroundColor: '#C0C0C0', marginRight: '3px' }}>
-                                                    Cancel
-                                                </Button>
-                                                <Button variant='contained' size='small' style={{ backgroundColor: '#1F51FF', marginRight: '3px' }}>
-                                                    Send
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </form> */}

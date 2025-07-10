@@ -218,20 +218,14 @@ const handleNextPage = () => {
   }
 
   const selectLeadList = (leadId: any) => {
-    navigate(`/app/leads/lead-details`, { 
-      state: { 
-        leadId, 
-        detail: true, 
-        contacts: contacts || [], 
-        status: status || [], 
-        source: source || [], 
-        companies: companies || [], 
-        tags: tags || [], 
-        users: users || [], 
-        countries: countries || [], 
-        industries: industries || [] 
-      } 
-    })
+    // Use the new path parameter based navigation
+    navigate(`/app/leads/${leadId}`)
+    
+  }
+  const redirectToEditLead = (leadId: any) => {
+    // Use the new path parameter based navigation
+    navigate(`/app/leads/${leadId}/edit`)
+    
   }
 
   const deleteLead = (deleteId: any) => {
@@ -356,7 +350,7 @@ const handleNextPage = () => {
               cursor: 'pointer'
             }}
           >
-            <Box sx={{ width: '28%', pl: 1, display: 'flex', alignItems: 'center' }} onClick={() => handleSort('lead_name')}>
+            <Box sx={{ width: '28%', pl: 1, display: 'flex', alignItems: 'center' }} onClick={() => handleSort('lead_title')}>
               Lead Name {sortField === 'lead_name' && (sortOrder === 'asc' ? <FiChevronUp /> : <FiChevronDown />)}
             </Box>
             <Box sx={{ width: '14%', display: 'flex',  justifyContent: 'center', alignItems: 'center' }} onClick={() => handleSort('contact_name')}>
@@ -391,10 +385,23 @@ const handleNextPage = () => {
             stableSort(leads, getComparator(sortOrder, sortField)).map((item: any, index: number) => (
 
               <Box key={index} sx={{ mb: '5px' }}>
-                <Box sx={{ backgroundColor: 'white', borderRadius: '4px', boxShadow: '0px 0px 5px rgba(0,0,0,0.1)', p: '10px', fontSize: '14px' }}>
+                <Box 
+                  sx={{ 
+                    backgroundColor: 'white', 
+                    borderRadius: '4px', 
+                    boxShadow: '0px 0px 5px rgba(0,0,0,0.1)', 
+                    p: '10px', 
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    '&:hover': {
+                      boxShadow: '0px 0px 10px rgba(0,0,0,0.15)',
+                    }
+                  }}
+                  onClick={() => selectLeadList(item.id)}
+                >
                   <Stack direction="row" alignItems="center">
                     <Box sx={{ width: '28%', pl: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {item?.lead_name || '--'}
+                      {item?.lead_title || '--'}
                     </Box>
                     <Box sx={{ width: '14%', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {item?.contact_name || '--'}
@@ -410,12 +417,24 @@ const handleNextPage = () => {
                         {item?.status || '--'}
                       </Typography>
                     </Box>
-                    <Box sx={{ width: '10%' }}>{item?.created_date || '--'}</Box>
-                    <Box sx={{ width: '5%', textAlign: 'right', pr: 1, display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                      <FaEdit
-                        onClick={() =>
-                          navigate(`/app/leads/lead-details`, { state: { leadId: item.id, detail: false } })
+                    <Box sx={{ width: '10%', textAlign: 'center' }}>{item?.created_date || '--'}</Box>
+                    <Box 
+                      sx={{ 
+                        width: '5%', 
+                        textAlign: 'right', 
+                        pr: 1, 
+                        display: 'flex', 
+                        gap: '8px', 
+                        justifyContent: 'flex-end',
+                        // Prevent click events from bubbling up to parent
+                        '& > *': { 
+                          zIndex: 2 
                         }
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <FaEdit
+                        onClick={() => redirectToEditLead(item.id)}
                         style={{ width: '18px', height: '18px', cursor: 'pointer', color: '#1A3353' }}
                       />
                       <FaTrashAlt

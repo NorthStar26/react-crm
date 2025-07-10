@@ -16,6 +16,7 @@ interface CustomAppBarProps {
   onSubmit?: (e: React.FormEvent) => void;
   disabled?: boolean;
   variant?: 'form' | 'detail' | 'view'; // New prop to define page type
+  customButtons?: React.ReactNode; // New prop to add custom buttons
 }
 
 export function CustomAppBar({
@@ -28,6 +29,7 @@ export function CustomAppBar({
   onSubmit,
   disabled = false,
   variant,
+  customButtons,
 }: CustomAppBarProps) {
   const location = useLocation();
   const sharedData = useMyContext();
@@ -62,10 +64,11 @@ export function CustomAppBar({
                 }
                 style={{ backgroundColor: 'white', color: '#5B5C63' }}
               >
-                {backBtn}
+                {backBtn || 'Back'}
               </Button>
             </div>
-            <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              {customButtons}
               <Button
                 type="submit"
                 variant="contained"
