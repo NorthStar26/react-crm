@@ -59,16 +59,21 @@ const MOCK_CONTACTS: Contact[] = [];
 const MOCK_TAGS: string[] = ['Important', 'Urgent', 'Follow-up', 'New'];
 // MOCK_CONTACT_OPTIONS removed as we're now using real data from the API
 // MOCK_COMPANIES removed as we're now using real data from the API
+// Updated status options based on backend requirements
 const MOCK_STATUS: [string, string][] = [
-  ['open', 'Open'],
-  ['closed', 'Closed'],
-  ['assigned', 'Assigned']
+  ['new', 'New'],
+  ['qualified', 'Qualified'],
+  ['disqualified', 'Disqualified'],
+  ['recycled', 'Recycled']
 ];
 const MOCK_SOURCES: [string, string][] = [
   ['call', 'Call'],
   ['email', 'Email'],
-  ['web', 'Web'],
-  ['referral', 'Referral']
+  ['existing customer', 'Existing Customer'],
+  ['partner', 'Partner'],
+  ['public relations', 'Public Relations'],
+  ['campaign', 'Campaign'],
+  ['other', 'Other']
 ];
 
 
@@ -126,7 +131,7 @@ export function AddLeads() {
     description: '',
     assigned_to: '', // Single string
     contact: '', // Singular field, single string
-    status: 'assigned',
+    status: 'new',
     source: 'call',
     tags: [],
     company: '',
@@ -422,7 +427,7 @@ export function AddLeads() {
       description: '',
       assigned_to: '',
       contact: '',
-      status: 'assigned',
+      status: 'new',
       source: 'call',
       tags: [],
       company: '',
