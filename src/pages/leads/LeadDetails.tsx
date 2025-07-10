@@ -7,6 +7,7 @@ import {
     Link,
     TextField,
     Tooltip,
+    CircularProgress,
 } from '@mui/material'
 import StatusLabel from '../../components/StatusLabel'
 import { 
@@ -206,6 +207,7 @@ function LeadDetails() {
     // Get leadId from URL parameters
     const { leadId } = useParams<{ leadId: string }>();
     const [leadData, setLeadData] = useState<LeadResponse | null>(null);
+    const [loading, setLoading] = useState(true); // Add loading state
     const [note, setNote] = useState('');
     const [noteError, setNoteError] = useState('');
     const [noteSubmitting, setNoteSubmitting] = useState(false);
@@ -235,11 +237,16 @@ function LeadDetails() {
 
     useEffect(() => {
         if (leadId) {
-            getLeadDetails(leadId)
+            getLeadDetails(leadId, true) // Pass true for initial load
         }
     }, [leadId])
 
-    const getLeadDetails = (id: string) => {
+    const getLeadDetails = (id: string, isInitialLoad = false) => {
+        // Only set loading to true for initial load
+        if (isInitialLoad) {
+            setLoading(true);
+        }
+        
         const Header = {
             Accept: 'application/json',
             'Content-Type': 'application/json',
@@ -254,6 +261,11 @@ function LeadDetails() {
             })
             .catch((err) => {
                 console.error('Error:', err);
+            })
+            .finally(() => {
+                if (isInitialLoad) {
+                    setLoading(false);
+                }
             })
     }
 
@@ -354,8 +366,8 @@ function LeadDetails() {
                     if (result.success) {
                         // Add to local state
                         setAttachments(prev => [...prev, file]);
-                        // Refresh lead details to show the new attachment
-                        getLeadDetails(leadId as string);
+                        // Refresh lead details to show the new attachment (not initial load)
+                        getLeadDetails(leadId as string, false);
                         
                         // Show success alert
                         setAlertMessage(`File "${file.name}" was successfully uploaded`);
@@ -422,8 +434,8 @@ function LeadDetails() {
         fetchData(`${LeadUrl}/${leadId}/`, 'POST', data, Header)
             .then((res) => {
                 if (!res.error) {
-                    // Refresh lead details to show the new comment
-                    getLeadDetails(leadId as string);
+                    // Refresh lead details to show the new comment (not initial load)
+                    getLeadDetails(leadId as string, false);
                     setNote('');
                     setNoteError('');
                     
@@ -512,8 +524,8 @@ function LeadDetails() {
         fetchData(`/${LeadUrl}/attachment/${attachmentToDelete}/`, 'DELETE', null as any, Header)
             .then((res) => {
                 if (!res.error) {
-                    // Success - refresh lead details to update the UI
-                    getLeadDetails(leadId as string);
+                    // Success - refresh lead details to update the UI (not initial load)
+                    getLeadDetails(leadId as string, false);
                     
                     // Show success alert
                     setAlertMessage('Attachment was successfully deleted');
@@ -626,7 +638,20 @@ function LeadDetails() {
                     }
                 />
                 
-                <Box sx={{ mt: '40px', p: '80px 40px'  }}>
+                {loading ? (
+                    // Show loading spinner while data is being fetched
+                    <Box sx={{ 
+                        display: 'flex', 
+                        justifyContent: 'center', 
+                        alignItems: 'center', 
+                        minHeight: '60vh',
+                        mt: '40px'
+                    }}>
+                        <CircularProgress size={60} />
+                    </Box>
+                ) : (
+                    // Only render content when data is loaded
+                    <Box sx={{ mt: '40px', p: '80px 40px' }}>
                     
                     
                     <Box sx={{ display: 'flex', gap: 3 }}>
@@ -942,7 +967,8 @@ function LeadDetails() {
                             </Box>
                         </Box>
                     </Box>
-                </Box>
+                    </Box>
+                )}
             </Box>
         </Box>
     )
