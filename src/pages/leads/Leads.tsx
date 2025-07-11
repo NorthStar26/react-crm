@@ -118,11 +118,11 @@ export default function Leads(props: any) {
 
   const statusList = [
       { value: '', label: 'Status' },
-      { value: 'assigned', label: 'Assigned' },
-      { value: 'in process', label: 'In Process' },
-      { value: 'converted', label: 'Converted' },
+      { value: 'new', label: 'New' },
+      { value: 'qualified', label: 'Qualified' },
+      { value: 'disqualified', label: 'Disqualified' },
       { value: 'recycled', label: 'Recycled' },
-      { value: 'closed', label: 'Closed' },
+      
     ];
 
   const sourceList = [
