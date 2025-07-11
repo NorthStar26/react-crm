@@ -1118,8 +1118,48 @@ export function AddLeads() {
                       </div>
                       
                     </div>
-                    <div className='fieldContainer2'>
-                      <div className='fieldSubContainer' >
+                    <div className='fieldContainer2'><div className='fieldSubContainer'>
+                        <div className='fieldTitle'>Status</div>
+                        <FormControl sx={{ width: '70%' }}>
+                          <Select
+                            name='status'
+                            value={formData.status}
+                            open={statusSelectOpen}
+                            onClick={() => setStatusSelectOpen(!statusSelectOpen)}
+                            IconComponent={() => (
+                              <div onClick={() => setStatusSelectOpen(!statusSelectOpen)} className="select-icon-background">
+                                {statusSelectOpen ? <FiChevronUp className='select-icon' /> : <FiChevronDown className='select-icon' />}
+                              </div>
+                            )}
+                            className={'select'}
+                            onChange={handleChange}
+                            error={!!errors?.status?.[0]}
+                          >
+                            {MOCK_STATUS.map((option: any) => (
+                              <MenuItem key={option[0]} value={option[0]}>
+                                {option[1]}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                          <FormHelperText>{errors?.status?.[0] ? errors?.status[0] : ''}</FormHelperText>
+                        </FormControl>
+                      </div>
+                     
+                      <div className='fieldSubContainer'>
+                        <div className='fieldTitle'>Link</div>
+                        <TextField
+                          name='link'
+                          value={formData.link}
+                          onChange={handleChange}
+                          style={{ width: '70%' }}
+                          size='small'
+                          helperText={errors?.link?.[0] ? errors?.link[0] : ''}
+                          error={!!errors?.link?.[0]}
+                        />
+                      </div>
+                      
+                    </div>
+                    <div className='fieldContainer2'> <div className='fieldSubContainer' >
                         <div className='fieldTitle'>
                           Attachments
                         </div>
@@ -1253,47 +1293,7 @@ export function AddLeads() {
                           </Box>
                         </Box>
                       </div>
-                      <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>Link</div>
-                        <TextField
-                          name='link'
-                          value={formData.link}
-                          onChange={handleChange}
-                          style={{ width: '70%' }}
-                          size='small'
-                          helperText={errors?.link?.[0] ? errors?.link[0] : ''}
-                          error={!!errors?.link?.[0]}
-                        />
-                      </div>
                       
-                    </div>
-                    <div className='fieldContainer2'>
-                      <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>Status</div>
-                        <FormControl sx={{ width: '70%' }}>
-                          <Select
-                            name='status'
-                            value={formData.status}
-                            open={statusSelectOpen}
-                            onClick={() => setStatusSelectOpen(!statusSelectOpen)}
-                            IconComponent={() => (
-                              <div onClick={() => setStatusSelectOpen(!statusSelectOpen)} className="select-icon-background">
-                                {statusSelectOpen ? <FiChevronUp className='select-icon' /> : <FiChevronDown className='select-icon' />}
-                              </div>
-                            )}
-                            className={'select'}
-                            onChange={handleChange}
-                            error={!!errors?.status?.[0]}
-                          >
-                            {MOCK_STATUS.map((option: any) => (
-                              <MenuItem key={option[0]} value={option[0]}>
-                                {option[1]}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                          <FormHelperText>{errors?.status?.[0] ? errors?.status[0] : ''}</FormHelperText>
-                        </FormControl>
-                      </div>
                       <div className='fieldSubContainer'>
                         {/* Empty container for layout balance */}
                       </div>
