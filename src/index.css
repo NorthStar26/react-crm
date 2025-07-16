@@ -17,20 +17,26 @@ code {
 .ag-theme-alpine .ag-header-cell,
 .ag-theme-alpine .ag-header-cell-label,
 .ag-theme-alpine .ag-header-cell-text {
-  background: #0f2a55 !important;   /* keeps the bar dark blue */
-  color: #fff !important;           /* forces white text */
-  font-weight: 600;                 /* bold */
+  background: #0f2a55 !important; /* keeps the bar dark blue */
+  color: #fff !important; /* forces white text */
+  font-weight: 600; /* bold */
+}
+.ag-theme-alpine .ag-header-row {
+  min-height: 40px !important;
 }
 
 /* zebra rows (unchanged) */
-.ag-theme-alpine .ag-row:nth-child(odd)  { background: #ffffff; }
-.ag-theme-alpine .ag-row:nth-child(even) { background: #f3f8ff; }
-
+.ag-theme-alpine .ag-row:nth-child(odd) {
+  background: #ffffff;
+}
+.ag-theme-alpine .ag-row:nth-child(even) {
+  background: #f3f8ff;
+}
 
 /* left-align the paging bar */
 .ag-theme-alpine .ag-paging-panel {
-  justify-content: flex-start !important;   /* push to left */
-  padding-left: 8px;                        /* little margin */
+  justify-content: flex-start !important; /* push to left */
+  padding-left: 8px; /* little margin */
 }
 
 /* MUI Pagination pills: dark-blue active item */
@@ -38,7 +44,6 @@ code {
   border-radius: 16px;
 }
 .MuiPaginationItem-page.Mui-selected {
-  background:#0F2A55;
-  color:#fff;
+  background: #0f2a55;
+  color: #fff;
 }
-
