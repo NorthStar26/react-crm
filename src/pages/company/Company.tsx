@@ -589,6 +589,7 @@ export default function Company() {
                       suppressRowClickSelection
                       suppressCellFocus
                       rowHeight={56}
+                      headerHeight={40}
                       onGridReady={(params) => {
                         setGridApi(params.api);
                         params.api.sizeColumnsToFit();

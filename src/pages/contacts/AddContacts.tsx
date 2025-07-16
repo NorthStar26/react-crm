@@ -45,6 +45,7 @@ type FormErrors = {
   description?: string[];
   non_field_errors?: string[];
   detail?: string[];
+  department?: string[];
 };
 
 interface FormData {
@@ -59,6 +60,7 @@ interface FormData {
   language: string;
   description: string;
   do_not_call: boolean;
+  department?: string;
 }
 
 const SALUTATIONS = [
@@ -97,6 +99,7 @@ function AddContact() {
     language: '',
     description: '',
     do_not_call: false,
+    department: '',
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
@@ -236,6 +239,7 @@ function AddContact() {
         language: formData.language || null,
         description: descriptionContent || null,
         do_not_call: formData.do_not_call,
+        department: formData.department || null,
       };
       console.log('Submitting contact data:', data);
 
@@ -741,16 +745,16 @@ function AddContact() {
                           <div style={fieldStyles.fieldInput}>
                             <TextField
                               name="department"
-                              value=""
+                              value={formData.department}
                               onChange={handleChange}
                               size="small"
                               fullWidth
-                              disabled
-                              placeholder="Coming soon"
-                              helperText=" "
+                              placeholder="Enter department"
+                              helperText={errors?.department?.[0] || ''}
+                              error={!!errors?.department?.[0]}
                               InputProps={{
                                 style: {
-                                  color: '#9e9e9e',
+                                  color: '#0f0f0fff',
                                 },
                               }}
                               sx={{

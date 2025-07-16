@@ -169,6 +169,10 @@ export default function Contacts() {
   const [countries, setCountries] = useState<{ id: string; name: string }[]>(
     []
   );
+  // 1. Добавить состояния для департаментов
+  const [departments, setDepartments] = useState<string[]>([]);
+  const [departmentFilter, setDepartmentFilter] = useState('');
+  const [departmentSelectOpen, setDepartmentSelectOpen] = useState(false);
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -230,6 +234,7 @@ export default function Contacts() {
       minWidth: 20,
       sortable: true,
     },
+
     {
       field: 'language',
       headerName: 'Language',
@@ -289,7 +294,7 @@ export default function Contacts() {
 
   // AG Grid theme variables
   const gridTheme = {
-    '--ag-header-background-color': '#2E4258',
+    '--ag-header-background-color': '#582e39ff',
     '--ag-header-foreground-color': '#FFFFFF',
     '--ag-header-border-color': '#0F2A55',
     '--ag-odd-row-background-color': '#FFFFFF',
@@ -308,6 +313,7 @@ export default function Contacts() {
     jobTitleFilter,
     languageFilter,
     companyFilter,
+    departmentFilter, // Добавить это
   ]);
 
   useEffect(() => {
@@ -337,6 +343,9 @@ export default function Contacts() {
       //   if (jobTitleFilter) url += `&title=${jobTitleFilter}`;
       if (languageFilter) url += `&language=${languageFilter}`;
       if (companyFilter) url += `&company=${companyFilter}`;
+      // После строки с companyFilter
+      if (departmentFilter)
+        url += `&department=${encodeURIComponent(departmentFilter)}`;
 
       const data = await fetchData(url, 'GET', null as any, Header);
 
@@ -344,6 +353,7 @@ export default function Contacts() {
         setContactList(data.data?.contact_obj_list || []);
         setCountries(data.data?.companies || data.data?.countries || []);
         setJobTitles(data.data?.job_titles || []);
+        setDepartments(data.data?.departments || []);
         setTotalContacts(
           data.data?.contacts_count || data.data?.contact_obj_list?.length || 0
         );
@@ -586,6 +596,40 @@ export default function Contacts() {
               ))}
             </Select>
           </FormControl>
+          {/* Department Filter */}
+          <FormControl sx={{ minWidth: 160 }}>
+            <Select
+              displayEmpty
+              value={departmentFilter}
+              onChange={(e) => {
+                setDepartmentFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              onOpen={() => setDepartmentSelectOpen(true)}
+              onClose={() => setDepartmentSelectOpen(false)}
+              open={departmentSelectOpen}
+              IconComponent={() => (
+                <div style={{ marginRight: 8 }}>
+                  {departmentSelectOpen ? <FiChevronUp /> : <FiChevronDown />}
+                </div>
+              )}
+              sx={{
+                background: '#fff',
+                borderRadius: 2,
+                fontSize: 16,
+                height: 40,
+              }}
+            >
+              <MenuItem value="">
+                <em>All Departments</em>
+              </MenuItem>
+              {departments.map((dept) => (
+                <MenuItem key={dept} value={dept}>
+                  {dept}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         </Stack>
         {/* Export + Add Contact */}
         <Stack direction="row" spacing={2}>
@@ -680,6 +724,7 @@ export default function Contacts() {
                   suppressRowClickSelection
                   suppressCellFocus
                   rowHeight={56}
+                  headerHeight={40}
                   onGridReady={(params) => {
                     setGridApi(params.api);
                     params.api.sizeColumnsToFit();

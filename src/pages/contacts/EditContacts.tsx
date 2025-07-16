@@ -45,6 +45,7 @@ type FormErrors = {
   country?: string[];
   language?: string[];
   description?: string[];
+  department?: string[];
   non_field_errors?: string[];
   detail?: string[];
   [key: string]: string[] | undefined;
@@ -63,6 +64,7 @@ interface FormData {
   language: string;
   description: string;
   do_not_call: boolean;
+  department?: string; // Optional field for department
 }
 
 // Available salutation options
@@ -107,6 +109,7 @@ function EditContact() {
     language: '',
     description: '',
     do_not_call: false,
+    department: '', // Optional field for department
   });
 
   // Load companies list on component mount
@@ -149,6 +152,7 @@ function EditContact() {
         language: state.value.language || '',
         description: state.value.description || '',
         do_not_call: state.value.do_not_call || false,
+        department: '',
       });
     }
   }, [state?.id, state?.value]);
@@ -268,6 +272,7 @@ function EditContact() {
         language: formData.language || null,
         description: descriptionContent || null,
         do_not_call: formData.do_not_call,
+        department: formData.department || null, // Include department if available
       };
 
       console.log('Updating contact data:', data);
@@ -442,7 +447,8 @@ function EditContact() {
       formData.title !== (state.value.title || '') ||
       formData.country !== (state.value.country || '') ||
       formData.language !== (state.value.language || '') ||
-      formData.do_not_call !== (state.value.do_not_call || false)
+      formData.do_not_call !== (state.value.do_not_call || false) ||
+      formData.description !== (state.value.description || '')
     );
   };
 
@@ -799,13 +805,13 @@ function EditContact() {
                           <div style={fieldStyles.fieldInput}>
                             <TextField
                               name="department"
-                              value=""
+                              value={formData.department}
                               onChange={handleChange}
                               size="small"
                               fullWidth
-                              disabled
-                              placeholder="Coming soon"
-                              helperText=" "
+                              placeholder="Enter department"
+                              helperText={errors?.department?.[0] || ' '}
+                              error={!!errors?.department?.[0]}
                               InputProps={{
                                 style: {
                                   color: '#9e9e9e',
