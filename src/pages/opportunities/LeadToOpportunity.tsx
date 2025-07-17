@@ -189,7 +189,6 @@ export function LeadToOpportunity() {
 
     fetchData(`${OpportunityUrl}/`, 'POST', JSON.stringify(data), Header)
       .then((res) => {
-        console.log('Form data:', res);
         if (!res.error) {
           // Convert lead status to 'converted'
           //   "Missing required fields: contact, company, description, status, assigned_to"
@@ -207,9 +206,7 @@ export function LeadToOpportunity() {
             }),
             Header
           )
-            .then((leadRes) => {
-              console.log('Lead converted:', leadRes);
-            })
+            .then((leadRes) => {})
             .catch((err) => {
               console.error('Error converting lead:', err);
               setAlertMessage('An error occurred while converting the lead.');
@@ -263,8 +260,6 @@ export function LeadToOpportunity() {
     setAlertOpen(false);
   };
 
-  console.log(state, 'leadsform');
-  console.log('form', formData);
   return (
     <Box sx={{ mt: '60px' }}>
       <CustomAppBar
