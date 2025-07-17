@@ -443,73 +443,130 @@ export default function Accounts() {
     // console.log(!!(selectedId?.length === 0), 'asd');
 
     return (
-        <Box sx={{ mt: '60px' }}>
-            <CustomToolbar>
-                <Tabs defaultValue={tab} onChange={handleChangeTab} sx={{ mt: '26px' }}>
-                    <CustomTab value="open" label="Open"
-                        sx={{
-                            backgroundColor: tab === 'open' ? '#F0F7FF' : '#284871',
-                            color: tab === 'open' ? '#3f51b5' : 'white',
-                        }} />
-                    <CustomTab value="closed" label="Closed"
-                        sx={{
-                            backgroundColor: tab === 'closed' ? '#F0F7FF' : '#284871',
-                            color: tab === 'closed' ? '#3f51b5' : 'white',
-                            ml: '5px',
-                        }}
-                    />
-                </Tabs>
+      <Box sx={{ mt: '60px' }}>
+        <CustomToolbar>
+          <Tabs
+            defaultValue={tab}
+            onChange={handleChangeTab}
+            sx={{ mt: '26px' }}
+          >
+            <CustomTab
+              value="open"
+              label="Open"
+              sx={{
+                backgroundColor: tab === 'open' ? '#F0F7FF' : '#284871',
+                color: tab === 'open' ? '#3f51b5' : 'white',
+              }}
+            />
+            <CustomTab
+              value="closed"
+              label="Closed"
+              sx={{
+                backgroundColor: tab === 'closed' ? '#F0F7FF' : '#284871',
+                color: tab === 'closed' ? '#3f51b5' : 'white',
+                ml: '5px',
+              }}
+            />
+          </Tabs>
 
-                <Stack sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-                    <Select
-                        value={tab === 'open' ? openRecordsPerPage : closedRecordsPerPage}
-                        onChange={(e: any) => handleRecordsPerPage(e)}
-                        open={selectOpen}
-                        onOpen={() => setSelectOpen(true)}
-                        onClose={() => setSelectOpen(false)}
-                        className={`custom-select`}
-                        onClick={() => setSelectOpen(!selectOpen)}
-                        IconComponent={() => (
-                            <div onClick={() => setSelectOpen(!selectOpen)} className="custom-select-icon">
-                                {selectOpen ? <FiChevronUp style={{ marginTop: '12px' }} /> : <FiChevronDown style={{ marginTop: '12px' }} />}
-                            </div>
-                        )}
-                        sx={{
-                            '& .MuiSelect-select': { overflow: 'visible !important' }
-                        }}
-                    >
-                        {recordsList?.length && recordsList.map((item: any, i: any) => (
-                            <MenuItem key={i} value={item[0]}>
-                                {item[1]}
-                            </MenuItem>
-                        ))}
-                    </Select>
-                    <Box sx={{ borderRadius: '7px', backgroundColor: 'white', height: '40px', minHeight: '40px', maxHeight: '40px', display: 'flex', flexDirection: 'row', alignItems: 'center', mr: 1, p: '0px' }}>
-                        <FabLeft onClick={handlePreviousPage} disabled={tab === 'open' ? openCurrentPage === 1 : closedCurrentPage === 1}>
-                            <FiChevronLeft style={{ height: '15px' }} />
-                        </FabLeft>
-                        <Typography sx={{ mt: 0, textTransform: 'lowercase', fontSize: '15px', color: '#1A3353', textAlign: 'center' }}>
-                            {tab === 'open' ? `${openCurrentPage} to ${openTotalPages}` : `${closedCurrentPage} to ${closedTotalPages}`}
-
-                        </Typography>
-                        <FabRight onClick={handleNextPage} disabled={tab === 'open' ? (openCurrentPage === openTotalPages) : (closedCurrentPage === closedTotalPages)}>
-                            <FiChevronRight style={{ height: '15px' }} />
-                        </FabRight>
-                    </Box>
-                    <Button
-                        variant='contained'
-                        startIcon={<FiPlus className='plus-icon' />}
-                        onClick={onAddAccount}
-                        className={'add-button'}
-                    >
-                        Add Account
-                    </Button>
-                </Stack>
-            </CustomToolbar>
-            <Container sx={{ width: '100%', maxWidth: '100%', minWidth: '100%' }}>
-                <Box sx={{ width: '100%', minWidth: '100%', m: '15px 0px 0px 0px' }}>
-                    <Paper sx={{ width: 'cal(100%-15px)', mb: 2, p: '0px 15px 15px 15px' }}>
-                        {/* <Toolbar sx={{ pl: { sm: 2 }, pr: { xs: 1, sm: 1 } }}>
+          <Stack
+            sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}
+          >
+            <Select
+              value={tab === 'open' ? openRecordsPerPage : closedRecordsPerPage}
+              onChange={(e: any) => handleRecordsPerPage(e)}
+              open={selectOpen}
+              onOpen={() => setSelectOpen(true)}
+              onClose={() => setSelectOpen(false)}
+              className={`custom-select`}
+              onClick={() => setSelectOpen(!selectOpen)}
+              IconComponent={() => (
+                <div
+                  onClick={() => setSelectOpen(!selectOpen)}
+                  className="custom-select-icon"
+                >
+                  {selectOpen ? (
+                    <FiChevronUp style={{ marginTop: '12px' }} />
+                  ) : (
+                    <FiChevronDown style={{ marginTop: '12px' }} />
+                  )}
+                </div>
+              )}
+              sx={{
+                '& .MuiSelect-select': { overflow: 'visible !important' },
+              }}
+            >
+              {recordsList?.length &&
+                recordsList.map((item: any, i: any) => (
+                  <MenuItem key={i} value={item[0]}>
+                    {item[1]}
+                  </MenuItem>
+                ))}
+            </Select>
+            <Box
+              sx={{
+                borderRadius: '7px',
+                backgroundColor: 'white',
+                height: '40px',
+                minHeight: '40px',
+                maxHeight: '40px',
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                mr: 1,
+                p: '0px',
+              }}
+            >
+              <FabLeft
+                onClick={handlePreviousPage}
+                disabled={
+                  tab === 'open'
+                    ? openCurrentPage === 1
+                    : closedCurrentPage === 1
+                }
+              >
+                <FiChevronLeft style={{ height: '15px' }} />
+              </FabLeft>
+              <Typography
+                sx={{
+                  mt: 0,
+                  textTransform: 'lowercase',
+                  fontSize: '15px',
+                  color: '#1A3353',
+                  textAlign: 'center',
+                }}
+              >
+                {tab === 'open'
+                  ? `${openCurrentPage} to ${openTotalPages}`
+                  : `${closedCurrentPage} to ${closedTotalPages}`}
+              </Typography>
+              <FabRight
+                onClick={handleNextPage}
+                disabled={
+                  tab === 'open'
+                    ? openCurrentPage === openTotalPages
+                    : closedCurrentPage === closedTotalPages
+                }
+              >
+                <FiChevronRight style={{ height: '15px' }} />
+              </FabRight>
+            </Box>
+            <Button
+              variant="contained"
+              startIcon={<FiPlus className="plus-icon" />}
+              onClick={onAddAccount}
+              className={'add-button'}
+            >
+              Add Account
+            </Button>
+          </Stack>
+        </CustomToolbar>
+        <Container sx={{ width: '100%', maxWidth: '100%', minWidth: '100%' }}>
+          <Box sx={{ width: '100%', minWidth: '100%', m: '15px 0px 0px 0px' }}>
+            <Paper
+              sx={{ width: 'cal(100%-15px)', mb: 2, p: '0px 15px 15px 15px' }}
+            >
+              {/* <Toolbar sx={{ pl: { sm: 2 }, pr: { xs: 1, sm: 1 } }}>
                             <Tooltip title='Delete'>
                                 <Button
                                     variant='outlined'
@@ -530,35 +587,49 @@ export default function Accounts() {
                                 ''
                             )}
                         </Toolbar> */}
-                        <TableContainer>
-                            <Table>
-                                <EnhancedTableHead
-                                    numSelected={selected.length}
-                                    order={order}
-                                    orderBy={orderBy}
-                                    onSelectAllClick={handleSelectAllClick}
-                                    onRequestSort={handleRequestSort}
-                                    rowCount={tab === 'open' ? openAccounts?.length : closedAccounts?.length}
-                                    numSelectedId={selectedId}
-                                    isSelectedId={isSelectedId}
-                                    headCells={headCells}
-                                />
-                                {tab === 'open' ?
-                                    <TableBody>
-                                        {
-                                            openAccounts?.length > 0
-                                                ? stableSort(openAccounts, getComparator(order, orderBy))
-                                                    // .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((item: any, index: any) => {
-                                                    .map((item: any, index: any) => {
-                                                        const labelId = `enhanced-table-checkbox-${index}`
-                                                        const rowIndex = selectedId.indexOf(item.id);
-                                                        return (
-                                                            <TableRow
-                                                                tabIndex={-1}
-                                                                key={index}
-                                                                sx={{ border: 0, '&:nth-of-type(even)': { backgroundColor: 'whitesmoke' }, color: 'rgb(26, 51, 83)', textTransform: 'capitalize' }}
-                                                            >
-                                                                {/* <TableCell
+              <TableContainer>
+                <Table>
+                  <EnhancedTableHead
+                    numSelected={selected.length}
+                    order={order}
+                    orderBy={orderBy}
+                    onSelectAllClick={handleSelectAllClick}
+                    onRequestSort={handleRequestSort}
+                    rowCount={
+                      tab === 'open'
+                        ? openAccounts?.length
+                        : closedAccounts?.length
+                    }
+                    numSelectedId={selectedId}
+                    isSelectedId={isSelectedId}
+                    headCells={headCells}
+                  />
+                  {tab === 'open' ? (
+                    <TableBody>
+                      {
+                        openAccounts?.length > 0 ? (
+                          stableSort(
+                            openAccounts,
+                            getComparator(order, orderBy)
+                          )
+                            // .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((item: any, index: any) => {
+                            .map((item: any, index: any) => {
+                              const labelId = `enhanced-table-checkbox-${index}`;
+                              const rowIndex = selectedId.indexOf(item.id);
+                              return (
+                                <TableRow
+                                  tabIndex={-1}
+                                  key={index}
+                                  sx={{
+                                    border: 0,
+                                    '&:nth-of-type(even)': {
+                                      backgroundColor: 'whitesmoke',
+                                    },
+                                    color: 'rgb(26, 51, 83)',
+                                    textTransform: 'capitalize',
+                                  }}
+                                >
+                                  {/* <TableCell
                                                                     padding='checkbox'
                                                                     sx={{ border: 0, color: 'inherit' }}
                                                                     align='left'
@@ -572,71 +643,118 @@ export default function Accounts() {
                                                                         sx={{ border: 0, color: 'inherit' }}
                                                                     />
                                                                 </TableCell> */}
-                                                                <TableCell
-                                                                    className='tableCell-link'
-                                                                    onClick={() => accountDetail(item.id)}
-                                                                >
-                                                                    {item?.name ? item?.name : '---'}
-                                                                </TableCell>
-                                                                <TableCell className='tableCell'>
-                                                                    {item?.website ? item?.website : '---'}
-                                                                </TableCell>
-                                                                <TableCell className='tableCell'>
-                                                                    <Stack style={{ display: 'flex', flexDirection: 'row', alignItems: "center" }}>
-                                                                        <Avatar src={item?.lead?.created_by?.profile_pic} alt={item?.lead?.created_by?.email} /><Stack sx={{ ml: 1 }}>{item?.lead?.account_name ? item?.lead?.account_name : '---'}</Stack>
-                                                                    </Stack>
-                                                                </TableCell>
-                                                                <TableCell className='tableCell'>
-                                                                    {item?.lead?.country ? item?.lead?.country : '---'}
-                                                                </TableCell>
-                                                                <TableCell className='tableCell'>
-                                                                    {item?.tags?.length ? item?.tags.map((tag: any, i: any) => <Stack sx={{ mr: 0.5 }}> Tags(tag)</Stack>) : '---'}
-                                                                </TableCell>
-                                                                <TableCell className='tableCell'>
-                                                                    {/* <IconButton>
+                                  <TableCell
+                                    className="tableCell-link"
+                                    onClick={() => accountDetail(item.id)}
+                                  >
+                                    {item?.name ? item?.name : '---'}
+                                  </TableCell>
+                                  <TableCell className="tableCell">
+                                    {item?.website ? item?.website : '---'}
+                                  </TableCell>
+                                  <TableCell className="tableCell">
+                                    <Stack
+                                      style={{
+                                        display: 'flex',
+                                        flexDirection: 'row',
+                                        alignItems: 'center',
+                                      }}
+                                    >
+                                      <Avatar
+                                        src={
+                                          item?.lead?.created_by?.profile_pic
+                                        }
+                                        alt={item?.lead?.created_by?.email}
+                                      />
+                                      <Stack sx={{ ml: 1 }}>
+                                        {item?.lead?.account_name
+                                          ? item?.lead?.account_name
+                                          : '---'}
+                                      </Stack>
+                                    </Stack>
+                                  </TableCell>
+                                  <TableCell className="tableCell">
+                                    {item?.lead?.country
+                                      ? item?.lead?.country
+                                      : '---'}
+                                  </TableCell>
+                                  <TableCell className="tableCell">
+                                    {item?.tags?.length
+                                      ? item?.tags.map((tag: any, i: any) => (
+                                          <Stack sx={{ mr: 0.5 }}>
+                                            {' '}
+                                            Tags(tag)
+                                          </Stack>
+                                        ))
+                                      : '---'}
+                                  </TableCell>
+                                  <TableCell className="tableCell">
+                                    {/* <IconButton>
                                                                         <FaEdit
                                                                             onClick={() => EditItem(item?.id)}
                                                                             style={{ fill: '#1A3353', cursor: 'pointer', width: '18px' }}
                                                                         />
                                                                     </IconButton> */}
-                                                                    <IconButton>
-                                                                        <FaTrashAlt
-                                                                            onClick={() => deleteRow(item?.id)}
-                                                                            style={{ fill: '#1A3353', cursor: 'pointer', width: '15px' }} />
-                                                                    </IconButton>
-                                                                </TableCell>
-                                                            </TableRow>
-                                                        )
-                                                    })
-                                                : <TableRow> <TableCell colSpan={6} sx={{ border: 0 }}><Spinner /></TableCell></TableRow>
-                                        }
-                                        {
-                                            // emptyRows > 0 && (
-                                            //     <TableRow
-                                            //         style={{
-                                            //             height: (dense ? 33 : 53) * emptyRows
-                                            //         }}
-                                            //     >
-                                            //         <TableCell colSpan={6} />
-                                            //     </TableRow>
-                                            // )
-
-                                        }
-                                    </TableBody> :
-                                    <TableBody>
-                                        {
-                                            closedAccounts?.length > 0
-                                                ? stableSort(closedAccounts, getComparator(order, orderBy)).map((item: any, index: any) => {
-                                                    // .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((item: any, index: any) => {
-                                                    const labelId = `enhanced-table-checkbox-${index}`
-                                                    const rowIndex = selectedId.indexOf(item.id);
-                                                    return (
-                                                        <TableRow
-                                                            tabIndex={-1}
-                                                            key={index}
-                                                            sx={{ border: 0, '&:nth-of-type(even)': { backgroundColor: 'whitesmoke' }, color: 'rgb(26, 51, 83)', textTransform: 'capitalize' }}
-                                                        >
-                                                            {/* <TableCell
+                                    <IconButton>
+                                      <FaTrashAlt
+                                        onClick={() => deleteRow(item?.id)}
+                                        style={{
+                                          fill: '#1A3353',
+                                          cursor: 'pointer',
+                                          width: '15px',
+                                        }}
+                                      />
+                                    </IconButton>
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })
+                        ) : (
+                          <TableRow>
+                            {' '}
+                            <TableCell
+                              colSpan={6}
+                              sx={{ border: 0 }}
+                            ></TableCell>
+                          </TableRow>
+                        )
+                      }
+                      {
+                        // emptyRows > 0 && (
+                        //     <TableRow
+                        //         style={{
+                        //             height: (dense ? 33 : 53) * emptyRows
+                        //         }}
+                        //     >
+                        //         <TableCell colSpan={6} />
+                        //     </TableRow>
+                        // )
+                      }
+                    </TableBody>
+                  ) : (
+                    <TableBody>
+                      {closedAccounts?.length > 0 ? (
+                        stableSort(
+                          closedAccounts,
+                          getComparator(order, orderBy)
+                        ).map((item: any, index: any) => {
+                          // .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((item: any, index: any) => {
+                          const labelId = `enhanced-table-checkbox-${index}`;
+                          const rowIndex = selectedId.indexOf(item.id);
+                          return (
+                            <TableRow
+                              tabIndex={-1}
+                              key={index}
+                              sx={{
+                                border: 0,
+                                '&:nth-of-type(even)': {
+                                  backgroundColor: 'whitesmoke',
+                                },
+                                color: 'rgb(26, 51, 83)',
+                                textTransform: 'capitalize',
+                              }}
+                            >
+                              {/* <TableCell
                                                                     padding='checkbox'
                                                                     sx={{ border: 0, color: 'inherit' }}
                                                                     align='left'
@@ -650,60 +768,89 @@ export default function Accounts() {
                                                                         sx={{ border: 0, color: 'inherit' }}
                                                                     />
                                                                 </TableCell> */}
-                                                            <TableCell
-                                                                className='tableCell-link'
-                                                                onClick={() => accountDetail(item.id)}
-                                                            >
-                                                                {item?.name ? item?.name : '---'}
-                                                            </TableCell>
-                                                            <TableCell className='tableCell'>
-                                                                {item?.website ? item?.website : '---'}
-                                                            </TableCell>
-                                                            <TableCell className='tableCell'>
-                                                                <Stack style={{ display: 'flex', flexDirection: 'row', alignItems: "center" }}>
-                                                                    <Avatar src={item?.lead?.created_by?.profile_pic} alt={item?.lead?.created_by?.email} /><Stack sx={{ ml: 1 }}>{item?.lead?.account_name ? item?.lead?.account_name : '---'}</Stack>
-                                                                </Stack>
-                                                            </TableCell>
-                                                            <TableCell className='tableCell'>
-                                                                {item?.lead?.country ? item?.lead?.country : '---'}
-                                                            </TableCell>
-                                                            <TableCell className='tableCell'>
-                                                                {item?.tags?.length ? item?.tags.map((tag: any, i: any) => <Stack sx={{ mr: 0.5 }}> Tags(tag)</Stack>) : '---'}
-                                                            </TableCell>
-                                                            <TableCell className='tableCell'>
-                                                                {/* <IconButton>
+                              <TableCell
+                                className="tableCell-link"
+                                onClick={() => accountDetail(item.id)}
+                              >
+                                {item?.name ? item?.name : '---'}
+                              </TableCell>
+                              <TableCell className="tableCell">
+                                {item?.website ? item?.website : '---'}
+                              </TableCell>
+                              <TableCell className="tableCell">
+                                <Stack
+                                  style={{
+                                    display: 'flex',
+                                    flexDirection: 'row',
+                                    alignItems: 'center',
+                                  }}
+                                >
+                                  <Avatar
+                                    src={item?.lead?.created_by?.profile_pic}
+                                    alt={item?.lead?.created_by?.email}
+                                  />
+                                  <Stack sx={{ ml: 1 }}>
+                                    {item?.lead?.account_name
+                                      ? item?.lead?.account_name
+                                      : '---'}
+                                  </Stack>
+                                </Stack>
+                              </TableCell>
+                              <TableCell className="tableCell">
+                                {item?.lead?.country
+                                  ? item?.lead?.country
+                                  : '---'}
+                              </TableCell>
+                              <TableCell className="tableCell">
+                                {item?.tags?.length
+                                  ? item?.tags.map((tag: any, i: any) => (
+                                      <Stack sx={{ mr: 0.5 }}> Tags(tag)</Stack>
+                                    ))
+                                  : '---'}
+                              </TableCell>
+                              <TableCell className="tableCell">
+                                {/* <IconButton>
                                                                         <FaEdit
                                                                             onClick={() => EditItem(item?.id)}
                                                                             style={{ fill: '#1A3353', cursor: 'pointer', width: '18px' }}
                                                                         />
                                                                     </IconButton> */}
-                                                                <IconButton>
-                                                                    <FaTrashAlt
-                                                                        onClick={() => deleteRow(item?.id)}
-                                                                        style={{ fill: '#1A3353', cursor: 'pointer', width: '15px' }} />
-                                                                </IconButton>
-                                                            </TableCell>
-                                                        </TableRow>
-                                                    )
-                                                })
-                                                : <TableRow> <TableCell colSpan={6} sx={{ border: 0 }}><Spinner /></TableCell></TableRow>
-                                        }
-                                    </TableBody>
-                                }
+                                <IconButton>
+                                  <FaTrashAlt
+                                    onClick={() => deleteRow(item?.id)}
+                                    style={{
+                                      fill: '#1A3353',
+                                      cursor: 'pointer',
+                                      width: '15px',
+                                    }}
+                                  />
+                                </IconButton>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
+                      ) : (
+                        <TableRow>
+                          {' '}
+                          <TableCell colSpan={6} sx={{ border: 0 }}></TableCell>
+                        </TableRow>
 
-                            </Table>
-                        </TableContainer>
-                    </Paper>
-                </Box>
-            </Container>
-            <DeleteModal
-                onClose={deleteRowModalClose}
-                open={deleteRowModal}
-                id={selectedId}
-                modalDialog={modalDialog}
-                modalTitle={modalTitle}
-                DeleteItem={deleteItem}
-            />
-        </Box>
-    )
+                      )}
+                    </TableBody>
+                  )}
+                </Table>
+              </TableContainer>
+            </Paper>
+          </Box>
+        </Container>
+        <DeleteModal
+          onClose={deleteRowModalClose}
+          open={deleteRowModal}
+          id={selectedId}
+          modalDialog={modalDialog}
+          modalTitle={modalTitle}
+          DeleteItem={deleteItem}
+        />
+      </Box>
+    );
 }
