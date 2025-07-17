@@ -69,6 +69,7 @@ import MyContext from '../context/Context';
 import { logout } from '../services/AuthService';
 import ProfileComponent from '../pages/profile/Profile';
 import { useUser } from '../context/UserContext';
+import { LeadToOpportunity } from '../pages/opportunities/LeadToOpportunity';
 
 export default function Sidebar(props: any) {
   const navigate = useNavigate();
@@ -436,6 +437,10 @@ export default function Sidebar(props: any) {
               <Route
                 path="/app/opportunities/add-opportunity"
                 element={<AddOpportunity />}
+              />
+              <Route
+                path="/app/opportunities/add-opportunity-from-lead"
+                element={<LeadToOpportunity />}
               />
               <Route
                 path="/app/opportunities/opportunity-details"
