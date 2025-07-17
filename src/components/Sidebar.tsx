@@ -69,6 +69,7 @@ import MyContext from '../context/Context';
 import { logout } from '../services/AuthService';
 import ProfileComponent from '../pages/profile/Profile';
 import { useUser } from '../context/UserContext';
+import OpportunityPipeline from '../pages/opportunities/OpportunityPipeline';
 
 export default function Sidebar(props: any) {
   const navigate = useNavigate();
@@ -444,6 +445,11 @@ export default function Sidebar(props: any) {
               <Route
                 path="/app/opportunities/edit-opportunity"
                 element={<EditOpportunity />}
+              />
+
+              <Route
+                path="/app/opportunities/pipeline/:id"
+                element={<OpportunityPipeline />}
               />
               <Route path="/app/cases" element={<Cases />} />
               <Route path="/app/cases/add-case" element={<AddCase />} />
