@@ -57,41 +57,12 @@ import {
   pipelineConnectorStyles,
 } from '../../components/PipelineIcons';
 
-// Используем стили из нашего файла PipelineIcons для кастомного коннектора
+// Используем стили PipelineIcons для кастомного коннектора
 const CustomConnector = styled(StepConnector)(() => ({
   [`& .MuiStepConnector-line`]: pipelineConnectorStyles.line,
   [`&.Mui-active .MuiStepConnector-line`]: pipelineConnectorStyles.active,
   [`&.Mui-completed .MuiStepConnector-line`]: pipelineConnectorStyles.completed,
 }));
-
-const MOCK_DATA = {
-  opportunity: {
-    id: 'e991b9b2-9e8a-4d9a-8441-b3ae6d37fa37',
-    name: 'Test Opportunity',
-    company_name: 'Test Company',
-    contact_name: 'John Doe',
-    amount: 10000,
-    probability: 10,
-    lead_source: 'Web',
-    created_at: '2025-07-17',
-    description: 'This is a test opportunity',
-    assigned_to: 'Johny User',
-    days_to_close: 90,
-  },
-  pipeline_metadata: {
-    current_stage: 'QUALIFICATION',
-    current_stage_display: 'Qualification',
-    editable_fields: ['meeting_date'],
-    next_stage: 'IDENTIFY_DECISION_MAKERS',
-    available_stages: [
-      { value: 'QUALIFICATION', label: 'Qualification' },
-      { value: 'IDENTIFY_DECISION_MAKERS', label: 'Identify Decision Makers' },
-      { value: 'PROPOSAL', label: 'Proposal' },
-      { value: 'NEGOTIATION', label: 'Negotiation' },
-    ],
-    is_at_negotiation: false,
-  },
-};
 
 // Styles for fields used in renderStageContent
 const fieldStyles = {
@@ -137,19 +108,60 @@ function OpportunityPipeline() {
   const crntPage = opportunity?.name || 'Opportunity';
 
   useEffect(() => {
-    fetchOpportunityData();
+    if (id) {
+      fetchOpportunityData();
+    } else {
+      setErrorMessage('Opportunity ID is missing');
+      setLoading(false);
+    }
   }, [id]);
 
   const fetchOpportunityData = async () => {
-    setOpportunity(MOCK_DATA.opportunity);
-    setPipelineMetadata(MOCK_DATA.pipeline_metadata);
-    setFormData({
-      meeting_date: null,
-      proposal_doc: null,
-      feedback: '',
-      expected_close_date: null,
-    });
-    setLoading(false);
+    const token = localStorage.getItem('Token');
+    const org = localStorage.getItem('org');
+
+    const headers = {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      Authorization: token || '',
+      org: org || '',
+    };
+
+    try {
+      await fetchData(
+        `${OpportunityUrl}/${id}/pipeline/`,
+        'GET',
+        null as any,
+        headers
+      ).then((res) => {
+        console.log('Pipeline data response:', res);
+        if (!res.error) {
+          setOpportunity(res.opportunity);
+          setPipelineMetadata(res.pipeline_metadata);
+
+          // Initialize form data based on the opportunity data
+          setFormData({
+            meeting_date: res.opportunity.meeting_date || null,
+            proposal_doc: null,
+            feedback: res.opportunity.feedback || '',
+            expected_close_date: res.opportunity.expected_close_date || null,
+            result: res.opportunity.result || '', // Добавляем поле result
+          });
+
+          // Set activities if available
+          if (res.activities) {
+            setActivities(res.activities);
+          }
+        } else {
+          setErrorMessage('Failed to load opportunity data');
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching opportunity data:', error);
+      setErrorMessage('An error occurred while loading opportunity data');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleFieldChange = (field: string, value: any) => {
@@ -159,10 +171,159 @@ function OpportunityPipeline() {
 
   const handleSave = async () => {
     setSaving(true);
-    setTimeout(() => {
-      setSuccessMessage('Changes saved successfully (Demo)');
-      setSaving(false);
-    }, 1000);
+    setSuccessMessage('');
+    setErrorMessage('');
+
+    const token = localStorage.getItem('Token');
+    const org = localStorage.getItem('org');
+
+    try {
+      let response;
+      let shouldMoveToNextStage = false;
+      let nextStage = pipelineMetadata.current_stage;
+
+      // Определяем, нужно ли переходить на следующий этап
+      if (
+        pipelineMetadata.current_stage === 'QUALIFICATION' &&
+        formData.meeting_date
+      ) {
+        shouldMoveToNextStage = true;
+        nextStage = 'IDENTIFY_DECISION_MAKERS';
+      }
+
+      // Check if we have a file to upload
+      if (formData.proposal_doc instanceof File) {
+        // Use FormData for file upload
+        const formDataToSend = new FormData();
+        formDataToSend.append('stage', pipelineMetadata.current_stage);
+
+        // Для IDENTIFY_DECISION_MАКERS отправляем только файл
+        if (pipelineMetadata.current_stage === 'IDENTIFY_DECISION_MAKERS') {
+          formDataToSend.append('proposal_doc', formData.proposal_doc);
+        } else {
+          // Для других этапов отправляем соответствующие поля
+          Object.keys(formData).forEach((key) => {
+            if (
+              formData[key] !== null &&
+              formData[key] !== undefined &&
+              formData[key] !== ''
+            ) {
+              // check if the field is allowed for the current stage
+              const allowedFields = pipelineMetadata.editable_fields || [];
+              if (allowedFields.includes(key) || key === 'proposal_doc') {
+                formDataToSend.append(key, formData[key]);
+              }
+            }
+          });
+        }
+
+        // Make direct fetch call for FormData
+        response = await fetch(`${OpportunityUrl}/${id}/pipeline/`, {
+          method: 'PATCH',
+          headers: {
+            Accept: 'application/json',
+            Authorization: token || '',
+            org: org || '',
+            // Don't set Content-Type for FormData
+          },
+          body: formDataToSend,
+        });
+      } else {
+        // Use JSON for regular data
+        const dataToSend: any = {
+          stage: pipelineMetadata.current_stage, // Всегда отправляем текущий stage
+        };
+
+        // Добавляем поля в зависимости от текущего этапа
+        if (
+          pipelineMetadata.current_stage === 'QUALIFICATION' &&
+          formData.meeting_date
+        ) {
+          dataToSend.meeting_date = formData.meeting_date;
+        } else if (
+          pipelineMetadata.current_stage === 'PROPOSAL' &&
+          formData.feedback
+        ) {
+          dataToSend.feedback = formData.feedback;
+        } else if (
+          pipelineMetadata.current_stage === 'NEGOTIATION' &&
+          formData.result
+        ) {
+          dataToSend.result = formData.result;
+        }
+
+        const headers = {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          Authorization: token || '',
+          org: org || '',
+        };
+
+        response = await fetchData(
+          `${OpportunityUrl}/${id}/pipeline/`,
+          'PATCH',
+          JSON.stringify(dataToSend),
+          headers
+        );
+      }
+
+      // Handle response
+      let res;
+      if (response instanceof Response) {
+        res = await response.json();
+      } else {
+        res = response;
+      }
+
+      if (!res.error) {
+        // Если нужно перейти на следующий этап, делаем второй запрос
+        if (shouldMoveToNextStage) {
+          // Второй запрос для смены stage
+          const stageChangeData = {
+            stage: nextStage,
+          };
+
+          const headers = {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            Authorization: token || '',
+            org: org || '',
+          };
+
+          const stageChangeResponse = await fetchData(
+            `${OpportunityUrl}/${id}/pipeline/`,
+            'PATCH',
+            JSON.stringify(stageChangeData),
+            headers
+          );
+
+          if (!stageChangeResponse.error) {
+            setSuccessMessage(
+              'Meeting date saved! You have moved to the Identify Decision Makers stage. You can now upload the proposal document.'
+            );
+          } else {
+            setErrorMessage(
+              'Meeting date saved, but failed to move to next stage'
+            );
+          }
+        } else {
+          setSuccessMessage(res.message || 'Changes saved successfully');
+        }
+
+        // Refresh data after successful save
+        setTimeout(() => {
+          fetchOpportunityData();
+          setSuccessMessage(''); // clear success message after data refresh
+        }, 2000);
+      } else {
+        setErrorMessage(res.errors || 'Failed to save changes');
+      }
+    } catch (error) {
+      console.error('Error saving opportunity:', error);
+      setErrorMessage('An error occurred while saving changes');
+    }
+
+    setSaving(false);
   };
 
   const handleCancel = () => {
@@ -244,7 +405,7 @@ function OpportunityPipeline() {
       case 'IDENTIFY_DECISION_MAKERS':
         return (
           <div style={fieldStyles.fieldContainer}>
-            {editableFields.includes('proposal_doc') && (
+            {editableFields.includes('attachment_links') && (
               <div style={fieldStyles.fieldRow}>
                 <div style={fieldStyles.fieldTitle as React.CSSProperties}>
                   Proposal Document
@@ -255,8 +416,8 @@ function OpportunityPipeline() {
                       value={
                         formData.proposal_doc instanceof File
                           ? formData.proposal_doc.name
-                          : formData.proposal_doc
-                          ? 'Document uploaded'
+                          : opportunity?.attachments?.length > 0
+                          ? `${opportunity.attachments.length} file(s) uploaded`
                           : 'No file selected'
                       }
                       InputProps={{
@@ -333,58 +494,21 @@ function OpportunityPipeline() {
       case 'NEGOTIATION':
         return (
           <div style={fieldStyles.fieldContainer}>
-            {editableFields.includes('expected_close_date') && (
+            {editableFields.includes('result') && (
               <div style={fieldStyles.fieldRow}>
                 <div style={fieldStyles.fieldTitle as React.CSSProperties}>
-                  Expected Close Date
-                </div>
-                <div style={fieldStyles.fieldInput}>
-                  <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <DatePicker
-                      value={
-                        formData.expected_close_date
-                          ? dayjs(formData.expected_close_date)
-                          : null
-                      }
-                      onChange={(newValue) =>
-                        handleFieldChange(
-                          'expected_close_date',
-                          newValue?.format('YYYY-MM-DD')
-                        )
-                      }
-                      slotProps={{
-                        textField: {
-                          fullWidth: true,
-                          size: 'small',
-                          error: !!errors.expected_close_date,
-                          helperText: errors.expected_close_date,
-                          sx: {
-                            '& .MuiOutlinedInput-root': {
-                              backgroundColor: '#F9FAFB',
-                            },
-                          },
-                        },
-                      }}
-                    />
-                  </LocalizationProvider>
-                </div>
-              </div>
-            )}
-            {editableFields.includes('feedback') && (
-              <div style={fieldStyles.fieldRow}>
-                <div style={fieldStyles.fieldTitle as React.CSSProperties}>
-                  Negotiation Feedback
+                  Result
                 </div>
                 <div style={fieldStyles.fieldInput}>
                   <TextField
                     multiline
                     rows={4}
-                    value={formData.feedback}
+                    value={formData.result || ''}
                     onChange={(e) =>
-                      handleFieldChange('feedback', e.target.value)
+                      handleFieldChange('result', e.target.value)
                     }
                     fullWidth
-                    placeholder="Enter negotiation details..."
+                    placeholder="Enter negotiation result..."
                     sx={{
                       '& .MuiOutlinedInput-root': {
                         backgroundColor: '#F9FAFB',
@@ -404,16 +528,32 @@ function OpportunityPipeline() {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}>
+      <Box
+        sx={{ display: 'flex', justifyContent: 'center', p: 5, mt: '120px' }}
+      >
         <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (errorMessage && !opportunity) {
+    return (
+      <Box sx={{ p: 3, mt: '120px' }}>
+        <Alert severity="error">{errorMessage}</Alert>
+        <Button variant="contained" onClick={handleCancel} sx={{ mt: 2 }}>
+          Back to Opportunities
+        </Button>
       </Box>
     );
   }
 
   if (!opportunity || !pipelineMetadata) {
     return (
-      <Box sx={{ p: 3 }}>
+      <Box sx={{ p: 3, mt: '120px' }}>
         <Alert severity="error">Failed to load opportunity data</Alert>
+        <Button variant="contained" onClick={handleCancel} sx={{ mt: 2 }}>
+          Back to Opportunities
+        </Button>
       </Box>
     );
   }
@@ -443,6 +583,22 @@ function OpportunityPipeline() {
           backgroundColor: '#f5f5f5',
         }}
       >
+        {/* Success/Error Messages */}
+        {successMessage && (
+          <Box sx={{ px: '38px', pt: 2 }}>
+            <Alert severity="success" onClose={() => setSuccessMessage('')}>
+              {successMessage}
+            </Alert>
+          </Box>
+        )}
+        {errorMessage && (
+          <Box sx={{ px: '38px', pt: 2 }}>
+            <Alert severity="error" onClose={() => setErrorMessage('')}>
+              {errorMessage}
+            </Alert>
+          </Box>
+        )}
+
         {/* Stepper */}
         <Box sx={{ px: '38px', pt: 2 }}>
           <Stepper
@@ -458,30 +614,12 @@ function OpportunityPipeline() {
                 >
                   <StepLabel
                     StepIconComponent={() => {
-                      // Определяем иконку в зависимости от значения стадии
-                      switch (stage.value) {
-                        case 'QUALIFICATION':
-                          return <CompletedStepIcon />; // Всегда галочка для первой стадии (Qualification)
-
-                        case 'IDENTIFY_DECISION_MAKERS':
-                          // Для второй стадии (Decision Makers)
-                          if (getCurrentStepIndex() > 1) {
-                            // Если мы уже прошли эту стадию, показываем зеленую галочку
-                            return <CompletedStepIcon />;
-                          } else {
-                            // Иначе показываем голубую иконку (текущая стадия)
-                            return <CurrentStepIcon />;
-                          }
-
-                        default:
-                          // Стандартная логика для остальных стадий
-                          if (index < getCurrentStepIndex()) {
-                            return <CompletedStepIcon />; // Завершенные стадии - зеленые галочки
-                          } else if (index === getCurrentStepIndex()) {
-                            return <CurrentStepIcon />; // Текущая стадия - голубые песочные часы
-                          } else {
-                            return <PendingStepIcon />; // Будущие стадии - серые песочные часы
-                          }
+                      if (index < getCurrentStepIndex()) {
+                        return <CompletedStepIcon />;
+                      } else if (index === getCurrentStepIndex()) {
+                        return <CurrentStepIcon />;
+                      } else {
+                        return <PendingStepIcon />;
                       }
                     }}
                   >
@@ -520,12 +658,11 @@ function OpportunityPipeline() {
                 <Box
                   sx={{
                     flex: 1,
-                    marginBottom: 0, // Убираем отступ у заголовка
-                    paddingBottom: 0, // Убираем отступ у заголовка
+                    marginBottom: 0,
+                    paddingBottom: 0,
                   }}
                 >
                   <PageTitle>{opportunity.name}</PageTitle>
-                  {/* <Divider sx={{ mt: 2, width: '100%' }} /> */}
                 </Box>
                 <Box
                   sx={{
@@ -544,8 +681,8 @@ function OpportunityPipeline() {
               <Box
                 sx={{
                   mt: 0,
-                  pt: 0, // Устанавливаем padding-top в 0
-                  marginTop: '-45px', // Добавляем отрицательный margin
+                  pt: 0,
+                  marginTop: '-45px',
                 }}
               >
                 <Grid container spacing={1}>
@@ -561,7 +698,7 @@ function OpportunityPipeline() {
                           height: '36px',
                         }}
                       >
-                        {opportunity.company_name || 'Company Name'}
+                        {opportunity.account?.name || 'Company Name'}
                       </Typography>
                     </FieldContainer>
                   </Grid>
@@ -576,13 +713,17 @@ function OpportunityPipeline() {
                           color: '#1A3353',
                         }}
                       >
-                        {opportunity.contact_name || 'Contact'}
+                        {opportunity.contacts_info?.length > 0
+                          ? opportunity.contacts_info
+                              .map((c: any) => c.name)
+                              .join(', ')
+                          : 'Contact'}
                       </Typography>
                     </FieldContainer>
                   </Grid>
                 </Grid>
 
-                {/* Stage-specific content   */}
+                {/* Stage-specific content */}
                 <Box sx={{ mt: 3 }}>{renderStageContent()}</Box>
               </Box>
             </SectionContainer>
@@ -615,13 +756,9 @@ function OpportunityPipeline() {
                   />
                 </Grid>
                 <Grid item xs={4}>
-                  <FieldLabel>Expected Result</FieldLabel>
+                  <FieldLabel>Expected Revenue</FieldLabel>
                   <StyledTextField
-                    value={
-                      ((opportunity.amount || 0) *
-                        (opportunity.probability || 0)) /
-                      100
-                    }
+                    value={opportunity.expected_revenue || 0}
                     InputProps={{ readOnly: true }}
                     size="small"
                     fullWidth
@@ -630,16 +767,28 @@ function OpportunityPipeline() {
                 <Grid item xs={4}>
                   <FieldLabel>Assigned To</FieldLabel>
                   <StyledTextField
-                    value={opportunity.assigned_to || ''}
+                    value={
+                      opportunity.assigned_to_info?.length > 0
+                        ? opportunity.assigned_to_info
+                            .map((a: any) => a.user?.email)
+                            .join(', ')
+                        : ''
+                    }
                     InputProps={{ readOnly: true }}
                     size="small"
                     fullWidth
                   />
                 </Grid>
                 <Grid item xs={4}>
-                  <FieldLabel>Days To Close</FieldLabel>
+                  <FieldLabel>Expected Close Date</FieldLabel>
                   <StyledTextField
-                    value={opportunity.days_to_close || 0}
+                    value={
+                      opportunity.expected_close_date
+                        ? new Date(
+                            opportunity.expected_close_date
+                          ).toLocaleDateString()
+                        : ''
+                    }
                     InputProps={{ readOnly: true }}
                     size="small"
                     fullWidth
@@ -700,7 +849,7 @@ function OpportunityPipeline() {
                 multiline
                 rows={4}
                 fullWidth
-                placeholder="It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout."
+                placeholder="Add a note..."
                 sx={{
                   mb: 2,
                   '& .MuiOutlinedInput-root': {
@@ -723,27 +872,25 @@ function OpportunityPipeline() {
 
               {/* Activities */}
               <Box sx={{ mt: 3 }}>
-                <ActivityItem>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <ActivityAuthor>John Doe</ActivityAuthor>
-                    <ActivityDate>
-                      <Typography>Jul 5, 2025, 12:30 AM</Typography>
-                    </ActivityDate>
-                  </Box>
-                  <ActivityContent>Comment</ActivityContent>
-                </ActivityItem>
-
-                <ActivityItem>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <ActivityAuthor>Action</ActivityAuthor>
-                    <ActivityDate>
-                      <Typography>Jul 2, 2025, 12:19 AM</Typography>
-                    </ActivityDate>
-                  </Box>
-                  <ActivityContent sx={{ fontWeight: 700 }}>
-                    Opportunity Name status changed into Qualification
-                  </ActivityContent>
-                </ActivityItem>
+                {activities.length > 0 ? (
+                  activities.map((activity, index) => (
+                    <ActivityItem key={index}>
+                      <Box
+                        sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                      >
+                        <ActivityAuthor>{activity.author}</ActivityAuthor>
+                        <ActivityDate>
+                          <Typography>{activity.date}</Typography>
+                        </ActivityDate>
+                      </Box>
+                      <ActivityContent>{activity.content}</ActivityContent>
+                    </ActivityItem>
+                  ))
+                ) : (
+                  <Typography sx={{ color: '#666', textAlign: 'center' }}>
+                    No activities yet
+                  </Typography>
+                )}
               </Box>
             </SectionContainer>
           </Box>
