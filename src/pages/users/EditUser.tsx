@@ -1,5 +1,29 @@
 import React, { ChangeEvent, useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { FaTrashAlt } from 'react-icons/fa';
+import { ValidationModule } from 'ag-grid-community';
+import { ModuleRegistry } from 'ag-grid-community';
+import { PhotoCamera, Delete, Upload } from '@mui/icons-material';
+import { 
+  ColumnAutoSizeModule,
+  TextFilterModule, 
+  NumberFilterModule,
+  DateFilterModule,
+  RowAutoHeightModule,
+  CellStyleModule
+} from 'ag-grid-community';
+
+ModuleRegistry.registerModules([
+  ColumnAutoSizeModule,
+  TextFilterModule,
+  NumberFilterModule,
+  DateFilterModule,
+  RowAutoHeightModule,
+  CellStyleModule
+]);
+
+ModuleRegistry.registerModules([ValidationModule]);
+
 import {
   TextField,
   AccordionDetails,
@@ -45,7 +69,9 @@ import { COUNTRIES } from '../../data/countries';
 import '../../styles/style.css';
 import { Badge } from '@mui/material';
 import { uploadImageToCloudinary } from '../../utils/uploadImageToCloudinary';
-// import Slider from 'material-ui/Slider';
+
+const SUPPORTED_FORMATS = ['image/jpg', 'image/jpeg', 'image/png'];
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
 
 type FormErrors = {
   email?: string[];
@@ -62,10 +88,8 @@ type FormErrors = {
   first_name?: string[];
   last_name?: string[];
   password?: string[];
-  // has_sales_access?: string[];
-  // has_marketing_access?: string[];
-  // is_organization_admin?: string[];
 };
+
 interface FormData {
   email: string;
   role: string;
@@ -80,10 +104,32 @@ interface FormData {
   profile_pic: string | null;
   first_name: string;
   last_name: string;
-  // has_sales_access: boolean,
-  // has_marketing_access: boolean,
-  // is_organization_admin: boolean
 }
+
+const AvatarContainer = styled('div')({
+  position: 'relative',
+  width: 150,
+  height: 150,
+  '&:hover .avatar-actions': {
+    opacity: 1,
+  },
+});
+
+const AvatarActionButton = styled(IconButton)({
+  position: 'absolute',
+  backgroundColor: '#1A3353',
+  color: 'white',
+  transition: 'opacity 0.3s ease-in-out',
+  opacity: 0,
+  '&:hover': {
+    backgroundColor: '#1A3353',
+  },
+});
+
+const HiddenInput = styled('input')({
+  display: 'none',
+});
+
 export function EditUser() {
   const { state } = useLocation();
   const navigate = useNavigate();
@@ -110,9 +156,6 @@ export function EditUser() {
     profile_pic: '',
     first_name: '',
     last_name: '',
-    // has_sales_access: false,
-    // has_marketing_access: false,
-    // is_organization_admin: false
   });
   const [successMessage, setSuccessMessage] = useState(false);
   const [open, setOpen] = useState(false);
@@ -124,6 +167,7 @@ export function EditUser() {
   const [info_message, setInfoMessage] = useState(
     'Profile picture updated successfully!'
   );
+
   useEffect(() => {
     setFormData(state?.value);
     getEditDetail(state?.id);
@@ -159,60 +203,55 @@ export function EditUser() {
       });
     }
   };
+
   const handleSubmit = (e: any) => {
     e.preventDefault();
     submitForm();
   };
 
-  // const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-  //     const file = event.target.files?.[0] || null;
-  //     if (file) {
-  //         const reader = new FileReader();
-  //         reader.onload = () => {
-  //             setFormData({ ...formData, profile_pic: reader.result as string });
-  //         };
-  //         reader.readAsDataURL(file);
-  //     }
-  // };
-
   const getEditDetail = (id: any) => {
-      fetchData(`${UserUrl}/${id}/`, 'GET', null as any, Headers)
-          .then((res: any) => {
-              console.log('edit detail Form data:', res);
-              if (!res.error) {
-                  const data = res?.data?.profile_obj
-                  setFormData({
-                      email: data?.user_details?.email || '',
-                      role: data.role || 'ADMIN',
-                      phone: data.phone || '',
-                      alternate_phone: data.alternate_phone || '',
-                      address_line: data?.address?.address_line || '',
-                      street: data?.address?.street || '',
-                      city: data?.address?.city || '',
-                      state: data?.address?.state || '',
-                      postcode: data?.address?.postcode || '',
-                      country: data?.address?.country || '',
-                      profile_pic: data?.user_details?.profile_pic || null,
-                      first_name: data?.user_details?.first_name || '',
-                      last_name: data?.user_details?.last_name || '',
-                  })
-              }
-              if (res.error) {
-                  setError(true)
-              }
-          })
-          .catch(() => {
-          })
-  }
-  const submitForm = () => {
-    const Header = {
+    const headers = {
       Accept: 'application/json',
       'Content-Type': 'application/json',
-      Authorization: localStorage.getItem('Token'),
-      org: localStorage.getItem('org'),
+      Authorization: localStorage.getItem('Token') || '',
+      org: localStorage.getItem('org') || '',
+    };
+    
+    fetchData(`${UserUrl}/${id}/`, 'GET', null as any, headers)
+      .then((res: any) => {
+        if (!res.error) {
+          const data = res?.data?.profile_obj;
+          setFormData({
+            email: data?.user_details?.email || '',
+            role: data.role || 'ADMIN',
+            phone: data.phone || '',
+            alternate_phone: data.alternate_phone || '',
+            address_line: data?.address?.address_line || '',
+            street: data?.address?.street || '',
+            city: data?.address?.city || '',
+            state: data?.address?.state || '',
+            postcode: data?.address?.postcode || '',
+            country: data?.address?.country || '',
+            profile_pic: data?.user_details?.profile_pic || null,
+            first_name: data?.user_details?.first_name || '',
+            last_name: data?.user_details?.last_name || '',
+          });
+        }
+        if (res.error) {
+          setError(true);
+        }
+      })
+      .catch(() => {});
+  };
+
+  const submitForm = () => {
+    const headers = {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      Authorization: localStorage.getItem('Token') || '',
+      org: localStorage.getItem('org') || '',
     };
 
-    // validate the form
     const errors: FormErrors = {};
     if (!formData.email || formData.email.trim() === '') {
       errors.email = ['Email is required'];
@@ -241,34 +280,19 @@ export function EditUser() {
       country: formData.country,
       first_name: formData.first_name,
       last_name: formData.last_name,
-      // profile_pic: formData.profile_pic,
-      // has_sales_access: formData.has_sales_access,
-      // has_marketing_access: formData.has_marketing_access,
-      // is_organization_admin: formData.is_organization_admin
     };
 
-    fetchData(`${UserUrl}/${state?.id}/`, 'PUT', JSON.stringify(data), Header)
+    fetchData(`${UserUrl}/${state?.id}/`, 'PUT', JSON.stringify(data), headers)
       .then(async (res: any) => {
-        // console.log('editsubmit:', res);
         if (!res.error) {
           resetForm();
-          
-          // If the user being edited is the current logged-in user, refresh the context
-          // Convert both IDs to strings for comparison to avoid type mismatch
           const currentUserId = user?.user_details?.id?.toString();
           const editedUserId = state?.id?.toString();
           
-          console.log('Current user ID:', currentUserId);
-          console.log('Edited user ID:', editedUserId);
-          console.log('IDs match:', currentUserId === editedUserId);
-          
           if (user && currentUserId && editedUserId && currentUserId === editedUserId) {
-            console.log('User edited their own profile - refreshing page to update all components...');
-            // When user edits their own profile, refresh the page to ensure all components update
             window.location.href = '/app/users';
-            return; // Exit early since we're doing a page refresh
+            return;
           }
-          
           navigate('/app/users');
         }
         if (res.error) {
@@ -281,6 +305,7 @@ export function EditUser() {
       })
       .catch(() => {});
   };
+
   const resetForm = () => {
     setFormData({
       email: '',
@@ -296,98 +321,134 @@ export function EditUser() {
       profile_pic: '',
       first_name: '',
       last_name: '',
-      // has_sales_access: false,
-      // has_marketing_access: false,
-      // is_organization_admin: false
     });
     setProfileErrors({});
     setUserErrors({});
   };
+
   const onCancel = () => {
     setReset(true);
-    // resetForm()
   };
-  const module = 'Users';
-  const crntPage = 'Edit User';
-  const backBtn = state?.edit ? 'Back To Users' : 'Back To UserDetails';
 
-  const inputStyles = {
-    display: 'none',
-  };
-  // console.log(state, 'edit',profileErrors)
-  // console.log(formData, 'as', state);
-
-  const StyledBadge = styled(Badge)(({ theme }) => ({
-    '& .MuiBadge-badge': {
-      backgroundColor: '#44b700',
-      color: '#44b700',
-      boxShadow: `0 0 0 2px ${theme.palette.background.paper}`,
-      '&::after': {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        borderRadius: '50%',
-        animation: 'ripple 1.2s infinite ease-in-out',
-        border: '1px solid currentColor',
-        content: '""',
-      },
-    },
-    '@keyframes ripple': {
-      '0%': {
-        transform: 'scale(.8)',
-        opacity: 1,
-      },
-      '100%': {
-        transform: 'scale(2.4)',
-        opacity: 0,
-      },
-    },
-  }));
-
-  const SmallAvatar = styled(Avatar)(({ theme }) => ({
-    width: 28,
-    height: 28,
-    border: `2px solid ${theme.palette.background.paper}`,
-  }));
-
-  // handle avatar change
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    const { url } = await uploadImageToCloudinary(file as File);
-    if (url) {
-      fetchData(
+    
+    if (!file) return;
+
+    if (!SUPPORTED_FORMATS.includes(file.type)) {
+      setProfileErrors({
+        profile_pic: ['Unsupported file format. Please upload a JPG or PNG image.']
+      });
+      return;
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      setProfileErrors({
+        profile_pic: ['File size exceeds 5MB limit.']
+      });
+      return;
+    }
+
+    setProfileErrors({
+      ...profileErrors,
+      profile_pic: undefined
+    });
+
+    try {
+      const { url } = await uploadImageToCloudinary(file);
+      if (url) {
+        await updateProfilePicture(url);
+      }
+    } catch (err) {
+      console.error('Error uploading image:', err);
+      setProfileErrors({
+        profile_pic: ['Failed to upload profile picture']
+      });
+    }
+  };
+
+  const handleDeleteAvatar = async () => {
+    try {
+      const headers = {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        Authorization: localStorage.getItem('Token') || '',
+        org: localStorage.getItem('org') || '',
+      };
+
+      const response = await fetchData(
+        `${UserUrl}/${state?.id}/image/`,
+        'PUT',
+        JSON.stringify({ profile_pic: '', email: formData.email }),
+        headers
+      );
+
+      if (!response.error) {
+        setFormData({ ...formData, profile_pic: null });
+        setInfoMessage('Profile picture removed successfully!');
+        setSuccessMessage(true);
+        setTimeout(() => {
+          setSuccessMessage(false);
+        }, 3000);
+        return;
+      }
+
+      const nullResponse = await fetchData(
+        `${UserUrl}/${state?.id}/image/`,
+        'PUT',
+        JSON.stringify({ profile_pic: null, email: formData.email }),
+        headers
+      );
+
+      if (!nullResponse.error) {
+        setFormData({ ...formData, profile_pic: null });
+        setInfoMessage('Profile picture removed successfully!');
+        setSuccessMessage(true);
+        setTimeout(() => {
+          setSuccessMessage(false);
+        }, 3000);
+      } else {
+        throw new Error('Failed to remove profile picture');
+      }
+    } catch (err) {
+      console.error('Error removing profile picture:', err);
+      setProfileErrors({
+        profile_pic: ['Failed to remove profile picture'],
+      });
+    }
+  };
+
+  const updateProfilePicture = async (url: string) => {
+    try {
+      const headers = {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        Authorization: localStorage.getItem('Token') || '',
+        org: localStorage.getItem('org') || '',
+      };
+
+      const response = await fetchData(
         `${UserUrl}/${state?.id}/image/`,
         'PUT',
         JSON.stringify({ profile_pic: url, email: formData.email }),
-        {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-          Authorization: localStorage.getItem('Token'),
-          org: localStorage.getItem('org'),
-        }
-      )
-        .then((res: any) => {
-          if (!res.error) {
-            setFormData({ ...formData, profile_pic: url });
-            setInfoMessage('Profile picture updated successfully!');
-            setSuccessMessage(true);
-            setTimeout(() => {
-              setSuccessMessage(false);
-            }, 3000);
-          } else {
-            setProfileErrors(
-              res?.errors?.profile_errors || res?.profile_errors[0]
-            );
-          }
-        })
-        .catch((err) => {
-          console.error('Error updating profile picture:', err);
-          setProfileErrors({
-            profile_pic: ['Failed to update profile picture'],
-          });
-        });
+        headers
+      );
+
+      if (!response.error) {
+        setFormData({ ...formData, profile_pic: url });
+        setInfoMessage('Profile picture updated successfully!');
+        setSuccessMessage(true);
+        setTimeout(() => {
+          setSuccessMessage(false);
+        }, 3000);
+      } else {
+        throw new Error(response.error);
+      }
+    } catch (err) {
+      console.error('Error updating profile picture:', err);
+      setProfileErrors({
+        profile_pic: ['Failed to update profile picture'],
+      });
     }
   };
 
@@ -399,8 +460,8 @@ export function EditUser() {
     const headers = {
       Accept: 'application/json',
       'Content-Type': 'application/json',
-      Authorization: localStorage.getItem('Token'),
-      org: localStorage.getItem('org'),
+      Authorization: localStorage.getItem('Token') || '',
+      org: localStorage.getItem('org') || '',
     };
     const body = JSON.stringify({
       current_password: currentPassword,
@@ -433,7 +494,10 @@ export function EditUser() {
       });
   };
 
-  console.log(formData, 'formData');
+  const module = 'Users';
+  const crntPage = 'Edit User';
+  const backBtn = state?.edit ? 'Back To Users' : 'Back To UserDetails';
+
   return (
     <Box sx={{ mt: '60px' }}>
       <CustomAppBar
@@ -454,10 +518,9 @@ export function EditUser() {
             open={successMessage}
             message={info_message}
             key={'top' + 'center'}
-            // set color to green
             sx={{
               '& .MuiSnackbarContent-root': {
-                backgroundColor: '#4caf50', // Green color for success
+                backgroundColor: '#4caf50',
                 color: '#fff',
               },
             }}
@@ -474,72 +537,77 @@ export function EditUser() {
                 </AccordionSummary>
                 <Divider className="divider" />
                 <AccordionDetails>
-                  {/* Display user avatar */}
-                  <Box
-                    sx={{
-                      width: '98%',
-                      mb: 1,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexDirection: 'column',
-                    }}
-                    component="form"
-                    noValidate
-                    autoComplete="off"
-                  >
-                    <ButtonBase
-                      component="label"
-                      role={undefined}
-                      tabIndex={-1} // prevent label from tab focus
-                      aria-label="Avatar image"
-                      sx={{
-                        borderRadius: '40px',
-                        '&:has(:focus-visible)': {
-                          outline: '2px solid',
-                          outlineOffset: '2px',
-                        },
-                      }}
-                    >
-                      <Badge
-                        overlap="circular"
-                        anchorOrigin={{
-                          vertical: 'bottom',
-                          horizontal: 'right',
-                        }}
-                        badgeContent={
-                          <MdOutlineMonochromePhotos color="green" size={24} />
-                        }
-                      >
-                        <Avatar
-                          alt="profile image"
-                          src={formData.profile_pic || ''}
-                          sx={{
-                            width: 100,
-                            height: 100,
-                            border: '2px solid #FCDDEC',
-                            p: 0.5,
-                          }}
-                        />
-                      </Badge>
-                      <input
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
+                    <AvatarContainer>
+                      <Avatar
+                        src={formData.profile_pic || ''}
+                        alt="Profile"
+                        sx={{ width: 150, height: 150, border: '2px solid pink' }}
+                      />
+
+                      <HiddenInput
+                        id="avatar-upload"
                         type="file"
-                        accept="image/*"
-                        style={{
-                          border: 0,
-                          clip: 'rect(0 0 0 0)',
-                          height: '1px',
-                          margin: '-1px',
-                          overflow: 'hidden',
-                          padding: 0,
-                          position: 'absolute',
-                          whiteSpace: 'nowrap',
-                          width: '1px',
-                        }}
+                        accept=".jpg,.jpeg,.png"
                         onChange={handleAvatarChange}
                       />
-                    </ButtonBase>
+
+                      <label htmlFor="avatar-upload" style={{ cursor: 'pointer' }}>
+                        <AvatarActionButton
+                          title="Upload"
+                          className="avatar-actions"
+                          sx={{
+                            top: '10px',
+                            right: '-35px',
+                          }}
+                          onClick={() => document.getElementById('avatar-upload')?.click()}
+
+                        >
+                          <FaUpload />
+                        </AvatarActionButton>
+                      </label>
+
+                      <AvatarActionButton
+                        title="Camera"
+                        className="avatar-actions"
+                        sx={{
+                          top: '55px',
+                          right: '-42px',
+                        }}
+                      >
+                        <MdOutlineMonochromePhotos />
+                      </AvatarActionButton>
+
+                      {formData.profile_pic && (
+                        <AvatarActionButton
+                          title="Remove"
+                          className="avatar-actions"
+                          sx={{
+                            top: '100px',
+                            right: '-35px',
+                          }}
+                          onClick={handleDeleteAvatar}
+                        >
+                          <FaTrashAlt />
+                        </AvatarActionButton>
+                      )}
+                    </AvatarContainer>
+                    
+                    {profileErrors?.profile_pic?.[0] && (
+                      <Typography 
+                        color="error" 
+                        variant="caption" 
+                        sx={{ 
+                          display: 'block', 
+                          textAlign: 'center', 
+                          mt: 1 
+                        }}
+                      >
+                        {profileErrors.profile_pic[0]}
+                      </Typography>
+                    )}
                   </Box>
+
                   <Box
                     sx={{ width: '98%', color: '#1A3353', mb: 1 }}
                     component="form"
@@ -549,7 +617,6 @@ export function EditUser() {
                     <div className="fieldContainer2">
                       <div className="fieldSubContainer">
                         <div className="fieldTitle">First Name</div>
-
                         <RequiredTextField
                           required
                           name="first_name"
@@ -570,7 +637,6 @@ export function EditUser() {
                       </div>
                       <div className="fieldSubContainer">
                         <div className="fieldTitle">Last Name</div>
-
                         <RequiredTextField
                           required
                           name="last_name"
@@ -618,7 +684,6 @@ export function EditUser() {
                       </div>
                       <div className="fieldSubContainer">
                         <div className="fieldTitle">Password</div>
-                        {/* add change password button */}
                         <Button
                           variant="contained"
                           onClick={() => handleOpen()}
@@ -661,7 +726,6 @@ export function EditUser() {
                               }}
                             >
                               <Typography>Current Password</Typography>
-
                               <RequiredTextField
                                 variant="outlined"
                                 name="current_password"
@@ -687,7 +751,6 @@ export function EditUser() {
                               }}
                             >
                               <Typography>New Password</Typography>
-
                               <RequiredTextField
                                 variant="outlined"
                                 name="new_password"
@@ -711,7 +774,6 @@ export function EditUser() {
                               }}
                             >
                               <Typography>Confirm Password</Typography>
-
                               <RequiredTextField
                                 variant="outlined"
                                 name="confirm_password"
@@ -775,9 +837,7 @@ export function EditUser() {
                               >
                                 Cancel
                               </Button>
-
                               <Button
-                                // type='submit'
                                 className="header-button"
                                 onClick={changePassword}
                                 variant="contained"
@@ -822,7 +882,6 @@ export function EditUser() {
                           />
                         </Tooltip>
                       </div>
-
                       <div className="fieldSubContainer">
                         <div className="fieldTitle">Alternate Phone</div>
                         <Tooltip title="Please enter a valid international phone number (e.g. +14155552671)">
@@ -837,90 +896,25 @@ export function EditUser() {
                               !!profileErrors?.alternate_phone?.[0] ||
                               !!userErrors?.alternate_phone?.[0] ||
                               (formData.phone === formData.alternate_phone &&
-                                formData.alternate_phone !== '') // Check if both numbers are same
+                                formData.alternate_phone !== '')
                             }
                             helperText={
                               profileErrors?.alternate_phone?.[0] ||
                               userErrors?.alternate_phone?.[0] ||
                               (formData.phone === formData.alternate_phone &&
                               formData.alternate_phone !== ''
-                                ? 'Phone number and alternate phone number cannot be the same.' // Warning message
+                                ? 'Phone number and alternate phone number cannot be the same.'
                                 : '')
                             }
                           />
                         </Tooltip>
                       </div>
                     </div>
-                    {/* <div className='fieldContainer2'>
-                                            <div className='fieldSubContainer'>
-                                                <div className='fieldTitle'>Profile picture</div>
-                                                <Stack sx={{ display: 'flex', flexDirection: 'column' }}>
-                                                    <Stack sx={{ display: 'flex', flexDirection: 'row' }}>
-                                                        <label htmlFor="avatar-input">
-                                                            <input
-                                                                id="avatar-input"
-                                                                name="profile_pic"
-                                                                type="file"
-                                                                accept="image/*"
-                                                                onChange={(e: any) => {
-                                                                    handleFileChange(e);
-                                                                    handleChange(e);
-                                                                }}
-                                                                style={inputStyles}
-                                                            />
-                                                            <IconButton
-                                                                component="span"
-                                                                color="primary"
-                                                                aria-label="upload avatar"
-                                                            >
-                                                                <FaUpload fill='lightgrey' />
-                                                            </IconButton>
-                                                        </label>
-                                                        <Box>  {formData.profile_pic !== null ?
-                                                            <Box sx={{ position: 'relative' }}>
-                                                                <Avatar src={formData.profile_pic || ''} />
-                                                                <FaTimes style={{ position: 'absolute', marginTop: '-45px', marginLeft: '25px', fill: 'lightgray', cursor: 'pointer' }}
-                                                                    onClick={() => setFormData({ ...formData, profile_pic: null })} />
-                                                            </Box> : ''}
-                                                        </Box>
-                                                        {formData.profile_pic && <Typography sx={{ color: '#d32f2f', fontSize: '12px', ml: '-70px', mt: '40px' }}>{profileErrors?.profile_pic?.[0] || userErrors?.profile_pic?.[0] || ''}</Typography>}
-                                                    </Stack>
-                                                </Stack>
-
-
-                                            </div>
-                                            <div className='fieldSubContainer'>
-                                                <div className='fieldTitle'>Sales Access</div>
-                                                <AntSwitch
-                                                    name='has_sales_access'
-                                                    checked={formData.has_sales_access}
-                                                    onChange={handleChange}
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className='fieldContainer2'>
-                                            <div className='fieldSubContainer'>
-                                                <div className='fieldTitle'>Marketing Access</div>
-                                                <AntSwitch
-                                                    name='has_marketing_access'
-                                                    checked={formData.has_marketing_access}
-                                                    onChange={handleChange}
-                                                />
-                                            </div>
-                                            <div className='fieldSubContainer'>
-                                                <div className='fieldTitle'>Organization Admin</div>
-                                                <AntSwitch
-                                                    name='is_organization_admin'
-                                                    checked={formData.is_organization_admin}
-                                                    onChange={handleChange}
-                                                />
-                                            </div>
-                                        </div> */}
                   </Box>
                 </AccordionDetails>
               </Accordion>
             </div>
-            {/* Address Details */}
+
             <div className="leadContainer">
               <Accordion defaultExpanded style={{ width: '98%' }}>
                 <AccordionSummary
@@ -1087,252 +1081,6 @@ export function EditUser() {
                 </AccordionDetails>
               </Accordion>
             </div>
-            {/* Business Hours */}
-            {/* <div className='leadContainer'>
-                            <Accordion defaultExpanded style={{ width: '98%' }}>
-                                <AccordionSummary
-                                    expandIcon={<FaArrowDown />}
-                                    aria-controls='panel1a-content'
-                                    id='panel1a-header'
-                                >
-                                    <div className='typography'>
-                                        <Typography
-                                            style={{ marginBottom: '15px', fontWeight: 'bold' }}
-                                        >
-                                            Business Hours
-                                        </Typography>
-                                    </div>
-                                </AccordionSummary>
-                                <AccordionDetails>
-                                    <Box
-                                        sx={{ width: '98%', color: '#1A3353' }}
-                                        component='form'
-                                        noValidate
-                                        autoComplete='off'
-                                    >
-                                        <div>
-                                            <div className='fieldSubContainer' style={{ marginLeft: '4.8%' }}>
-                                                <div className='fieldTitle'>Business Hours</div>
-                                                <TextField
-                                                    name='lead_source'
-                                                    select
-                                                    // onChange={onChange}
-                                                    // InputProps={{
-                                                    //     classes: {
-                                                    //         root: textFieldClasses.root
-                                                    //     }
-                                                    // }}
-                                                    className="custom-textfield"
-                                                    style={{ width: '70%' }}
-                                                >
-                                                    {state.roles && state.roles.map((option) => (
-                          <MenuItem key={option[1]} value={option[0]}>
-                            {option[0]}
-                          </MenuItem>
-                        ))}
-                                                </TextField>
-                                            </div>
-                                        </div>
-                                    </Box>
-                                </AccordionDetails>
-                            </Accordion>
-                        </div> */}
-            {/* Preferences */}
-            {/* <div className='leadContainer'>
-                            <Accordion defaultExpanded style={{ width: '98%' }}>
-                                <AccordionSummary
-                                    expandIcon={<FaArrowDown />}
-                                    aria-controls='panel1a-content'
-                                    id='panel1a-header'
-                                >
-                                    <div className='typography'>
-                                        <Typography
-                                            style={{ marginBottom: '15px', fontWeight: 'bold' }}
-                                        >
-                                            Preferences
-                                        </Typography>
-                                    </div>
-                                </AccordionSummary>
-                                <AccordionDetails>
-                                    <Box
-                                        sx={{ width: '98%', color: '#1A3353' }}
-                                        component='form'
-                                        noValidate
-                                        autoComplete='off'
-                                    >
-                                        <div className='fieldContainer'>
-                                            <div className='fieldSubContainer'>
-                                                <div className='fieldTitle'>Default Page After Login</div>
-                                                <TextField
-                                                    name='lead_source'
-                                                    select
-                                                    // onChange={onChange}
-                                                    // InputProps={{
-                                                    //     classes: {
-                                                    //         root: textFieldClasses.root
-                                                    //     }
-                                                    // }}
-                                                    className="custom-textfield"
-                                                    style={{ width: '70%' }}
-                                                >
-                                                    {state.roles && state.roles.map((option) => (
-                          <MenuItem key={option[1]} value={option[0]}>
-                            {option[0]}
-                          </MenuItem>
-                        ))}
-                                                </TextField>
-                                            </div>
-                                            <div className='fieldSubContainer'>
-                                                <div className='fieldTitle'>Persone Name Format</div>
-                                                <TextField
-                                                    name='lead_source'
-                                                    select
-                                                    // onChange={onChange}
-                                                    // InputProps={{
-                                                    //     classes: {
-                                                    //         root: textFieldClasses.root
-                                                    //     }
-                                                    // }}
-                                                    className="custom-textfield"
-                                                    style={{ width: '70%' }}
-                                                >
-                                                    {state.roles && state.roles.map((option) => (
-                          <MenuItem key={option[1]} value={option[0]}>
-                            {option[0]}
-                          </MenuItem>
-                        ))}
-                                                </TextField>
-                                            </div>
-                                        </div>
-                                        <div className='fieldContainer2'>
-                                            <div className='fieldSubContainer'>
-                                                <div className='fieldTitle'>Prefferred Currency</div>
-                                                <TextField
-                                                    name='lead_source'
-                                                    select
-                                                    // onChange={onChange}
-                                                    // InputProps={{
-                                                    //     classes: {
-                                                    //         root: textFieldClasses.root
-                                                    //     }
-                                                    // }}
-                                                    className="custom-textfield"
-                                                    style={{ width: '70%' }}
-                                                >
-                                                     {state.roles && state.roles.map((option) => (
-                          <MenuItem key={option[1]} value={option[0]}>
-                            {option[0]}
-                          </MenuItem>
-                        ))}
-                                                </TextField>
-                                            </div>
-                                            <div className='fieldSubContainer'>
-                                                <div className='fieldTitle'>Digit Grouping Pattern</div>
-                                                <TextField
-                                                    name='lead_source'
-                                                    select
-                                                    // onChange={onChange}
-                                                    // InputProps={{
-                                                    //     classes: {
-                                                    //         root: textFieldClasses.root
-                                                    //     }
-                                                    // }}
-                                                    className="custom-textfield"
-                                                    style={{ width: '70%' }}
-                                                >
-                                                    {state.roles && state.roles.map((option) => (
-                          <MenuItem key={option[1]} value={option[0]}>
-                            {option[0]}
-                          </MenuItem>
-                        ))}
-                                                </TextField>
-                                            </div>
-                                        </div>
-                                        <div className='fieldContainer2'>
-                                            <div className='fieldSubContainer'>
-                                                <div className='fieldTitle'>Digit Grouping Seperator</div>
-                                                <TextField
-                                                    name='lead_source'
-                                                    select
-                                                    // onChange={onChange}
-                                                    // InputProps={{
-                                                    //     classes: {
-                                                    //         root: textFieldClasses.root
-                                                    //     }
-                                                    // }}
-                                                    className="custom-textfield"
-                                                    style={{ width: '70%' }}
-                                                >
-                                                     {state.roles && state.roles.map((option) => (
-                          <MenuItem key={option[1]} value={option[0]}>
-                            {option[0]}
-                          </MenuItem>
-                        ))}
-                                                </TextField>
-                                            </div>
-                                            <div className='fieldSubContainer'>
-                                                <div className='fieldTitle'>Number of Currency Decimals</div>
-                                                <TextField
-                                                    name='lead_source'
-                                                    select
-                                                    // onChange={onChange}
-                                                    // InputProps={{
-                                                    //     classes: {
-                                                    //         root: textFieldClasses.root
-                                                    //     }
-                                                    // }}
-                                                    className="custom-textfield"
-                                                    style={{ width: '70%' }}
-                                                >
-                                                 {state.roles && state.roles.map((option) => (
-                          <MenuItem key={option[1]} value={option[0]}>
-                            {option[0]}
-                          </MenuItem>
-                        ))}
-                                                </TextField>
-                                            </div>
-                                        </div>
-                                    </Box>
-                                </AccordionDetails>
-                            </Accordion>
-                        </div> */}
-            {/* Signature Block */}
-            {/* <div className='leadContainer'>
-                            <Accordion defaultExpanded style={{ width: '98%' }}>
-                                <AccordionSummary
-                                    expandIcon={<FaArrowDown />}
-                                    aria-controls='panel1a-content'
-                                    id='panel1a-header'
-                                >
-                                    <div className='typography'>
-                                        <Typography style={{ marginBottom: '15px', fontWeight: 'bold' }}>Signature Block</Typography>
-                                    </div>
-                                </AccordionSummary>
-                                <AccordionDetails>
-                                    <Box
-                                        sx={{ width: '100%', color: '#1A3353' }}
-                                        component='form'
-                                        noValidate
-                                        autoComplete='off'
-                                    >
-                                        <div className='DescriptionDetail'>
-                                            <div className='descriptionSubContainer'>
-                                                <div className='descriptionTitle'>Signature</div>
-                                                <TextareaAutosize
-                                                    aria-label='minimum height'
-                                                    name='description'
-                                                    minRows={8}
-                                                    // defaultValue={state.editData && state.editData.description ? state.editData.description : ''}
-                                                    // onChange={onChange}
-                                                    style={{ width: '70%', padding: '5px' }}
-                                                    placeholder='Add Description'
-                                                />
-                                            </div>
-                                        </div>
-                                    </Box>
-                                </AccordionDetails>
-                            </Accordion>
-                        </div> */}
           </div>
         </form>
       </Box>
