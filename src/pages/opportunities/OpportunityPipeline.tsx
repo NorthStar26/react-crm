@@ -662,7 +662,7 @@ function OpportunityPipeline() {
               </div>
             )}
 
-            {/* Поле для загрузки контракта */}
+            {/* field for uploading  */}
             {editableFields.includes('attachment_links') && (
               <div style={fieldStyles.fieldRow}>
                 <div style={fieldStyles.fieldTitle as React.CSSProperties}>
