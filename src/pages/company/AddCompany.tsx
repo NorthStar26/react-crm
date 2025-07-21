@@ -777,6 +777,7 @@ import {
   Select,
   MenuItem,
   Avatar,
+  Badge,
   FormHelperText,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
@@ -792,6 +793,8 @@ import INDCHOICES from '../../data/INDCHOICES';
 import { SuccessAlert, ErrorAlert } from '../../components/Button/SuccessAlert';
 import { DialogModal } from '../../components/DialogModal';
 import { uploadImageToCloudinary } from '../../utils/uploadImageToCloudinary';
+import GreenCameraIcon from './GreenCameraIcon'; // Adjust the path if needed
+
 
 type FormErrors = {
   name?: string[];
@@ -848,29 +851,54 @@ const CompanyLogo: React.FC<CompanyLogoProps> = ({
         marginBottom: 20,
       }}
     >
-      <Avatar
-        src={typeof logo === 'string' ? logo : undefined}
-        sx={{
-          width: 100,
-          height: 100,
-          backgroundColor: '#f5f5f5',
-          border: '2px dashed #ddd',
-          mb: 1,
-          cursor: 'pointer',
-          '&:hover': {
-            opacity: 0.8,
-          },
+      <Badge
+        overlap="circular"
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
         }}
-        onClick={() => {
-          document.getElementById('company-logo-upload')?.click();
-        }}
+        badgeContent={
+          <span
+            style={{
+              background: '#fff',
+              borderRadius: '50%',
+              boxShadow: '0 0 2px #ccc',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 32,
+              height: 32,
+              cursor: 'pointer',
+            }}
+            onClick={() => {
+              document.getElementById('company-logo-upload')?.click();
+            }}
+          >
+            <GreenCameraIcon />
+          </span>
+        }
       >
-        {!logo && (
-          <Typography variant="caption" color="textSecondary">
-            Logo
-          </Typography>
-        )}
-      </Avatar>
+        <Avatar
+          src={typeof logo === 'string' ? logo : undefined}
+          sx={{
+            width: 100,
+            height: 100,
+            backgroundColor: '#f5f5f5',
+            border: '2px dashed #ddd',
+            mb: 1,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            '&:hover': {
+              opacity: 0.8,
+            },
+          }}
+          onClick={() => {
+            document.getElementById('company-logo-upload')?.click();
+          }}
+        />
+      </Badge>
       <input
         type="file"
         accept="image/*"
@@ -879,12 +907,10 @@ const CompanyLogo: React.FC<CompanyLogoProps> = ({
         onChange={async (e) => {
           const file = e.target.files?.[0];
           if (!file) return;
-          // Check file size (2 MB = 2 * 1024 * 1024 bytes)
           if (file.size > 2 * 1024 * 1024) {
-            setError(['Logo must be less than 2 MB']);
+            alert(['Logo must be less than 2 MB']);
             return;
           }
-
           try {
             const { url } = await uploadImageToCloudinary(file);
             if (url) {

@@ -14,6 +14,7 @@ import {
   Avatar,
   FormHelperText,
   Button,
+  Badge
 } from '@mui/material';
 import { CompaniesUrl } from '../../services/ApiUrls';
 import { CustomAppBar } from '../../components/CustomAppBar';
@@ -28,6 +29,7 @@ import { SuccessAlert, ErrorAlert } from '../../components/Button/SuccessAlert';
 import { Spinner } from '../../components/Spinner';
 import { DialogModal } from '../../components/DialogModal';
 import { uploadImageToCloudinary } from '../../utils/uploadImageToCloudinary'; // Make sure you have this utility
+import GreenCameraIcon from './GreenCameraIcon'; // Adjust the path if needed
 
 
 type FormErrors = {
@@ -560,30 +562,63 @@ function EditCompany() {
                   >
                     {/* Company Logo */}
                     <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
-                      <label htmlFor="logo-upload" style={{ cursor: 'pointer' }}>
+                      <Badge
+                        overlap="circular"
+                        anchorOrigin={{
+                          vertical: 'bottom',
+                          horizontal: 'right',
+                        }}
+                        badgeContent={
+                          <span
+                            style={{
+                              background: '#fff',
+                              borderRadius: '50%',
+                              boxShadow: '0 0 2px #ccc',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              width: 32,
+                              height: 32,
+                              cursor: 'pointer',
+                            }}
+                            onClick={() => {
+                              document.getElementById('logo-upload')?.click();
+                            }}
+                          >
+                            <GreenCameraIcon />
+                          </span>
+                        }
+                      >
                         <Avatar
                           src={formData.logo_url}
                           alt="Company Logo"
                           sx={{ width: 100, height: 100 }}
+                          onClick={() => {
+                            document.getElementById('logo-upload')?.click();
+                          }}
                         >
                           {formData.name ? formData.name.charAt(0).toUpperCase() : 'C'}
                         </Avatar>
-                        <input
-                          id="logo-upload"
-                          type="file"
-                          accept="image/*"
-                          style={{ display: 'none' }}
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (!file) return;
-                            setFormData((prev) => ({
-                              ...prev,
-                              logo: file,
-                              logo_url: URL.createObjectURL(file), // Just show preview
-                            }));
-                          }}
-                        />
-                      </label>
+                      </Badge>
+                      <input
+                        id="logo-upload"
+                        type="file"
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          if (file.size > 2 * 1024 * 1024) {
+                            alert('Logo must be less than 2 MB');
+                            return;
+                          }
+                          setFormData((prev) => ({
+                            ...prev,
+                            logo: file,
+                            logo_url: URL.createObjectURL(file), // Just show preview
+                          }));
+                        }}
+                      />
                     </div>
 
 
