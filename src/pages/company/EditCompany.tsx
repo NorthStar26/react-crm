@@ -310,7 +310,7 @@ function EditCompany() {
 
         try {
           await fetchData(
-            `/companies/${companyId}/logo/`,
+            `${CompaniesUrl}${companyId}/`,
             'PATCH',
             JSON.stringify({ logo_url: result.url }),
             {
