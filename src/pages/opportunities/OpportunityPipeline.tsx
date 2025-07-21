@@ -132,6 +132,13 @@ function OpportunityPipeline() {
   const module = 'Opportunities';
   const crntPage = opportunity?.name || 'Opportunity';
 
+  const [uploadedFile, setUploadedFile] = useState<{
+    fileName: string;
+    fileUrl: string;
+    fileType: string;
+    attachmentType: string;
+  } | null>(null);
+
   useEffect(() => {
     if (id) {
       fetchOpportunityData();
@@ -283,7 +290,10 @@ function OpportunityPipeline() {
             (att: any) => att.attachment_type === 'proposal'
           );
 
-          if (!proposalAttachments || proposalAttachments.length === 0) {
+          if (
+            (!proposalAttachments || proposalAttachments.length === 0) &&
+            !uploadedFile
+          ) {
             throw new Error(
               'Please upload a proposal document before proceeding'
             );
@@ -489,9 +499,12 @@ function OpportunityPipeline() {
     file_url: string;
     file_name: string;
     file_type: string;
+    file?: File;
     attachment_type?: string;
   }) => {
     try {
+      setSaving(true);
+
       const token = localStorage.getItem('Token');
       const org = localStorage.getItem('org');
       const headers = {
@@ -519,6 +532,14 @@ function OpportunityPipeline() {
       );
 
       if (result.success) {
+        // Сохраняем информацию о загруженном файле в состоянии
+        setUploadedFile({
+          fileName: fileData.file_name,
+          fileUrl: fileData.file_url,
+          fileType: fileData.file_type,
+          attachmentType: attachmentType || 'proposal',
+        });
+
         setAlertState({
           ...alertState,
           success: {
@@ -546,6 +567,8 @@ function OpportunityPipeline() {
               : 'Failed to attach file to opportunity',
         },
       });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -744,7 +767,11 @@ function OpportunityPipeline() {
                   onError={handleUploadError}
                   accept=".pdf,.doc,.docx,.xlsx,.ppt,.pptx"
                   maxSizeMB={10}
-                  buttonText="Upload Proposal"
+                  buttonText={
+                    uploadedFile
+                      ? `Proposal: ${uploadedFile.fileName}`
+                      : 'Upload Proposal'
+                  }
                   existingFiles={
                     opportunity?.attachments
                       ?.filter((att: any) => att.attachment_type === 'proposal')
@@ -755,7 +782,24 @@ function OpportunityPipeline() {
                       })) || []
                   }
                   onDeleteFile={handleDeleteFile}
+                  showFileNameInButton={true}
                 />
+
+                {/* Показать информацию о загруженном файле, ожидающем сохранения */}
+                {uploadedFile && (
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: 'green',
+                      mt: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <CheckCircleIcon sx={{ fontSize: 16, mr: 0.5 }} />
+                    File uploaded. Click Save to proceed to Negotiation stage
+                  </Typography>
+                )}
               </div>
             </div>
           </div>
