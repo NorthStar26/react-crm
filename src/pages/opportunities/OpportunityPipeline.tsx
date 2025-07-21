@@ -608,6 +608,16 @@ function OpportunityPipeline() {
 
   const getCurrentStepIndex = () => {
     if (!pipelineMetadata) return 0;
+
+    // Если стадия QUALIFICATION, то активной считается IDENTIFY_DECISION_MAKERS
+    if (pipelineMetadata.current_stage === 'QUALIFICATION') {
+      const stages = pipelineMetadata.available_stages || [];
+      const identifyIndex = stages.findIndex(
+        (stage: any) => stage.value === 'IDENTIFY_DECISION_MAKERS'
+      );
+      return identifyIndex >= 0 ? identifyIndex : 1;
+    }
+
     const stages = pipelineMetadata.available_stages || [];
     const currentStageIndex = stages.findIndex(
       (stage: any) => stage.value === pipelineMetadata.current_stage
@@ -623,58 +633,54 @@ function OpportunityPipeline() {
       case 'QUALIFICATION':
         return (
           <>
-            {editableFields.includes('meeting_date') && (
-              <Box
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                mt: 2,
+              }}
+            >
+              <Typography
                 sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  mt: 2,
+                  minWidth: '91px',
+                  textAlign: 'right',
+                  pr: 2,
+                  fontFamily: 'Roboto',
+                  fontWeight: 500,
+                  fontSize: '15px',
+                  lineHeight: '18px',
+                  color: '#1A3353',
                 }}
               >
-                <Typography
-                  sx={{
-                    minWidth: '91px',
-                    textAlign: 'right',
-                    pr: 2,
-                    fontFamily: 'Roboto',
-                    fontWeight: 500,
-                    fontSize: '15px',
-                    lineHeight: '18px',
-                    color: '#1A3353',
-                  }}
-                >
-                  Meeting Date
-                </Typography>
-                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                  <DatePicker
-                    value={
-                      formData.meeting_date
-                        ? dayjs(formData.meeting_date)
-                        : null
-                    }
-                    onChange={(newValue) =>
-                      handleFieldChange(
-                        'meeting_date',
-                        newValue?.format('YYYY-MM-DD')
-                      )
-                    }
-                    slotProps={{
-                      textField: {
-                        size: 'small',
-                        sx: {
-                          width: '311px',
-                          '& .MuiOutlinedInput-root': {
-                            backgroundColor: '#F9FAFB',
-                          },
+                Meeting Date
+              </Typography>
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DatePicker
+                  value={
+                    formData.meeting_date ? dayjs(formData.meeting_date) : null
+                  }
+                  onChange={(newValue) =>
+                    handleFieldChange(
+                      'meeting_date',
+                      newValue?.format('YYYY-MM-DD')
+                    )
+                  }
+                  slotProps={{
+                    textField: {
+                      size: 'small',
+                      sx: {
+                        width: '311px',
+                        '& .MuiOutlinedInput-root': {
+                          backgroundColor: '#F9FAFB',
                         },
-                        error: !!errors.meeting_date,
-                        helperText: errors.meeting_date,
                       },
-                    }}
-                  />
-                </LocalizationProvider>
-              </Box>
-            )}
+                      error: !!errors.meeting_date,
+                      helperText: errors.meeting_date,
+                    },
+                  }}
+                />
+              </LocalizationProvider>
+            </Box>
           </>
         );
 
@@ -736,21 +742,19 @@ function OpportunityPipeline() {
                     })
                   }
                   onError={handleUploadError}
-                  accept=".pdf,.doc,.docx"
+                  accept=".pdf,.doc,.docx,.xlsx,.ppt,.pptx"
                   maxSizeMB={10}
-                  buttonText="Upload Document"
-                  variant="button"
+                  buttonText="Upload Proposal"
                   existingFiles={
-                    opportunity?.attachments?.map((att: any) => ({
-                      file_name: att.file_name,
-                      file_url: att.attachment || att.file_url,
-                      file_type: att.file_type,
-                    })) || []
+                    opportunity?.attachments
+                      ?.filter((att: any) => att.attachment_type === 'proposal')
+                      .map((att: any) => ({
+                        file_name: att.file_name,
+                        file_url: att.attachment,
+                        file_type: att.file_type,
+                      })) || []
                   }
                   onDeleteFile={handleDeleteFile}
-                  disabled={saving}
-                  singleFile={true}
-                  showFileNameInButton={true}
                 />
               </div>
             </div>
@@ -881,7 +885,7 @@ function OpportunityPipeline() {
                 Contract
               </div>
               <div style={fieldStyles.fieldInput}>
-                <CloudinaryFileUpload
+                {/* <CloudinaryFileUpload
                   onFileUpload={(fileData) =>
                     handleCloudinaryUpload({
                       ...fileData,
@@ -904,6 +908,28 @@ function OpportunityPipeline() {
                   disabled={saving}
                   singleFile={true}
                   showFileNameInButton={true}
+                /> */}
+                <CloudinaryFileUpload
+                  onFileUpload={(fileData) =>
+                    handleCloudinaryUpload({
+                      ...fileData,
+                      attachment_type: 'contract',
+                    })
+                  }
+                  onError={handleUploadError}
+                  accept=".pdf,.doc,.docx"
+                  maxSizeMB={10}
+                  buttonText="Upload Contract"
+                  existingFiles={
+                    opportunity?.attachments
+                      ?.filter((att: any) => att.attachment_type === 'contract')
+                      .map((att: any) => ({
+                        file_name: att.file_name,
+                        file_url: att.attachment,
+                        file_type: att.file_type,
+                      })) || []
+                  }
+                  onDeleteFile={handleDeleteFile}
                 />
               </div>
             </div>
@@ -1032,6 +1058,20 @@ function OpportunityPipeline() {
                 >
                   <StepLabel
                     StepIconComponent={() => {
+                      // QUALIFICATION всегда должна быть завершена
+                      if (stage.value === 'QUALIFICATION') {
+                        return <CompletedStepIcon />;
+                      }
+
+                      // Если текущая стадия QUALIFICATION, то IDENTIFY_DECISION_MAKERS должна быть активной
+                      if (
+                        pipelineMetadata.current_stage === 'QUALIFICATION' &&
+                        stage.value === 'IDENTIFY_DECISION_MAKERS'
+                      ) {
+                        return <CurrentStepIcon />;
+                      }
+
+                      // Стандартная логика для остальных стадий
                       if (index < getCurrentStepIndex()) {
                         return <CompletedStepIcon />;
                       } else if (index === getCurrentStepIndex()) {
@@ -1043,7 +1083,9 @@ function OpportunityPipeline() {
                   >
                     <Typography
                       sx={
-                        index === getCurrentStepIndex()
+                        index === getCurrentStepIndex() ||
+                        (pipelineMetadata.current_stage === 'QUALIFICATION' &&
+                          stage.value === 'IDENTIFY_DECISION_MAKERS')
                           ? pipelineStepLabelStyles.active
                           : pipelineStepLabelStyles.inactive
                       }

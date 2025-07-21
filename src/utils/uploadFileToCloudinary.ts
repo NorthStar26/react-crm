@@ -281,20 +281,94 @@ export const attachFileToLead = async (
  * @param headers - Request headers
  * @returns Response from the API
  */
+
+// export const attachFileToOpportunity = async (
+//   opportunityId: string,
+//   fileUrl: string,
+//   fileName: string,
+//   fileType: string,
+//   headers: { Authorization: string; org: string },
+//   attachmentType?: string
+// ): Promise<AttachmentResponse> => {
+//   try {
+//     // Используем fetchData вместо прямого fetch
+//     const { fetchData } = await import('../components/FetchData');
+//     const { OpportunityUrl } = await import('../services/ApiUrls');
+
+//     // Используем тот же подход, что и в attachFileToLead
+//     const attachmentEndpoint = `${OpportunityUrl}/attachment/`;
+
+//     console.log('Preparing to attach file to opportunity:', {
+//       endpoint: attachmentEndpoint,
+//       opportunityId,
+//       fileUrl,
+//       fileName,
+//       fileType,
+//       attachmentType,
+//     });
+
+//     // Добавляем opportunity_id в payload
+//     const payload = {
+//       opportunity_id: opportunityId,
+//       file_name: fileName,
+//       file_url: fileUrl,
+//       file_type: fileType,
+//       attachment_type: attachmentType || 'proposal',
+//     };
+
+//     console.log('Sending payload to API:', payload);
+
+//     // Используем fetchData - это функция, которая корректно обрабатывает запросы к API
+//     const result = await fetchData(
+//       attachmentEndpoint,
+//       'POST',
+//       JSON.stringify(payload),
+//       headers
+//     );
+
+//     if (result.error) {
+//       throw new Error(
+//         result.detail ||
+//           result.errors ||
+//           result.error ||
+//           'Failed to attach file'
+//       );
+//     }
+
+//     // Возвращаем типизированный ответ
+//     return {
+//       success: true,
+//       attachment_id: result.attachment_id,
+//       attachment: result.attachment,
+//       attachment_url: result.attachment_url,
+//       attachment_display: result.attachment_display,
+//       created_by: result.created_by,
+//       created_on: result.created_on,
+//       file_type: result.file_type,
+//       download_url: result.download_url,
+//     };
+//   } catch (error) {
+//     console.error('Error in attachFileToOpportunity:', error);
+//     return {
+//       success: false,
+//       error: error instanceof Error ? error.message : String(error),
+//     };
+//   }
+// };
 export const attachFileToOpportunity = async (
   opportunityId: string,
   fileUrl: string,
   fileName: string,
   fileType: string,
   headers: { Authorization: string; org: string },
-  attachmentType?: string // Добавляем новый параметр
+  attachmentType?: string
 ): Promise<AttachmentResponse> => {
   try {
-    const { OpportunityUrl } = await import('../services/ApiUrls');
+    // Импортируем необходимые URL
+    const { API_URL } = await import('../services/ApiUrls');
 
-    // Формируем полный URL
-
-    const attachmentEndpoint = `${OpportunityUrl}/attachment/`;
+    // Используем абсолютный URL вместо относительного
+    const attachmentEndpoint = `${API_URL}/opportunities/${opportunityId}/attachment/`;
 
     console.log('Preparing to attach file to opportunity:', {
       endpoint: attachmentEndpoint,
@@ -302,45 +376,54 @@ export const attachFileToOpportunity = async (
       fileUrl,
       fileName,
       fileType,
-      attachmentType, // Логируем новый параметр
+      attachmentType,
     });
 
-    // Создаем payload согласно требованиям API
+    // Подготавливаем payload без opportunity_id (т.к. ID в URL)
     const payload = {
       opportunity_id: opportunityId,
       file_name: fileName,
       file_type: fileType,
       file_url: fileUrl,
-      attachment_type: attachmentType || 'proposal', // Добавляем attachment_type в payload
+      attachment_type: attachmentType || 'proposal',
     };
 
     console.log('Sending payload to API:', payload);
 
-    // Делаем прямой fetch запрос с правильными заголовками
+    // Используем стандартный объект вместо Headers API
     const response = await fetch(attachmentEndpoint, {
       method: 'POST',
       headers: {
-        Accept: 'application/json',
         'Content-Type': 'application/json',
+        Accept: 'application/json',
         Authorization: headers.Authorization,
         org: headers.org,
       },
       body: JSON.stringify(payload),
     });
 
-    const result = await response.json();
-    console.log('API Response:', result);
+    console.log('Response status:', response.status);
 
-    if (!response.ok || result.error) {
+    const responseText = await response.text();
+    console.log('Raw response:', responseText);
+
+    let result;
+    try {
+      result = JSON.parse(responseText);
+    } catch (e) {
+      console.error('Failed to parse response as JSON:', e);
+      result = {};
+    }
+
+    if (!response.ok) {
       throw new Error(
         result.detail ||
           result.errors ||
           result.error ||
-          `HTTP ${response.status}: ${response.statusText}`
+          `Failed to attach file: ${response.status} ${response.statusText}`
       );
     }
 
-    // Возвращаем типизированный ответ
     return {
       success: true,
       attachment_id: result.attachment_id,
@@ -360,7 +443,6 @@ export const attachFileToOpportunity = async (
     };
   }
 };
-
 /**
  * Deletes an attachment from an opportunity
  * @param opportunityId - ID of the opportunity
