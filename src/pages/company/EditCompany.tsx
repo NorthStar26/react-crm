@@ -27,6 +27,8 @@ import INDCHOICES from '../../data/INDCHOICES';
 import { SuccessAlert, ErrorAlert } from '../../components/Button/SuccessAlert';
 import { Spinner } from '../../components/Spinner';
 import { DialogModal } from '../../components/DialogModal';
+import { uploadImageToCloudinary } from '../../utils/uploadImageToCloudinary'; // Make sure you have this utility
+
 
 type FormErrors = {
   name?: string[];
@@ -57,30 +59,34 @@ interface FormData {
   billing_postcode: string;
   billing_country: string;
   logo?: File | null;
+  logo_url?: string;
 }
 
-const CompanyLogo = ({ initial }: { initial: string }) => {
+const CompanyLogo = ({ logoUrl, initial }: { logoUrl?: string; initial: string }) => {
   return (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'center',
-        marginBottom: '20px',
-      }}
-    >
-      <Avatar
-        sx={{
-          width: 100,
-          height: 100,
-          backgroundColor: '#284871',
-          fontSize: 40,
-        }}
-      >
-        {initial || 'C'}
-      </Avatar>
+    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+      {logoUrl ? (
+        <Avatar
+          src={logoUrl}
+          alt="Company Logo"
+          sx={{ width: 100, height: 100 }}
+        />
+      ) : (
+        <Avatar
+          sx={{
+            width: 100,
+            height: 100,
+            backgroundColor: '#284871',
+            fontSize: 40,
+          }}
+        >
+          {initial || 'C'}
+        </Avatar>
+      )}
     </div>
   );
 };
+
 
 function EditCompany() {
   console.log('Rendering EditCompany component');
@@ -174,6 +180,7 @@ function EditCompany() {
             billing_postcode: companyData.billing_postcode || '',
             billing_country: companyData.billing_country || '',
             logo: null,
+            logo_url: companyData.logo_url || '',
           };
 
           setFormData(loadedData);
@@ -244,11 +251,12 @@ function EditCompany() {
       formData.industry !== originalFormData.industry ||
       formData.billing_street !== originalFormData.billing_street ||
       formData.billing_address_number !==
-        originalFormData.billing_address_number ||
+      originalFormData.billing_address_number ||
       formData.billing_city !== originalFormData.billing_city ||
       formData.billing_state !== originalFormData.billing_state ||
       formData.billing_postcode !== originalFormData.billing_postcode ||
-      formData.billing_country !== originalFormData.billing_country
+      formData.billing_country !== originalFormData.billing_country ||
+      !!formData.logo_url
     );
   };
 
@@ -284,6 +292,44 @@ function EditCompany() {
         setUpdateLoading(false);
         return;
       }
+      const uploadLogo = async () => {
+        if (!formData.logo || !companyId) return;
+
+        // 1. Upload the file to Cloudinary
+        const result = await uploadImageToCloudinary(formData.logo);
+        if (!result.success) {
+          setError('Failed to upload logo');
+          return;
+        }
+
+        // 2. Send PATCH request to backend with the Cloudinary URL
+        const token = localStorage.getItem('Token');
+        const org = localStorage.getItem('org');
+
+        try {
+          await fetchData(
+            `/companies/${companyId}/logo/`,
+            'PATCH',
+            JSON.stringify({ logo_url: result.url }),
+            {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+              Authorization: token ? `Bearer ${token.replace(/^Bearer\s+/i, '')}` : '',
+              org: org || '',
+            }
+          );
+          // Optionally update the preview with the new logo URL
+          setFormData((prev) => ({
+            ...prev,
+            logo: null,
+            logo_url: result.url,
+          }));
+          console.log('Logo uploaded and backend updated!');
+        } catch (err: any) {
+          console.error('Error uploading logo:', err);
+          setError('Failed to update logo in backend');
+        }
+      };
 
       // Collect only changed fields for PATCH request
       const changedFields: Record<string, any> = {};
@@ -336,7 +382,11 @@ function EditCompany() {
       console.log('API Response:', res);
 
       if (res.success || !res.error) {
+        // ✅ Upload the logo (if selected) AFTER successful PATCH
+        await uploadLogo();
+
         setShowSuccessAlert(true);
+
         // Navigate back to companies list after a short delay
         setTimeout(() => {
           navigate('/app/companies');
@@ -344,6 +394,7 @@ function EditCompany() {
       } else {
         handleApiErrors(res);
       }
+
     } catch (err: any) {
       console.error('API Error:', err);
       handleApiErrors(err);
@@ -508,13 +559,34 @@ function EditCompany() {
                     }}
                   >
                     {/* Company Logo */}
-                    <CompanyLogo
-                      initial={
-                        formData.name
-                          ? formData.name.charAt(0).toUpperCase()
-                          : 'C'
-                      }
-                    />
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+                      <label htmlFor="logo-upload" style={{ cursor: 'pointer' }}>
+                        <Avatar
+                          src={formData.logo_url}
+                          alt="Company Logo"
+                          sx={{ width: 100, height: 100 }}
+                        >
+                          {formData.name ? formData.name.charAt(0).toUpperCase() : 'C'}
+                        </Avatar>
+                        <input
+                          id="logo-upload"
+                          type="file"
+                          accept="image/*"
+                          style={{ display: 'none' }}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            setFormData((prev) => ({
+                              ...prev,
+                              logo: file,
+                              logo_url: URL.createObjectURL(file), // Just show preview
+                            }));
+                          }}
+                        />
+                      </label>
+                    </div>
+
+
 
                     {/* Row 1 */}
                     <div style={fieldStyles.fieldContainer}>
