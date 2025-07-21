@@ -29,51 +29,56 @@ interface CloudinaryFileUploadProps {
     file_url: string;
     file_name: string;
     file_type: string;
-    public_id?: string;
+    attachment_type?: string;
   }) => void;
-  onError?: (error: string) => void;
+  onError: (error: string) => void;
   accept?: string;
   maxSizeMB?: number;
   buttonText?: string;
-  variant?: 'button' | 'icon' | 'dropzone';
-  multiple?: boolean;
+  variant?: 'button' | 'dropzone' | 'icon';
   existingFiles?: Array<{
     file_name: string;
     file_url: string;
-    file_type?: string;
+    file_type: string;
   }>;
   onDeleteFile?: (index: number) => void;
   disabled?: boolean;
-  cloudinaryConfig?: {
-    cloudName?: string;
-    uploadPreset?: string;
-  };
+  singleFile?: boolean;
+  showFileNameInButton?: boolean;
 }
 
 export const CloudinaryFileUpload: React.FC<CloudinaryFileUploadProps> = ({
   onFileUpload,
   onError,
-  accept = '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.jpg,.jpeg,.png,.gif,.zip,.rar',
+  accept = '.pdf,.doc,.docx,.jpg,.jpeg,.png',
   maxSizeMB = 10,
   buttonText = 'Upload File',
   variant = 'button',
-  multiple = false,
   existingFiles = [],
   onDeleteFile,
   disabled = false,
-  cloudinaryConfig,
+  singleFile = false,
+  showFileNameInButton = false,
 }) => {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
+  // Функция для получения отображаемого текста кнопки
+  const getButtonText = () => {
+    if (showFileNameInButton && existingFiles.length > 0) {
+      const fileName = existingFiles[0].file_name;
+      // Обрезаем название файла если оно слишком длинное
+      return fileName.length > 30
+        ? `${fileName.substring(0, 27)}...`
+        : fileName;
+    }
+    return buttonText;
+  };
+
   const cloudName =
-    cloudinaryConfig?.cloudName ||
-    process.env.REACT_APP_CLOUDINARY_CLOUD_NAME ||
-    'your_cloud_name';
+    process.env.REACT_APP_CLOUDINARY_CLOUD_NAME || 'your_cloud_name';
   const uploadPreset =
-    cloudinaryConfig?.uploadPreset ||
-    process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET ||
-    'your_preset';
+    process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET || 'your_preset';
 
   // Get file icon based on file extension
   const getFileIcon = (fileName: string) => {
@@ -173,6 +178,20 @@ export const CloudinaryFileUpload: React.FC<CloudinaryFileUploadProps> = ({
     }
   };
 
+  // Обработчик успешной загрузки
+  const handleUploadSuccess = (result: any) => {
+    // Если это singleFile режим и есть существующий файл, удаляем его
+    if (singleFile && existingFiles.length > 0 && onDeleteFile) {
+      onDeleteFile(0);
+    }
+
+    onFileUpload({
+      file_url: result.secure_url,
+      file_name: result.original_filename || result.public_id,
+      file_type: result.resource_type,
+    });
+  };
+
   // Handle file selection
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -185,7 +204,7 @@ export const CloudinaryFileUpload: React.FC<CloudinaryFileUploadProps> = ({
     // Validate file
     const validationError = validateFile(file);
     if (validationError) {
-      onError?.(validationError);
+      onError(validationError);
       return;
     }
 
@@ -195,20 +214,14 @@ export const CloudinaryFileUpload: React.FC<CloudinaryFileUploadProps> = ({
     try {
       const response = await uploadToCloudinary(file);
 
-      const fileData = {
-        file_url: response.secure_url,
-        file_name: file.name,
-        file_type: file.type,
-        public_id: response.public_id,
-      };
+      handleUploadSuccess(response);
 
-      onFileUpload(fileData);
       setUploadProgress(100);
     } catch (error: unknown) {
       console.error('Upload error:', error);
       const errorMessage =
         error instanceof Error ? error.message : 'Failed to upload file';
-      onError?.(errorMessage);
+      onError(errorMessage);
     } finally {
       setUploading(false);
       setUploadProgress(0);
@@ -238,7 +251,7 @@ export const CloudinaryFileUpload: React.FC<CloudinaryFileUploadProps> = ({
               accept={accept}
               onChange={handleFileChange}
               disabled={uploading || disabled}
-              multiple={multiple}
+              multiple={!singleFile}
             />
           </IconButton>
         );
@@ -297,7 +310,7 @@ export const CloudinaryFileUpload: React.FC<CloudinaryFileUploadProps> = ({
               accept={accept}
               onChange={handleFileChange}
               disabled={uploading || disabled}
-              multiple={multiple}
+              multiple={!singleFile}
             />
           </Box>
         );
@@ -307,22 +320,23 @@ export const CloudinaryFileUpload: React.FC<CloudinaryFileUploadProps> = ({
           <Button
             component="label"
             variant="outlined"
-            startIcon={
+            endIcon={
               uploading ? <CircularProgress size={20} /> : <CloudUploadIcon />
             }
             disabled={uploading || disabled}
             sx={{
               textTransform: 'none',
+              width: '200px',
             }}
           >
-            {uploading ? `Uploading... ${uploadProgress}%` : buttonText}
+            {uploading ? `Uploading... ${uploadProgress}%` : getButtonText()}
             <input
               type="file"
               hidden
               accept={accept}
               onChange={handleFileChange}
               disabled={uploading || disabled}
-              multiple={multiple}
+              multiple={!singleFile}
             />
           </Button>
         );
@@ -331,7 +345,7 @@ export const CloudinaryFileUpload: React.FC<CloudinaryFileUploadProps> = ({
 
   return (
     <Box>
-      {/* Show existing files */}
+      {/* Show existing files
       {existingFiles.length > 0 && (
         <Box sx={{ mb: 2 }}>
           {existingFiles.map((file, index) => (
@@ -346,7 +360,7 @@ export const CloudinaryFileUpload: React.FC<CloudinaryFileUploadProps> = ({
             />
           ))}
         </Box>
-      )}
+      )} */}
 
       {/* Upload button */}
       {renderUploadButton()}

@@ -7,6 +7,18 @@
 // to avoid circular dependencies
 
 // Allowed file extensions
+interface AttachmentResponse {
+  success: boolean;
+  error?: string;
+  attachment_id?: string;
+  attachment?: string;
+  attachment_url?: string;
+  attachment_display?: string;
+  created_by?: string;
+  created_on?: string;
+  file_type?: string[];
+  download_url?: string;
+}
 const ALLOWED_FILE_EXTENSIONS = [
   // Documents
   'pdf',
@@ -274,14 +286,15 @@ export const attachFileToOpportunity = async (
   fileUrl: string,
   fileName: string,
   fileType: string,
-  headers: any
-) => {
+  headers: { Authorization: string; org: string },
+  attachmentType?: string // Добавляем новый параметр
+): Promise<AttachmentResponse> => {
   try {
     const { OpportunityUrl } = await import('../services/ApiUrls');
 
     // Формируем полный URL
-    const baseURL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-    const attachmentEndpoint = `${baseURL}/api${OpportunityUrl}/attachment/`;
+
+    const attachmentEndpoint = `${OpportunityUrl}/attachment/`;
 
     console.log('Preparing to attach file to opportunity:', {
       endpoint: attachmentEndpoint,
@@ -289,6 +302,7 @@ export const attachFileToOpportunity = async (
       fileUrl,
       fileName,
       fileType,
+      attachmentType, // Логируем новый параметр
     });
 
     // Создаем payload согласно требованиям API
@@ -297,6 +311,7 @@ export const attachFileToOpportunity = async (
       file_name: fileName,
       file_type: fileType,
       file_url: fileUrl,
+      attachment_type: attachmentType || 'proposal', // Добавляем attachment_type в payload
     };
 
     console.log('Sending payload to API:', payload);
@@ -307,8 +322,8 @@ export const attachFileToOpportunity = async (
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
-        Authorization: headers.Authorization || headers.authorization || '',
-        org: headers.org || headers.Org || '',
+        Authorization: headers.Authorization,
+        org: headers.org,
       },
       body: JSON.stringify(payload),
     });
@@ -318,15 +333,24 @@ export const attachFileToOpportunity = async (
 
     if (!response.ok || result.error) {
       throw new Error(
-        result.errors ||
+        result.detail ||
+          result.errors ||
           result.error ||
           `HTTP ${response.status}: ${response.statusText}`
       );
     }
 
+    // Возвращаем типизированный ответ
     return {
       success: true,
-      data: result,
+      attachment_id: result.attachment_id,
+      attachment: result.attachment,
+      attachment_url: result.attachment_url,
+      attachment_display: result.attachment_display,
+      created_by: result.created_by,
+      created_on: result.created_on,
+      file_type: result.file_type,
+      download_url: result.download_url,
     };
   } catch (error) {
     console.error('Error in attachFileToOpportunity:', error);
@@ -497,7 +521,8 @@ export const uploadAndAttachFileToLead = async (
 export const uploadAndAttachFileToOpportunity = async (
   opportunityId: string,
   file: File,
-  headers: any
+  headers: { Authorization: string; org: string },
+  attachmentType?: string // Добавляем параметр attachmentType
 ) => {
   console.log(
     'Starting file upload process for opportunity ID:',
@@ -530,7 +555,8 @@ export const uploadAndAttachFileToOpportunity = async (
     apiUrl,
     fileName,
     fileType,
-    headers
+    headers,
+    attachmentType // Передаем attachmentType
   );
   console.log('Attachment API result:', attachResult);
 
@@ -549,6 +575,6 @@ export const uploadAndAttachFileToOpportunity = async (
     originalUrl: uploadResult.originalUrl,
     fileName: file.name,
     fileType: file.type,
-    attachmentData: attachResult.data,
+    attachmentData: attachResult,
   };
 };
