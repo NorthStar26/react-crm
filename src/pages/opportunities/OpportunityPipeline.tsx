@@ -801,7 +801,7 @@ function OpportunityPipeline() {
                     handleFieldChange('feedback', e.target.value)
                   }
                   fullWidth
-                  placeholder="Enter feedback from the client..."
+                  placeholder="Enter feedback ..."
                   error={!!errors.feedback}
                   helperText={errors.feedback}
                   sx={{
