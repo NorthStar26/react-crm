@@ -247,10 +247,15 @@ function OpportunityPipeline() {
       // Логика переходов согласно конфигурации бэкенда
       switch (pipelineMetadata.current_stage) {
         case 'QUALIFICATION':
-          // QUALIFICATION автоматически переходит на IDENTIFY_DECISION_MAKERS
-          // На этой стадии нет редактируемых полей
+          // QUALIFICATION: проверяем и сохраняем meeting_date, затем переходим на IDENTIFY_DECISION_MAKERS
+          if (!formData.meeting_date) {
+            throw new Error('Please select a meeting date');
+          }
+
+          // Отправляем meeting_date и переход на IDENTIFY_DECISION_MAKERS одним запросом
           dataToSend = {
-            stage: 'IDENTIFY_DECISION_MAKERS',
+            stage: 'PROPOSAL', // Сразу переходим на PROPOSAL, если бэкенд это поддерживает
+            meeting_date: formData.meeting_date,
           };
           break;
 
@@ -260,27 +265,10 @@ function OpportunityPipeline() {
             throw new Error('Please select a meeting date');
           }
 
-          // Сначала сохраняем meeting_date на текущей стадии
+          // Переходим на PROPOSAL
           dataToSend = {
-            stage: pipelineMetadata.current_stage,
-            meeting_date: formData.meeting_date,
+            stage: 'PROPOSAL',
           };
-
-          response = await fetchData(
-            `${OpportunityUrl}/${id}/pipeline/`,
-            'PATCH',
-            JSON.stringify(dataToSend),
-            headers
-          );
-
-          if (!response.error) {
-            // После успешного сохранения переходим на PROPOSAL
-            dataToSend = {
-              stage: 'PROPOSAL',
-            };
-          } else {
-            throw new Error(response.errors || 'Failed to save meeting date');
-          }
           break;
 
         case 'PROPOSAL':
@@ -654,57 +642,45 @@ function OpportunityPipeline() {
 
     switch (pipelineMetadata.current_stage) {
       case 'QUALIFICATION':
+        // Для QUALIFICATION показываем поле meeting_date, так как мы редактируем его для перехода на IDENTIFY_DECISION_MAKERS
         return (
-          <>
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                mt: 2,
-              }}
-            >
-              <Typography
-                sx={{
-                  minWidth: '91px',
-                  textAlign: 'right',
-                  pr: 2,
-                  fontFamily: 'Roboto',
-                  fontWeight: 500,
-                  fontSize: '15px',
-                  lineHeight: '18px',
-                  color: '#1A3353',
-                }}
-              >
+          <div style={fieldStyles.fieldContainer}>
+            <div style={fieldStyles.fieldRow}>
+              <div style={fieldStyles.fieldTitle as React.CSSProperties}>
                 Meeting Date
-              </Typography>
-              <LocalizationProvider dateAdapter={AdapterDayjs}>
-                <DatePicker
-                  value={
-                    formData.meeting_date ? dayjs(formData.meeting_date) : null
-                  }
-                  onChange={(newValue) =>
-                    handleFieldChange(
-                      'meeting_date',
-                      newValue?.format('YYYY-MM-DD')
-                    )
-                  }
-                  slotProps={{
-                    textField: {
-                      size: 'small',
-                      sx: {
-                        width: '311px',
-                        '& .MuiOutlinedInput-root': {
-                          backgroundColor: '#F9FAFB',
+              </div>
+              <div style={fieldStyles.fieldInput}>
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                  <DatePicker
+                    value={
+                      formData.meeting_date
+                        ? dayjs(formData.meeting_date)
+                        : null
+                    }
+                    onChange={(newValue) =>
+                      handleFieldChange(
+                        'meeting_date',
+                        newValue?.format('YYYY-MM-DD')
+                      )
+                    }
+                    slotProps={{
+                      textField: {
+                        size: 'small',
+                        sx: {
+                          width: '311px',
+                          '& .MuiOutlinedInput-root': {
+                            backgroundColor: '#F9FAFB',
+                          },
                         },
+                        error: !!errors.meeting_date,
+                        helperText: errors.meeting_date,
                       },
-                      error: !!errors.meeting_date,
-                      helperText: errors.meeting_date,
-                    },
-                  }}
-                />
-              </LocalizationProvider>
-            </Box>
-          </>
+                    }}
+                  />
+                </LocalizationProvider>
+              </div>
+            </div>
+          </div>
         );
 
       case 'IDENTIFY_DECISION_MAKERS':
