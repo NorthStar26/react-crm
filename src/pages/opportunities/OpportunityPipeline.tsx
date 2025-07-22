@@ -767,13 +767,17 @@ function OpportunityPipeline() {
                     variant="body2"
                     sx={{
                       color: 'green',
-                      mt: 1,
+                      mt: 0,
                       display: 'flex',
                       alignItems: 'center',
+
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
                     }}
                   >
-                    <CheckCircleIcon sx={{ fontSize: 16, mr: 0.5 }} />
-                    File uploaded. Click Save to proceed to Negotiation stage
+                    {/* <CheckCircleIcon sx={{ fontSize: 16, mr: 0.5 }} /> */}
+                    {/* File uploaded. Click Save to proceed to Negotiation stage */}
                   </Typography>
                 )}
               </div>
@@ -784,7 +788,7 @@ function OpportunityPipeline() {
       case 'NEGOTIATION':
         return (
           <div style={fieldStyles.fieldContainer}>
-            <div style={fieldStyles.fieldRow}>
+            <div style={{ ...fieldStyles.fieldRow, marginLeft: '-80px' }}>
               <div style={fieldStyles.fieldTitle as React.CSSProperties}>
                 Feedback
               </div>
@@ -801,6 +805,7 @@ function OpportunityPipeline() {
                   error={!!errors.feedback}
                   helperText={errors.feedback}
                   sx={{
+                    width: '350px',
                     '& .MuiOutlinedInput-root': {
                       backgroundColor: '#F9FAFB',
                     },

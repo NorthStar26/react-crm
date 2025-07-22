@@ -230,7 +230,7 @@ export const CloudinaryFileUpload: React.FC<CloudinaryFileUploadProps> = ({
     }
   };
 
-  // Render upload button
+  // Render upload button )
   const renderUploadButton = () => {
     switch (variant) {
       case 'icon':
@@ -327,9 +327,26 @@ export const CloudinaryFileUpload: React.FC<CloudinaryFileUploadProps> = ({
             sx={{
               textTransform: 'none',
               width: '200px',
+              height: 40, // фиксированная высота кнопки
+              minHeight: 40, // чтобы не сжималась
+              mb: 0,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              justifyContent: 'flex-start', // чтобы текст не прятался за иконкой
             }}
           >
-            {uploading ? `Uploading... ${uploadProgress}%` : getButtonText()}
+            <span
+              style={{
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                display: 'block',
+                width: '100%',
+              }}
+            >
+              {uploading ? `Uploading... ${uploadProgress}%` : getButtonText()}
+            </span>
             <input
               type="file"
               hidden
