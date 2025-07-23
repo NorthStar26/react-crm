@@ -458,6 +458,11 @@ export default function Sidebar(props: any) {
                 element={<OpportunityPipeline />}
               />
               <Route path="/app/opportunities/view" element={<ViewOpportunity />} />
+              <Route
+                path="/app/opportunities/:id/pipeline"
+                element={<OpportunityPipeline />}
+              />
+
               <Route path="/app/cases" element={<Cases />} />
               <Route path="/app/cases/add-case" element={<AddCase />} />
               <Route path="/app/cases/edit-case" element={<EditCase />} />

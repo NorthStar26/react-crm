@@ -42,7 +42,7 @@ export const Home = (props: any) => {
     return null;
   }
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{ }}>
       {org ? (
         <>
           <Sidebar open={open} />
