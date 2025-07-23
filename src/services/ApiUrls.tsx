@@ -30,7 +30,7 @@ export const ContactUrl = 'contacts';
 // Users/USERS
 export const UsersUrl = 'users';
 // Opportunity
-export const OpportunityUrl = 'opportunities';
+export const OpportunityUrl = '/opportunities';
 // ACCOUNTS
 export const AccountsUrl = 'accounts';
 // CASES

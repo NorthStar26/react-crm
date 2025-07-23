@@ -14,6 +14,9 @@ import {
   CircularProgress,
   Divider,
   Grid,
+  MenuItem,
+  Select,
+  FormControl,
 } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -33,6 +36,12 @@ import {
   PipelineSaveButton,
   PipelineCancelButton,
 } from '../../components/PipelineButtons';
+import {
+  SuccessAlert,
+  ErrorAlert,
+  PipelineTransitionAlert,
+} from '../../components/Button/SuccessAlert';
+import { CloudinaryFileUpload } from '../../components/CloudinaryFileUpload';
 
 import {
   SectionContainer,
@@ -56,42 +65,18 @@ import {
   pipelineStepLabelStyles,
   pipelineConnectorStyles,
 } from '../../components/PipelineIcons';
+import {
+  attachFileToOpportunity,
+  deleteOpportunityAttachment,
+  uploadAndAttachFileToOpportunity,
+} from '../../utils/uploadFileToCloudinary';
 
-// Используем стили из нашего файла PipelineIcons для кастомного коннектора
+// Используем стили PipelineIcons для кастомного коннектора
 const CustomConnector = styled(StepConnector)(() => ({
   [`& .MuiStepConnector-line`]: pipelineConnectorStyles.line,
   [`&.Mui-active .MuiStepConnector-line`]: pipelineConnectorStyles.active,
   [`&.Mui-completed .MuiStepConnector-line`]: pipelineConnectorStyles.completed,
 }));
-
-const MOCK_DATA = {
-  opportunity: {
-    id: 'e991b9b2-9e8a-4d9a-8441-b3ae6d37fa37',
-    name: 'Test Opportunity',
-    company_name: 'Test Company',
-    contact_name: 'John Doe',
-    amount: 10000,
-    probability: 10,
-    lead_source: 'Web',
-    created_at: '2025-07-17',
-    description: 'This is a test opportunity',
-    assigned_to: 'Johny User',
-    days_to_close: 90,
-  },
-  pipeline_metadata: {
-    current_stage: 'QUALIFICATION',
-    current_stage_display: 'Qualification',
-    editable_fields: ['meeting_date'],
-    next_stage: 'IDENTIFY_DECISION_MAKERS',
-    available_stages: [
-      { value: 'QUALIFICATION', label: 'Qualification' },
-      { value: 'IDENTIFY_DECISION_MAKERS', label: 'Identify Decision Makers' },
-      { value: 'PROPOSAL', label: 'Proposal' },
-      { value: 'NEGOTIATION', label: 'Negotiation' },
-    ],
-    is_at_negotiation: false,
-  },
-};
 
 // Styles for fields used in renderStageContent
 const fieldStyles = {
@@ -127,29 +112,109 @@ function OpportunityPipeline() {
   const [saving, setSaving] = useState(false);
   const [opportunity, setOpportunity] = useState<any>(null);
   const [pipelineMetadata, setPipelineMetadata] = useState<any>(null);
-  const [formData, setFormData] = useState<any>({});
+  const [formData, setFormData] = useState<any>({
+    meeting_date: null,
+    proposal_doc: null,
+    feedback: '',
+    expected_close_date: null,
+    result: '',
+    close_option: '',
+    reason: '',
+  });
   const [activities, setActivities] = useState<any[]>([]);
   const [errors, setErrors] = useState<any>({});
-  const [successMessage, setSuccessMessage] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [alertState, setAlertState] = useState({
+    success: { open: false, message: '' },
+    error: { open: false, message: '' },
+    transition: { open: false, message: '' },
+  });
 
   const module = 'Opportunities';
   const crntPage = opportunity?.name || 'Opportunity';
 
+  const [uploadedFile, setUploadedFile] = useState<{
+    fileName: string;
+    fileUrl: string;
+    fileType: string;
+    attachmentType: string;
+  } | null>(null);
+
   useEffect(() => {
-    fetchOpportunityData();
+    if (id) {
+      fetchOpportunityData();
+    } else {
+      setAlertState({
+        ...alertState,
+        error: { open: true, message: 'Opportunity ID is missing' },
+      });
+      setLoading(false);
+    }
   }, [id]);
 
   const fetchOpportunityData = async () => {
-    setOpportunity(MOCK_DATA.opportunity);
-    setPipelineMetadata(MOCK_DATA.pipeline_metadata);
-    setFormData({
-      meeting_date: null,
-      proposal_doc: null,
-      feedback: '',
-      expected_close_date: null,
-    });
-    setLoading(false);
+    const token = localStorage.getItem('Token');
+    const org = localStorage.getItem('org');
+
+    const headers = {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      Authorization: token || '',
+      org: org || '',
+    };
+
+    try {
+      await fetchData(
+        `${OpportunityUrl}/${id}/pipeline/`,
+        'GET',
+        null as any,
+        headers
+      ).then((res) => {
+        console.log('Pipeline data response:', res);
+        console.log('Pipeline metadata:', res.pipeline_metadata);
+        console.log('Current stage:', res.pipeline_metadata?.current_stage);
+        console.log('Editable fields:', res.pipeline_metadata?.editable_fields);
+
+        if (!res.error) {
+          setOpportunity(res.opportunity);
+          setPipelineMetadata(res.pipeline_metadata);
+
+          // Initialize form data based on the opportunity data
+          setFormData({
+            meeting_date: res.opportunity.meeting_date || null,
+            proposal_doc: null,
+            feedback: res.opportunity.feedback || '',
+            expected_close_date: res.opportunity.expected_close_date || null,
+            result: res.opportunity.result || '',
+            close_option: '',
+            reason: res.opportunity.reason || '',
+          });
+
+          // Set activities if available
+          if (res.activities) {
+            setActivities(res.activities);
+          }
+        } else {
+          setAlertState({
+            ...alertState,
+            error: {
+              open: true,
+              message: 'Failed to load opportunity data',
+            },
+          });
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching opportunity data:', error);
+      setAlertState({
+        ...alertState,
+        error: {
+          open: true,
+          message: 'An error occurred while loading opportunity data',
+        },
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleFieldChange = (field: string, value: any) => {
@@ -159,18 +224,411 @@ function OpportunityPipeline() {
 
   const handleSave = async () => {
     setSaving(true);
-    setTimeout(() => {
-      setSuccessMessage('Changes saved successfully (Demo)');
-      setSaving(false);
-    }, 1000);
+    setAlertState({
+      success: { open: false, message: '' },
+      error: { open: false, message: '' },
+      transition: { open: false, message: '' },
+    });
+
+    const token = localStorage.getItem('Token');
+    const org = localStorage.getItem('org');
+
+    try {
+      let response;
+      let dataToSend: any = {};
+
+      const headers = {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        Authorization: token || '',
+        org: org || '',
+      };
+
+      // Логика переходов согласно конфигурации бэкенда
+      switch (pipelineMetadata.current_stage) {
+        case 'QUALIFICATION':
+          // QUALIFICATION: проверяем и сохраняем meeting_date, затем переходим на IDENTIFY_DECISION_MAKERS
+          if (!formData.meeting_date) {
+            throw new Error('Please select a meeting date');
+          }
+
+          // Отправляем meeting_date и переход на IDENTIFY_DECISION_MAKERS одним запросом
+          dataToSend = {
+            stage: 'PROPOSAL', // Сразу переходим на PROPOSAL, если бэкенд это поддерживает
+            meeting_date: formData.meeting_date,
+          };
+          break;
+
+        case 'IDENTIFY_DECISION_MAKERS':
+          // На этой стадии можно редактировать meeting_date
+          if (!formData.meeting_date) {
+            throw new Error('Please select a meeting date');
+          }
+
+          // Переходим на PROPOSAL
+          dataToSend = {
+            stage: 'PROPOSAL',
+          };
+          break;
+
+        case 'PROPOSAL':
+          // На этой стадии можно загружать attachment_links
+          // Проверяем наличие вложений типа 'proposal'
+          const proposalAttachments = opportunity?.attachments?.filter(
+            (att: any) => att.attachment_type === 'proposal'
+          );
+
+          if (
+            (!proposalAttachments || proposalAttachments.length === 0) &&
+            !uploadedFile
+          ) {
+            throw new Error(
+              'Please upload a proposal document before proceeding'
+            );
+          }
+
+          // Переходим на NEGOTIATION
+          dataToSend = {
+            stage: 'NEGOTIATION',
+          };
+          break;
+
+        case 'NEGOTIATION':
+          // На этой стадии можно редактировать feedback
+          if (!formData.feedback || formData.feedback.trim() === '') {
+            throw new Error('Please provide feedback before proceeding');
+          }
+
+          // Сначала сохраняем feedback
+          dataToSend = {
+            stage: pipelineMetadata.current_stage,
+            feedback: formData.feedback,
+          };
+
+          response = await fetchData(
+            `${OpportunityUrl}/${id}/pipeline/`,
+            'PATCH',
+            JSON.stringify(dataToSend),
+            headers
+          );
+
+          if (!response.error) {
+            // После успешного сохранения переходим на CLOSE
+            dataToSend = {
+              stage: 'CLOSE',
+            };
+          } else {
+            throw new Error(response.errors || 'Failed to save feedback');
+          }
+          break;
+
+        case 'CLOSE':
+          // На этой стадии выбираем Won или Lost
+          if (!formData.close_option) {
+            throw new Error('Please select close option (Won/Lost)');
+          }
+
+          if (
+            formData.close_option !== 'CLOSED WON' &&
+            formData.close_option !== 'CLOSED LOST'
+          ) {
+            throw new Error('Invalid close option');
+          }
+
+          // Переходим на выбранную финальную стадию
+          dataToSend = {
+            stage: formData.close_option,
+          };
+          break;
+
+        case 'CLOSED LOST':
+          // На этой стадии можно редактировать reason
+          if (!formData.reason || formData.reason.trim() === '') {
+            throw new Error('Please provide a reason for loss');
+          }
+
+          // Сохраняем reason
+          dataToSend = {
+            stage: pipelineMetadata.current_stage,
+            reason: formData.reason,
+          };
+          break;
+
+        case 'CLOSED WON':
+          // На этой стадии можно загружать contract через отдельный endpoint
+          // Проверяем наличие контракта
+          const contractAttachments = opportunity?.attachments?.filter(
+            (att: any) => att.attachment_type === 'contract'
+          );
+
+          if (!contractAttachments || contractAttachments.length === 0) {
+            setAlertState({
+              ...alertState,
+              success: {
+                open: true,
+                message:
+                  'Deal closed as Won! You can upload contract if needed.',
+              },
+            });
+            setSaving(false);
+            return;
+          } else {
+            // Если контракт уже загружен
+            setAlertState({
+              ...alertState,
+              success: {
+                open: true,
+                message: 'Deal closed as Won with contract!',
+              },
+            });
+            setSaving(false);
+            return;
+          }
+
+        default:
+          throw new Error(`Unknown stage: ${pipelineMetadata.current_stage}`);
+      }
+
+      // Отправляем финальный запрос
+      response = await fetchData(
+        `${OpportunityUrl}/${id}/pipeline/`,
+        'PATCH',
+        JSON.stringify(dataToSend),
+        headers
+      );
+
+      if (!response.error) {
+        const transitionMessages: { [key: string]: string } = {
+          IDENTIFY_DECISION_MAKERS:
+            'Moving to Identify Decision Makers stage...',
+          PROPOSAL: 'Meeting date saved! Moving to Proposal stage...',
+          NEGOTIATION: 'Proposal uploaded! Moving to Negotiation stage...',
+          CLOSE: 'Feedback saved! Moving to Close stage...',
+          'CLOSED WON': 'Deal closed as Won!',
+          'CLOSED LOST': 'Deal closed as Lost!',
+        };
+
+        const currentStageMessages: { [key: string]: string } = {
+          IDENTIFY_DECISION_MAKERS: 'Meeting date saved successfully',
+          PROPOSAL: 'Document uploaded successfully',
+          NEGOTIATION: 'Feedback saved successfully',
+          CLOSE: 'Close option selected',
+          'CLOSED LOST': 'Reason saved successfully',
+          'CLOSED WON': 'Contract uploaded successfully',
+        };
+
+        const isTransition =
+          dataToSend.stage !== pipelineMetadata.current_stage;
+        const message = isTransition
+          ? transitionMessages[dataToSend.stage]
+          : currentStageMessages[pipelineMetadata.current_stage] ||
+            'Changes saved successfully';
+
+        if (isTransition) {
+          setAlertState({
+            ...alertState,
+            transition: {
+              open: true,
+              message: message,
+            },
+          });
+        } else {
+          setAlertState({
+            ...alertState,
+            success: {
+              open: true,
+              message: message,
+            },
+          });
+        }
+
+        // Обновляем данные через 1.5 секунды
+        setTimeout(() => {
+          fetchOpportunityData();
+        }, 1500);
+      } else {
+        const errorMessage =
+          typeof response.errors === 'object'
+            ? Object.values(response.errors).flat().join(', ')
+            : response.errors || 'Failed to save changes';
+
+        throw new Error(errorMessage);
+      }
+    } catch (error) {
+      console.error('Error saving opportunity:', error);
+      setAlertState({
+        ...alertState,
+        error: {
+          open: true,
+          message:
+            error instanceof Error
+              ? error.message
+              : 'An error occurred while saving changes',
+        },
+      });
+    }
+
+    setSaving(false);
+  };
+
+  const getAvailableStages = () => {
+    if (!pipelineMetadata) return [];
+
+    // Используем доступные стадии из бэкенда
+    return pipelineMetadata.available_stages || [];
   };
 
   const handleCancel = () => {
     navigate('/app/opportunities');
   };
 
+  // Обработчик загрузки файла через Cloudinary
+  const handleCloudinaryUpload = async (fileData: {
+    file_url: string;
+    file_name: string;
+    file_type: string;
+    file?: File;
+    attachment_type?: string;
+  }) => {
+    try {
+      setSaving(true);
+
+      const token = localStorage.getItem('Token');
+      const org = localStorage.getItem('org');
+      const headers = {
+        Authorization: token || '',
+        org: org || '',
+      };
+
+      // Определяем тип вложения на основе текущей стадии
+      let attachmentType = fileData.attachment_type;
+      if (!attachmentType) {
+        if (pipelineMetadata.current_stage === 'PROPOSAL') {
+          attachmentType = 'proposal';
+        } else if (pipelineMetadata.current_stage === 'CLOSED WON') {
+          attachmentType = 'contract';
+        }
+      }
+
+      const result = await attachFileToOpportunity(
+        id!,
+        fileData.file_url,
+        fileData.file_name,
+        fileData.file_type,
+        headers,
+        attachmentType
+      );
+
+      if (result.success) {
+        // Сохраняем информацию о загруженном файле в состоянии
+        setUploadedFile({
+          fileName: fileData.file_name,
+          fileUrl: fileData.file_url,
+          fileType: fileData.file_type,
+          attachmentType: attachmentType || 'proposal',
+        });
+
+        setAlertState({
+          ...alertState,
+          success: {
+            open: true,
+            message: `${
+              attachmentType === 'contract' ? 'Contract' : 'Document'
+            } uploaded successfully`,
+          },
+        });
+
+        // Обновляем данные opportunity
+        fetchOpportunityData();
+      } else {
+        throw new Error(result.error || 'Failed to attach file');
+      }
+    } catch (error) {
+      console.error('Error attaching file:', error);
+      setAlertState({
+        ...alertState,
+        error: {
+          open: true,
+          message:
+            error instanceof Error
+              ? error.message
+              : 'Failed to attach file to opportunity',
+        },
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Обработчик ошибок загрузки
+  const handleUploadError = (error: string) => {
+    setAlertState({
+      ...alertState,
+      error: {
+        open: true,
+        message: error,
+      },
+    });
+  };
+
+  // Обработчик удаления файла
+  const handleDeleteFile = async (index: number) => {
+    try {
+      const attachment = opportunity.attachments[index];
+      if (!attachment) return;
+
+      const token = localStorage.getItem('Token');
+      const org = localStorage.getItem('org');
+      const headers = {
+        Authorization: token || '',
+        org: org || '',
+      };
+
+      const result = await deleteOpportunityAttachment(
+        id!,
+        attachment.id,
+        headers
+      );
+
+      if (result.success) {
+        setAlertState({
+          ...alertState,
+          success: {
+            open: true,
+            message: 'File deleted successfully',
+          },
+        });
+
+        // Обновляем данные opportunity
+        fetchOpportunityData();
+      } else {
+        throw new Error(result.error || 'Failed to delete file');
+      }
+    } catch (error) {
+      console.error('Error deleting file:', error);
+      setAlertState({
+        ...alertState,
+        error: {
+          open: true,
+          message:
+            error instanceof Error ? error.message : 'Failed to delete file',
+        },
+      });
+    }
+  };
+
   const getCurrentStepIndex = () => {
     if (!pipelineMetadata) return 0;
+
+    // Если стадия QUALIFICATION, то активной считается IDENTIFY_DECISION_MAKERS
+    if (pipelineMetadata.current_stage === 'QUALIFICATION') {
+      const stages = pipelineMetadata.available_stages || [];
+      const identifyIndex = stages.findIndex(
+        (stage: any) => stage.value === 'IDENTIFY_DECISION_MAKERS'
+      );
+      return identifyIndex >= 0 ? identifyIndex : 1;
+    }
+
     const stages = pipelineMetadata.available_stages || [];
     const currentStageIndex = stages.findIndex(
       (stage: any) => stage.value === pipelineMetadata.current_stage
@@ -184,30 +642,14 @@ function OpportunityPipeline() {
 
     switch (pipelineMetadata.current_stage) {
       case 'QUALIFICATION':
+        // Для QUALIFICATION показываем поле meeting_date, так как мы редактируем его для перехода на IDENTIFY_DECISION_MAKERS
         return (
-          <>
-            {editableFields.includes('meeting_date') && (
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  mt: 2,
-                }}
-              >
-                <Typography
-                  sx={{
-                    minWidth: '91px',
-                    textAlign: 'right',
-                    pr: 2,
-                    fontFamily: 'Roboto',
-                    fontWeight: 500,
-                    fontSize: '15px',
-                    lineHeight: '18px',
-                    color: '#1A3353',
-                  }}
-                >
-                  Meeting Date
-                </Typography>
+          <div style={fieldStyles.fieldContainer}>
+            <div style={fieldStyles.fieldRow}>
+              <div style={fieldStyles.fieldTitle as React.CSSProperties}>
+                Meeting Date
+              </div>
+              <div style={fieldStyles.fieldInput}>
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                   <DatePicker
                     value={
@@ -236,164 +678,305 @@ function OpportunityPipeline() {
                     }}
                   />
                 </LocalizationProvider>
-              </Box>
-            )}
-          </>
+              </div>
+            </div>
+          </div>
         );
 
       case 'IDENTIFY_DECISION_MAKERS':
         return (
           <div style={fieldStyles.fieldContainer}>
-            {editableFields.includes('proposal_doc') && (
-              <div style={fieldStyles.fieldRow}>
-                <div style={fieldStyles.fieldTitle as React.CSSProperties}>
-                  Proposal Document
-                </div>
-                <div style={fieldStyles.fieldInput}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <TextField
-                      value={
-                        formData.proposal_doc instanceof File
-                          ? formData.proposal_doc.name
-                          : formData.proposal_doc
-                          ? 'Document uploaded'
-                          : 'No file selected'
-                      }
-                      InputProps={{
-                        readOnly: true,
-                      }}
-                      fullWidth
-                      size="small"
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          backgroundColor: '#F9FAFB',
-                        },
-                      }}
-                    />
-                    <IconButton
-                      component="label"
-                      color="primary"
-                      sx={{
-                        border: '1px solid',
-                        borderColor: 'primary.main',
-                      }}
-                    >
-                      <AttachFileIcon />
-                      <input
-                        type="file"
-                        hidden
-                        accept=".pdf,.doc,.docx"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            handleFieldChange('proposal_doc', file);
-                          }
-                        }}
-                      />
-                    </IconButton>
-                  </Box>
-                </div>
+            {/* Убираем проверку editableFields.includes('meeting_date') */}
+            <div style={fieldStyles.fieldRow}>
+              <div style={fieldStyles.fieldTitle as React.CSSProperties}>
+                Meeting Date
               </div>
-            )}
+              <div style={fieldStyles.fieldInput}>
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                  <DatePicker
+                    value={
+                      formData.meeting_date
+                        ? dayjs(formData.meeting_date)
+                        : null
+                    }
+                    onChange={(newValue) =>
+                      handleFieldChange(
+                        'meeting_date',
+                        newValue?.format('YYYY-MM-DD')
+                      )
+                    }
+                    slotProps={{
+                      textField: {
+                        size: 'small',
+                        sx: {
+                          width: '311px',
+                          '& .MuiOutlinedInput-root': {
+                            backgroundColor: '#F9FAFB',
+                          },
+                        },
+                        error: !!errors.meeting_date,
+                        helperText: errors.meeting_date,
+                      },
+                    }}
+                  />
+                </LocalizationProvider>
+              </div>
+            </div>
           </div>
         );
 
       case 'PROPOSAL':
         return (
           <div style={fieldStyles.fieldContainer}>
-            {editableFields.includes('feedback') && (
-              <div style={fieldStyles.fieldRow}>
-                <div style={fieldStyles.fieldTitle as React.CSSProperties}>
-                  Feedback
-                </div>
-                <div style={fieldStyles.fieldInput}>
-                  <TextField
-                    multiline
-                    rows={4}
-                    value={formData.feedback}
-                    onChange={(e) =>
-                      handleFieldChange('feedback', e.target.value)
-                    }
-                    fullWidth
-                    placeholder="Enter feedback from the client..."
-                    error={!!errors.feedback}
-                    helperText={errors.feedback}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        backgroundColor: '#F9FAFB',
-                      },
-                    }}
-                  />
-                </div>
+            <div style={fieldStyles.fieldRow}>
+              <div style={fieldStyles.fieldTitle as React.CSSProperties}>
+                Proposal Document
               </div>
-            )}
+              <div style={fieldStyles.fieldInput}>
+                <CloudinaryFileUpload
+                  onFileUpload={(fileData) =>
+                    handleCloudinaryUpload({
+                      ...fileData,
+                      attachment_type: 'proposal',
+                    })
+                  }
+                  onError={handleUploadError}
+                  accept=".pdf,.doc,.docx,.xlsx,.ppt,.pptx"
+                  maxSizeMB={10}
+                  buttonText={
+                    uploadedFile
+                      ? `Proposal: ${uploadedFile.fileName}`
+                      : 'Upload Proposal'
+                  }
+                  existingFiles={
+                    opportunity?.attachments
+                      ?.filter((att: any) => att.attachment_type === 'proposal')
+                      .map((att: any) => ({
+                        file_name: att.file_name,
+                        file_url: att.attachment,
+                        file_type: att.file_type,
+                      })) || []
+                  }
+                  onDeleteFile={handleDeleteFile}
+                  showFileNameInButton={true}
+                />
+
+                {/* Показать информацию о загруженном файле, ожидающем сохранения */}
+                {uploadedFile && (
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: 'green',
+                      mt: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {/* <CheckCircleIcon sx={{ fontSize: 16, mr: 0.5 }} /> */}
+                    {/* File uploaded. Click Save to proceed to Negotiation stage */}
+                  </Typography>
+                )}
+              </div>
+            </div>
           </div>
         );
 
       case 'NEGOTIATION':
         return (
           <div style={fieldStyles.fieldContainer}>
-            {editableFields.includes('expected_close_date') && (
-              <div style={fieldStyles.fieldRow}>
-                <div style={fieldStyles.fieldTitle as React.CSSProperties}>
-                  Expected Close Date
-                </div>
-                <div style={fieldStyles.fieldInput}>
-                  <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <DatePicker
-                      value={
-                        formData.expected_close_date
-                          ? dayjs(formData.expected_close_date)
-                          : null
-                      }
-                      onChange={(newValue) =>
-                        handleFieldChange(
-                          'expected_close_date',
-                          newValue?.format('YYYY-MM-DD')
-                        )
-                      }
-                      slotProps={{
-                        textField: {
-                          fullWidth: true,
-                          size: 'small',
-                          error: !!errors.expected_close_date,
-                          helperText: errors.expected_close_date,
-                          sx: {
-                            '& .MuiOutlinedInput-root': {
-                              backgroundColor: '#F9FAFB',
-                            },
-                          },
-                        },
-                      }}
-                    />
-                  </LocalizationProvider>
-                </div>
+            <div style={{ ...fieldStyles.fieldRow, marginLeft: '-80px' }}>
+              <div style={fieldStyles.fieldTitle as React.CSSProperties}>
+                Feedback
               </div>
-            )}
-            {editableFields.includes('feedback') && (
-              <div style={fieldStyles.fieldRow}>
-                <div style={fieldStyles.fieldTitle as React.CSSProperties}>
-                  Negotiation Feedback
-                </div>
-                <div style={fieldStyles.fieldInput}>
-                  <TextField
-                    multiline
-                    rows={4}
-                    value={formData.feedback}
-                    onChange={(e) =>
-                      handleFieldChange('feedback', e.target.value)
-                    }
-                    fullWidth
-                    placeholder="Enter negotiation details..."
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        backgroundColor: '#F9FAFB',
-                      },
-                    }}
-                  />
-                </div>
+              <div style={fieldStyles.fieldInput}>
+                <TextField
+                  multiline
+                  rows={4}
+                  value={formData.feedback}
+                  onChange={(e) =>
+                    handleFieldChange('feedback', e.target.value)
+                  }
+                  fullWidth
+                  placeholder="Enter feedback ..."
+                  error={!!errors.feedback}
+                  helperText={errors.feedback}
+                  sx={{
+                    width: '350px',
+                    '& .MuiOutlinedInput-root': {
+                      backgroundColor: '#F9FAFB',
+                    },
+                  }}
+                />
               </div>
-            )}
+            </div>
+          </div>
+        );
+
+      case 'CLOSE':
+        return (
+          <div style={fieldStyles.fieldContainer}>
+            <div style={fieldStyles.fieldRow}>
+              <div style={fieldStyles.fieldTitle as React.CSSProperties}>
+                Close Option
+              </div>
+              <div style={fieldStyles.fieldInput}>
+                <Select
+                  value={formData.close_option || ''}
+                  onChange={(e) =>
+                    handleFieldChange('close_option', e.target.value)
+                  }
+                  displayEmpty
+                  sx={{
+                    backgroundColor: '#F9FAFB',
+                    width: '346px',
+                    '& .MuiSelect-select': {
+                      py: '10px',
+                    },
+                  }}
+                >
+                  <MenuItem value="" disabled>
+                    <em>Select Close Option</em>
+                  </MenuItem>
+                  <MenuItem value="CLOSED WON">Close Won</MenuItem>
+                  <MenuItem value="CLOSED LOST">Close Lost</MenuItem>
+                </Select>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'CLOSED LOST':
+        return (
+          <div style={fieldStyles.fieldContainer}>
+            <div style={fieldStyles.fieldRow}>
+              <div style={fieldStyles.fieldTitle as React.CSSProperties}>
+                Reason for Loss
+              </div>
+              <div style={fieldStyles.fieldInput}>
+                <TextField
+                  multiline
+                  rows={4}
+                  value={formData.reason || ''}
+                  onChange={(e) => handleFieldChange('reason', e.target.value)}
+                  fullWidth
+                  placeholder="Please provide a reason for closing as lost..."
+                  error={!!errors.reason}
+                  helperText={errors.reason}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      backgroundColor: '#F9FAFB',
+                    },
+                  }}
+                />
+              </div>
+            </div>
+
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 2,
+                py: 4,
+                mt: 3,
+              }}
+            >
+              <FaTimesCircle size={60} color="#f44336" />
+              <Typography
+                variant="h5"
+                sx={{ color: '#f44336', fontWeight: 500 }}
+              >
+                Deal Closed - Lost
+              </Typography>
+              <Typography
+                variant="body1"
+                sx={{ color: '#666', textAlign: 'center' }}
+              >
+                This opportunity has been closed as lost.
+              </Typography>
+            </Box>
+          </div>
+        );
+
+      case 'CLOSED WON':
+        return (
+          <div style={fieldStyles.fieldContainer}>
+            <div style={fieldStyles.fieldRow}>
+              <div style={fieldStyles.fieldTitle as React.CSSProperties}>
+                Contract
+              </div>
+              <div style={fieldStyles.fieldInput}>
+                {/* <CloudinaryFileUpload
+                  onFileUpload={(fileData) =>
+                    handleCloudinaryUpload({
+                      ...fileData,
+                      attachment_type: 'contract',
+                    })
+                  }
+                  onError={handleUploadError}
+                  accept=".pdf,.doc,.docx"
+                  maxSizeMB={10}
+                  buttonText="Upload Contract"
+                  variant="button"
+                  existingFiles={
+                    opportunity?.contract_attachment?.map((att: any) => ({
+                      file_name: att.file_name,
+                      file_url: att.url || att.file_url,
+                      file_type: att.file_type,
+                    })) || []
+                  }
+                  onDeleteFile={handleDeleteFile}
+                  disabled={saving}
+                  singleFile={true}
+                  showFileNameInButton={true}
+                /> */}
+                <CloudinaryFileUpload
+                  onFileUpload={(fileData) =>
+                    handleCloudinaryUpload({
+                      ...fileData,
+                      attachment_type: 'contract',
+                    })
+                  }
+                  onError={handleUploadError}
+                  accept=".pdf,.doc,.docx"
+                  maxSizeMB={10}
+                  buttonText="Upload Contract"
+                  existingFiles={
+                    opportunity?.attachments
+                      ?.filter((att: any) => att.attachment_type === 'contract')
+                      .map((att: any) => ({
+                        file_name: att.file_name,
+                        file_url: att.attachment,
+                        file_type: att.file_type,
+                      })) || []
+                  }
+                  onDeleteFile={handleDeleteFile}
+                />
+              </div>
+            </div>
+
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 2,
+                py: 4,
+                mt: 3,
+              }}
+            >
+              <CheckCircleIcon sx={{ fontSize: 60, color: '#4caf50' }} />
+              <Typography
+                variant="h5"
+                sx={{ color: '#4caf50', fontWeight: 500 }}
+              >
+                Deal Closed - Won!
+              </Typography>
+            </Box>
           </div>
         );
 
@@ -404,7 +987,14 @@ function OpportunityPipeline() {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+        }}
+      >
         <CircularProgress />
       </Box>
     );
@@ -412,8 +1002,11 @@ function OpportunityPipeline() {
 
   if (!opportunity || !pipelineMetadata) {
     return (
-      <Box sx={{ p: 3 }}>
+      <Box sx={{ p: 3, mt: '120px' }}>
         <Alert severity="error">Failed to load opportunity data</Alert>
+        <Button variant="contained" onClick={handleCancel} sx={{ mt: 2 }}>
+          Back to Opportunities
+        </Button>
       </Box>
     );
   }
@@ -443,6 +1036,38 @@ function OpportunityPipeline() {
           backgroundColor: '#f5f5f5',
         }}
       >
+        {/* Success/Error Messages */}
+        {alertState.success.open && (
+          <Box sx={{ px: '38px', pt: 2 }}>
+            <Alert
+              severity="success"
+              onClose={() =>
+                setAlertState({
+                  ...alertState,
+                  success: { open: false, message: '' },
+                })
+              }
+            >
+              {alertState.success.message}
+            </Alert>
+          </Box>
+        )}
+        {alertState.error.open && (
+          <Box sx={{ px: '38px', pt: 2 }}>
+            <Alert
+              severity="error"
+              onClose={() =>
+                setAlertState({
+                  ...alertState,
+                  error: { open: false, message: '' },
+                })
+              }
+            >
+              {alertState.error.message}
+            </Alert>
+          </Box>
+        )}
+
         {/* Stepper */}
         <Box sx={{ px: '38px', pt: 2 }}>
           <Stepper
@@ -458,36 +1083,34 @@ function OpportunityPipeline() {
                 >
                   <StepLabel
                     StepIconComponent={() => {
-                      // Определяем иконку в зависимости от значения стадии
-                      switch (stage.value) {
-                        case 'QUALIFICATION':
-                          return <CompletedStepIcon />; // Всегда галочка для первой стадии (Qualification)
+                      // QUALIFICATION всегда должна быть завершена
+                      if (stage.value === 'QUALIFICATION') {
+                        return <CompletedStepIcon />;
+                      }
 
-                        case 'IDENTIFY_DECISION_MAKERS':
-                          // Для второй стадии (Decision Makers)
-                          if (getCurrentStepIndex() > 1) {
-                            // Если мы уже прошли эту стадию, показываем зеленую галочку
-                            return <CompletedStepIcon />;
-                          } else {
-                            // Иначе показываем голубую иконку (текущая стадия)
-                            return <CurrentStepIcon />;
-                          }
+                      // Если текущая стадия QUALIFICATION, то IDENTIFY_DECISION_MAKERS должна быть активной
+                      if (
+                        pipelineMetadata.current_stage === 'QUALIFICATION' &&
+                        stage.value === 'IDENTIFY_DECISION_MAKERS'
+                      ) {
+                        return <CurrentStepIcon />;
+                      }
 
-                        default:
-                          // Стандартная логика для остальных стадий
-                          if (index < getCurrentStepIndex()) {
-                            return <CompletedStepIcon />; // Завершенные стадии - зеленые галочки
-                          } else if (index === getCurrentStepIndex()) {
-                            return <CurrentStepIcon />; // Текущая стадия - голубые песочные часы
-                          } else {
-                            return <PendingStepIcon />; // Будущие стадии - серые песочные часы
-                          }
+                      // Стандартная логика для остальных стадий
+                      if (index < getCurrentStepIndex()) {
+                        return <CompletedStepIcon />;
+                      } else if (index === getCurrentStepIndex()) {
+                        return <CurrentStepIcon />;
+                      } else {
+                        return <PendingStepIcon />;
                       }
                     }}
                   >
                     <Typography
                       sx={
-                        index === getCurrentStepIndex()
+                        index === getCurrentStepIndex() ||
+                        (pipelineMetadata.current_stage === 'QUALIFICATION' &&
+                          stage.value === 'IDENTIFY_DECISION_MAKERS')
                           ? pipelineStepLabelStyles.active
                           : pipelineStepLabelStyles.inactive
                       }
@@ -520,12 +1143,11 @@ function OpportunityPipeline() {
                 <Box
                   sx={{
                     flex: 1,
-                    marginBottom: 0, // Убираем отступ у заголовка
-                    paddingBottom: 0, // Убираем отступ у заголовка
+                    marginBottom: 0,
+                    paddingBottom: 0,
                   }}
                 >
                   <PageTitle>{opportunity.name}</PageTitle>
-                  {/* <Divider sx={{ mt: 2, width: '100%' }} /> */}
                 </Box>
                 <Box
                   sx={{
@@ -544,8 +1166,8 @@ function OpportunityPipeline() {
               <Box
                 sx={{
                   mt: 0,
-                  pt: 0, // Устанавливаем padding-top в 0
-                  marginTop: '-45px', // Добавляем отрицательный margin
+                  pt: 0,
+                  marginTop: '-45px',
                 }}
               >
                 <Grid container spacing={1}>
@@ -561,7 +1183,7 @@ function OpportunityPipeline() {
                           height: '36px',
                         }}
                       >
-                        {opportunity.company_name || 'Company Name'}
+                        {opportunity.account?.name || 'Company Name'}
                       </Typography>
                     </FieldContainer>
                   </Grid>
@@ -576,13 +1198,17 @@ function OpportunityPipeline() {
                           color: '#1A3353',
                         }}
                       >
-                        {opportunity.contact_name || 'Contact'}
+                        {opportunity.contacts_info?.length > 0
+                          ? opportunity.contacts_info
+                              .map((c: any) => c.name)
+                              .join(', ')
+                          : 'Contact'}
                       </Typography>
                     </FieldContainer>
                   </Grid>
                 </Grid>
 
-                {/* Stage-specific content   */}
+                {/* Stage-specific content */}
                 <Box sx={{ mt: 3 }}>{renderStageContent()}</Box>
               </Box>
             </SectionContainer>
@@ -615,13 +1241,9 @@ function OpportunityPipeline() {
                   />
                 </Grid>
                 <Grid item xs={4}>
-                  <FieldLabel>Expected Result</FieldLabel>
+                  <FieldLabel>Expected Revenue</FieldLabel>
                   <StyledTextField
-                    value={
-                      ((opportunity.amount || 0) *
-                        (opportunity.probability || 0)) /
-                      100
-                    }
+                    value={opportunity.expected_revenue || 0}
                     InputProps={{ readOnly: true }}
                     size="small"
                     fullWidth
@@ -630,16 +1252,28 @@ function OpportunityPipeline() {
                 <Grid item xs={4}>
                   <FieldLabel>Assigned To</FieldLabel>
                   <StyledTextField
-                    value={opportunity.assigned_to || ''}
+                    value={
+                      opportunity.assigned_to_info?.length > 0
+                        ? opportunity.assigned_to_info
+                            .map((a: any) => a.user?.email)
+                            .join(', ')
+                        : ''
+                    }
                     InputProps={{ readOnly: true }}
                     size="small"
                     fullWidth
                   />
                 </Grid>
                 <Grid item xs={4}>
-                  <FieldLabel>Days To Close</FieldLabel>
+                  <FieldLabel>Expected Close Date</FieldLabel>
                   <StyledTextField
-                    value={opportunity.days_to_close || 0}
+                    value={
+                      opportunity.expected_close_date
+                        ? new Date(
+                            opportunity.expected_close_date
+                          ).toLocaleDateString()
+                        : ''
+                    }
                     InputProps={{ readOnly: true }}
                     size="small"
                     fullWidth
@@ -700,7 +1334,7 @@ function OpportunityPipeline() {
                 multiline
                 rows={4}
                 fullWidth
-                placeholder="It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout."
+                placeholder="Add a note..."
                 sx={{
                   mb: 2,
                   '& .MuiOutlinedInput-root': {
@@ -723,32 +1357,61 @@ function OpportunityPipeline() {
 
               {/* Activities */}
               <Box sx={{ mt: 3 }}>
-                <ActivityItem>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <ActivityAuthor>John Doe</ActivityAuthor>
-                    <ActivityDate>
-                      <Typography>Jul 5, 2025, 12:30 AM</Typography>
-                    </ActivityDate>
-                  </Box>
-                  <ActivityContent>Comment</ActivityContent>
-                </ActivityItem>
-
-                <ActivityItem>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <ActivityAuthor>Action</ActivityAuthor>
-                    <ActivityDate>
-                      <Typography>Jul 2, 2025, 12:19 AM</Typography>
-                    </ActivityDate>
-                  </Box>
-                  <ActivityContent sx={{ fontWeight: 700 }}>
-                    Opportunity Name status changed into Qualification
-                  </ActivityContent>
-                </ActivityItem>
+                {activities.length > 0 ? (
+                  activities.map((activity, index) => (
+                    <ActivityItem key={index}>
+                      <Box
+                        sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                      >
+                        <ActivityAuthor>{activity.author}</ActivityAuthor>
+                        <ActivityDate>
+                          <Typography>{activity.date}</Typography>
+                        </ActivityDate>
+                      </Box>
+                      <ActivityContent>{activity.content}</ActivityContent>
+                    </ActivityItem>
+                  ))
+                ) : (
+                  <Typography sx={{ color: '#666', textAlign: 'center' }}>
+                    No activities yet
+                  </Typography>
+                )}
               </Box>
             </SectionContainer>
           </Box>
         </Box>
       </Box>
+
+      {/* Alert Components - размещаем в конце компонента */}
+      <SuccessAlert
+        open={alertState.success.open}
+        message={alertState.success.message}
+        onClose={() =>
+          setAlertState({
+            ...alertState,
+            success: { open: false, message: '' },
+          })
+        }
+      />
+
+      <ErrorAlert
+        open={alertState.error.open}
+        message={alertState.error.message}
+        onClose={() =>
+          setAlertState({ ...alertState, error: { open: false, message: '' } })
+        }
+      />
+
+      <PipelineTransitionAlert
+        open={alertState.transition.open}
+        message={alertState.transition.message}
+        onClose={() =>
+          setAlertState({
+            ...alertState,
+            transition: { open: false, message: '' },
+          })
+        }
+      />
     </Box>
   );
 }

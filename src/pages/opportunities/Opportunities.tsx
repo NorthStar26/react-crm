@@ -235,7 +235,7 @@ export default function Opportunities(props: any) {
   };
 
   const opportunityDetail = (opportunityId: any) => {
-    navigate(`/app/opportunities/opportunity-details`, {
+    navigate(`/app/opportunities/${opportunityId}/pipeline`, {
       state: {
         opportunityId,
         detail: true,

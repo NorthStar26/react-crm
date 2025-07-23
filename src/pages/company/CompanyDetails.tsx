@@ -26,7 +26,7 @@ type CompanyDetailsType = {
   billing_state: string;
   billing_postcode: string;
   billing_country: string;
-  logo?: string;
+  logo_url?: string;
 };
 
 export default function CompanyDetails() {
@@ -160,9 +160,9 @@ export default function CompanyDetails() {
                     color: '#666',
                   }}
                 >
-                  {companyDetails.logo ? (
+                  {companyDetails.logo_url ? (
                     <img
-                      src={companyDetails.logo}
+                      src={companyDetails.logo_url}
                       alt={companyDetails.name}
                       style={{
                         width: '100%',
