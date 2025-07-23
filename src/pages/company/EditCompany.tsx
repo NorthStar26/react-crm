@@ -29,7 +29,7 @@ import { SuccessAlert, ErrorAlert } from '../../components/Button/SuccessAlert';
 import { Spinner } from '../../components/Spinner';
 import { DialogModal } from '../../components/DialogModal';
 import { uploadImageToCloudinary } from '../../utils/uploadImageToCloudinary'; // Make sure you have this utility
-import GreenCameraIcon from './GreenCameraIcon'; // Adjust the path if needed
+import GreenCameraIcon from './GreenCameraIcon';
 
 
 type FormErrors = {
