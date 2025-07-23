@@ -176,34 +176,33 @@ export function EditUser() {
   // };
 
   const getEditDetail = (id: any) => {
-      fetchData(`${UserUrl}/${id}/`, 'GET', null as any, Headers)
-          .then((res: any) => {
-              console.log('edit detail Form data:', res);
-              if (!res.error) {
-                  const data = res?.data?.profile_obj
-                  setFormData({
-                      email: data?.user_details?.email || '',
-                      role: data.role || 'ADMIN',
-                      phone: data.phone || '',
-                      alternate_phone: data.alternate_phone || '',
-                      address_line: data?.address?.address_line || '',
-                      street: data?.address?.street || '',
-                      city: data?.address?.city || '',
-                      state: data?.address?.state || '',
-                      postcode: data?.address?.postcode || '',
-                      country: data?.address?.country || '',
-                      profile_pic: data?.user_details?.profile_pic || null,
-                      first_name: data?.user_details?.first_name || '',
-                      last_name: data?.user_details?.last_name || '',
-                  })
-              }
-              if (res.error) {
-                  setError(true)
-              }
-          })
-          .catch(() => {
-          })
-  }
+    fetchData(`${UserUrl}/${id}/`, 'GET', null as any, Headers)
+      .then((res: any) => {
+        console.log('edit detail Form data:', res);
+        if (!res.error) {
+          const data = res?.data?.profile_obj;
+          setFormData({
+            email: data?.user_details?.email || '',
+            role: data.role || 'ADMIN',
+            phone: data.phone || '',
+            alternate_phone: data.alternate_phone || '',
+            address_line: data?.address?.address_line || '',
+            street: data?.address?.street || '',
+            city: data?.address?.city || '',
+            state: data?.address?.state || '',
+            postcode: data?.address?.postcode || '',
+            country: data?.address?.country || '',
+            profile_pic: data?.user_details?.profile_pic || null,
+            first_name: data?.user_details?.first_name || '',
+            last_name: data?.user_details?.last_name || '',
+          });
+        }
+        if (res.error) {
+          setError(true);
+        }
+      })
+      .catch(() => {});
+  };
   const submitForm = () => {
     const Header = {
       Accept: 'application/json',
@@ -252,23 +251,30 @@ export function EditUser() {
         // console.log('editsubmit:', res);
         if (!res.error) {
           resetForm();
-          
+
           // If the user being edited is the current logged-in user, refresh the context
           // Convert both IDs to strings for comparison to avoid type mismatch
           const currentUserId = user?.user_details?.id?.toString();
           const editedUserId = state?.id?.toString();
-          
+
           console.log('Current user ID:', currentUserId);
           console.log('Edited user ID:', editedUserId);
           console.log('IDs match:', currentUserId === editedUserId);
-          
-          if (user && currentUserId && editedUserId && currentUserId === editedUserId) {
-            console.log('User edited their own profile - refreshing page to update all components...');
+
+          if (
+            user &&
+            currentUserId &&
+            editedUserId &&
+            currentUserId === editedUserId
+          ) {
+            console.log(
+              'User edited their own profile - refreshing page to update all components...'
+            );
             // When user edits their own profile, refresh the page to ensure all components update
             window.location.href = '/app/users';
             return; // Exit early since we're doing a page refresh
           }
-          
+
           navigate('/app/users');
         }
         if (res.error) {
@@ -434,6 +440,11 @@ export function EditUser() {
   };
 
   console.log(formData, 'formData');
+
+  // isCurrentUser
+  const isCurrentUser =
+    user && user.user_details?.id?.toString() === state?.id?.toString();
+
   return (
     <Box sx={{ mt: '60px' }}>
       <CustomAppBar
@@ -617,14 +628,21 @@ export function EditUser() {
                         />
                       </div>
                       <div className="fieldSubContainer">
-                        <div className="fieldTitle">Password</div>
+                        {isCurrentUser && (
+                          <div className="fieldTitle">Password</div>
+                        )}
                         {/* add change password button */}
-                        <Button
-                          variant="contained"
-                          onClick={() => handleOpen()}
-                        >
-                          Change Password
-                        </Button>
+                        {/*  */}
+                        {isCurrentUser && (
+                          <Button
+                            variant="contained"
+                            onClick={() => handleOpen()}
+                          >
+                            Change Password
+                          </Button>
+                        )}
+                        {/* add change password button */}
+
                         <Modal
                           open={open}
                           onClose={handleClose}
