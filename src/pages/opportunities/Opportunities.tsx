@@ -234,23 +234,19 @@ export default function Opportunities(props: any) {
     return selected.indexOf(name) !== -1;
   };
 
-  const opportunityDetail = (opportunityId: any) => {
-    navigate(`/app/opportunities/opportunity-details`, {
-      state: {
-        opportunityId,
-        detail: true,
-        contacts: contacts || [],
-        leadSource: leadSource || [],
-        currency: currency || [],
-        tags: tags || [],
-        account: account || [],
-        stage: stage || [],
-        users: users || [],
-        teams: teams || [],
-        countries: countries || [],
-      },
+  // const opportunityDetail = (opportunity: any) => {
+  //   navigate('opportunities/view', {
+  //     state: { opportunityData: opportunity }
+  //   });
+  // };
+
+  const handleViewOpportunity = (opportunity: any) => {
+    navigate('view', {
+      state: { opportunityData: opportunity }
     });
   };
+
+
 
   const deleteRow = (id: any) => {
     setSelectedId(id);
@@ -557,7 +553,8 @@ export default function Opportunities(props: any) {
                                                                 </TableCell> */}
                           <TableCell
                             className="tableCell-link"
-                            onClick={() => opportunityDetail(item.id)}
+                            onClick={() => handleViewOpportunity(item)}
+
                           >
                             {item?.name ? item?.name : '---'}
                           </TableCell>

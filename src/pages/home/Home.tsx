@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Routes, Route } from 'react-router-dom';
 import { Box } from '@mui/material';
 import Sidebar from '../../components/Sidebar';
 import Organization from '../organization/Organization';
 import { useUser } from '../../context/UserContext';
 import { Spinner } from '../../components/Spinner';
+
+import Opportunities from '../opportunities/Opportunities';
+import ViewOpportunity from '../opportunities/ViewOpportunity';
 
 export const Home = (props: any) => {
   const navigate = useNavigate();
@@ -39,11 +42,18 @@ export const Home = (props: any) => {
     return null;
   }
   return (
-    <Box sx={{}}>
+    <Box sx={{ display: 'flex' }}>
       {org ? (
-        <Sidebar
-          open={open}
-        />
+        <>
+          <Sidebar open={open} />
+          <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+            <Routes>
+              <Route path="opportunities" element={<Opportunities />} />
+              <Route path="opportunities/view" element={<ViewOpportunity />} />
+              {/* Add more routes here as needed */}
+            </Routes>
+          </Box>
+        </>
       ) : (
         <Organization />
       )}
