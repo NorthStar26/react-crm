@@ -851,9 +851,9 @@ function OpportunityPipeline() {
       case 'CLOSE':
         return (
           <div style={fieldStyles.fieldContainer}>
-            <div style={fieldStyles.fieldRow}>
+            <div style={{ ...fieldStyles.fieldRow, marginLeft: '-110px' }}>
               <div style={fieldStyles.fieldTitle as React.CSSProperties}>
-                Close Option
+                Result
               </div>
               <div style={fieldStyles.fieldInput}>
                 <Select
@@ -864,9 +864,34 @@ function OpportunityPipeline() {
                   displayEmpty
                   sx={{
                     backgroundColor: '#F9FAFB',
-                    width: '346px',
+                    width: '312px',
+                    height: '40px',
+                    borderRadius: '4px',
+                    border: '1px solid rgba(0,0,0,0.23)',
+                    boxSizing: 'border-box',
+                    // Стили для стрелочки (иконки)
+                    '& .MuiSelect-icon': {
+                      color: '#BDBDBD', // светло-серая стрелочка
+                      right: 12,
+                    },
+                    // Стили для текста
                     '& .MuiSelect-select': {
-                      py: '10px',
+                      py: '9px',
+                      color: '#1A3353',
+                      fontWeight: 400,
+                      fontSize: '15px',
+                    },
+                    // Стили для рамки
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      border: 'none',
+                    },
+                  }}
+                  inputProps={{
+                    style: {
+                      borderRadius: 4,
+                      paddingLeft: 12,
+                      paddingRight: 32,
+                      backgroundColor: '#F9FAFB',
                     },
                   }}
                 >
@@ -880,9 +905,9 @@ function OpportunityPipeline() {
             </div>
             {/* Показываем поле Reason только если выбран Close Lost */}
             {formData.close_option === 'CLOSED LOST' && (
-              <div style={fieldStyles.fieldRow}>
+              <div style={{ ...fieldStyles.fieldRow, marginLeft: '-110px' }}>
                 <div style={fieldStyles.fieldTitle as React.CSSProperties}>
-                  Reason for Loss
+                  Reason
                 </div>
                 <div style={fieldStyles.fieldInput}>
                   <TextField
@@ -897,6 +922,8 @@ function OpportunityPipeline() {
                     error={!!errors.reason}
                     helperText={errors.reason}
                     sx={{
+                      width: '344px',
+                      height: '115px',
                       '& .MuiOutlinedInput-root': {
                         backgroundColor: '#F9FAFB',
                       },
@@ -906,9 +933,9 @@ function OpportunityPipeline() {
               </div>
             )}
 
-            {/* Показываем форму загрузки контракта только если выбран Close Won */}
+            {/* Showing Contract Upload for Close Won */}
             {formData.close_option === 'CLOSED WON' && (
-              <div style={fieldStyles.fieldRow}>
+              <div style={{ ...fieldStyles.fieldRow, marginLeft: '-110px' }}>
                 <div style={fieldStyles.fieldTitle as React.CSSProperties}>
                   Contract
                 </div>

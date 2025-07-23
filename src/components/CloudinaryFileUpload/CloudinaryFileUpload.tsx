@@ -321,7 +321,11 @@ export const CloudinaryFileUpload: React.FC<CloudinaryFileUploadProps> = ({
             component="label"
             variant="outlined"
             endIcon={
-              uploading ? <CircularProgress size={20} /> : <CloudUploadIcon />
+              uploading ? (
+                <CircularProgress size={20} />
+              ) : (
+                <CloudUploadIcon sx={{ color: '#1976D2' }} />
+              )
             }
             disabled={uploading || disabled}
             sx={{
@@ -334,6 +338,7 @@ export const CloudinaryFileUpload: React.FC<CloudinaryFileUploadProps> = ({
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
               justifyContent: 'flex-start', // чтобы текст не прятался за иконкой
+              color: 'text.primary',
             }}
           >
             <span
