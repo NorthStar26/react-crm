@@ -652,6 +652,14 @@ function OpportunityPipeline() {
       );
       return identifyIndex >= 0 ? identifyIndex : 1;
     }
+    //  If the current stage is CLOSED WON or CLOSED LOST, we want to show the CLOSE stage
+    if (
+      pipelineMetadata.current_stage === 'CLOSED WON' ||
+      pipelineMetadata.current_stage === 'CLOSED LOST'
+    ) {
+      const stages = pipelineMetadata.available_stages || [];
+      return stages.findIndex((stage: any) => stage.value === 'CLOSE');
+    }
 
     const stages = pipelineMetadata.available_stages || [];
     const currentStageIndex = stages.findIndex(
@@ -1093,7 +1101,14 @@ function OpportunityPipeline() {
               (stage: any, index: number) => (
                 <Step
                   key={stage.value}
-                  completed={index < getCurrentStepIndex()}
+                  completed={
+                    //  Сonsider Close completed if the stage is CLOSED WON or CLOSED LOST
+                    (pipelineMetadata.current_stage === 'CLOSED WON' ||
+                      pipelineMetadata.current_stage === 'CLOSED LOST') &&
+                    stage.value === 'CLOSE'
+                      ? true
+                      : index < getCurrentStepIndex()
+                  }
                 >
                   <StepLabel
                     StepIconComponent={() => {
@@ -1102,12 +1117,19 @@ function OpportunityPipeline() {
                         return <CompletedStepIcon />;
                       }
 
-                      // Если текущая стадия QUALIFICATION, то IDENTIFY_DECISION_MAKERS должна быть активной
+                      // If the current stage is QUALIFICATION, then IDENTIFY_DECISION_MAKERS must be active
                       if (
                         pipelineMetadata.current_stage === 'QUALIFICATION' &&
                         stage.value === 'IDENTIFY_DECISION_MAKERS'
                       ) {
                         return <CurrentStepIcon />;
+                      }
+                      if (
+                        (pipelineMetadata.current_stage === 'CLOSED WON' ||
+                          pipelineMetadata.current_stage === 'CLOSED LOST') &&
+                        stage.value === 'CLOSE'
+                      ) {
+                        return <CompletedStepIcon />;
                       }
 
                       // Стандартная логика для остальных стадий
