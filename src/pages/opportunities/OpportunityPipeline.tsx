@@ -129,6 +129,7 @@ function OpportunityPipeline() {
     transition: { open: false, message: '' },
   });
   const [showClosedLostMessage, setShowClosedLostMessage] = useState(false);
+  const [contractUploaded, setContractUploaded] = useState(false);
   const module = 'Opportunities';
   const crntPage = opportunity?.name || 'Opportunity';
 
@@ -339,7 +340,10 @@ function OpportunityPipeline() {
             const contractAttachments = opportunity?.attachments?.filter(
               (att: any) => att.attachment_type === 'contract'
             );
-            if (!contractAttachments || contractAttachments.length === 0) {
+            if (
+              (!contractAttachments || contractAttachments.length === 0) &&
+              !contractUploaded
+            ) {
               throw new Error(
                 'Please upload a contract before closing as won.'
               );
@@ -412,6 +416,9 @@ function OpportunityPipeline() {
         // Показываем сообщение только для CLOSED LOST
         if (pipelineMetadata.current_stage === 'CLOSED LOST') {
           setShowClosedLostMessage(true);
+        }
+        if (pipelineMetadata.current_stage === 'CLOSED WON') {
+          setContractUploaded(false);
         }
         const transitionMessages: { [key: string]: string } = {
           IDENTIFY_DECISION_MAKERS:
@@ -542,7 +549,9 @@ function OpportunityPipeline() {
           fileType: fileData.file_type,
           attachmentType: attachmentType || 'proposal',
         });
-
+        if ((attachmentType || fileData.attachment_type) === 'contract') {
+          setContractUploaded(true);
+        }
         setAlertState({
           ...alertState,
           success: {
@@ -906,7 +915,11 @@ function OpportunityPipeline() {
                     onError={handleUploadError}
                     accept=".pdf,.doc,.docx"
                     maxSizeMB={10}
-                    buttonText="Upload Contract"
+                    buttonText={
+                      uploadedFile && uploadedFile.attachmentType === 'contract'
+                        ? `Contract: ${uploadedFile.fileName}`
+                        : 'Upload Contract'
+                    }
                     existingFiles={
                       opportunity?.attachments
                         ?.filter(
