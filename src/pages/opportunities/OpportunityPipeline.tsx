@@ -128,7 +128,7 @@ function OpportunityPipeline() {
     error: { open: false, message: '' },
     transition: { open: false, message: '' },
   });
-
+  const [showClosedLostMessage, setShowClosedLostMessage] = useState(false);
   const module = 'Opportunities';
   const crntPage = opportunity?.name || 'Opportunity';
 
@@ -179,15 +179,15 @@ function OpportunityPipeline() {
           setPipelineMetadata(res.pipeline_metadata);
 
           // Initialize form data based on the opportunity data
-          setFormData({
+          setFormData((prev: typeof formData) => ({
             meeting_date: res.opportunity.meeting_date || null,
             proposal_doc: null,
             feedback: res.opportunity.feedback || '',
             expected_close_date: res.opportunity.expected_close_date || null,
             result: res.opportunity.result || '',
-            close_option: '',
+            close_option: prev.close_option,
             reason: res.opportunity.reason || '',
-          });
+          }));
 
           // Set activities if available
           if (res.activities) {
@@ -334,7 +334,17 @@ function OpportunityPipeline() {
           ) {
             throw new Error('Invalid close option');
           }
-
+          // Проверка для Close Won: контракт должен быть загружен
+          if (formData.close_option === 'CLOSED WON') {
+            const contractAttachments = opportunity?.attachments?.filter(
+              (att: any) => att.attachment_type === 'contract'
+            );
+            if (!contractAttachments || contractAttachments.length === 0) {
+              throw new Error(
+                'Please upload a contract before closing as won.'
+              );
+            }
+          }
           // Переходим на выбранную финальную стадию
           dataToSend = {
             stage: formData.close_option,
@@ -352,6 +362,7 @@ function OpportunityPipeline() {
             stage: pipelineMetadata.current_stage,
             reason: formData.reason,
           };
+
           break;
 
         case 'CLOSED WON':
@@ -398,6 +409,10 @@ function OpportunityPipeline() {
       );
 
       if (!response.error) {
+        // Показываем сообщение только для CLOSED LOST
+        if (pipelineMetadata.current_stage === 'CLOSED LOST') {
+          setShowClosedLostMessage(true);
+        }
         const transitionMessages: { [key: string]: string } = {
           IDENTIFY_DECISION_MAKERS:
             'Moving to Identify Decision Makers stage...',
@@ -846,35 +861,76 @@ function OpportunityPipeline() {
                 </Select>
               </div>
             </div>
+            {/* Показываем поле Reason только если выбран Close Lost */}
+            {formData.close_option === 'CLOSED LOST' && (
+              <div style={fieldStyles.fieldRow}>
+                <div style={fieldStyles.fieldTitle as React.CSSProperties}>
+                  Reason for Loss
+                </div>
+                <div style={fieldStyles.fieldInput}>
+                  <TextField
+                    multiline
+                    rows={4}
+                    value={formData.reason || ''}
+                    onChange={(e) =>
+                      handleFieldChange('reason', e.target.value)
+                    }
+                    fullWidth
+                    placeholder="Please provide a reason for closing as lost..."
+                    error={!!errors.reason}
+                    helperText={errors.reason}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        backgroundColor: '#F9FAFB',
+                      },
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Показываем форму загрузки контракта только если выбран Close Won */}
+            {formData.close_option === 'CLOSED WON' && (
+              <div style={fieldStyles.fieldRow}>
+                <div style={fieldStyles.fieldTitle as React.CSSProperties}>
+                  Contract
+                </div>
+                <div style={fieldStyles.fieldInput}>
+                  <CloudinaryFileUpload
+                    onFileUpload={(fileData) =>
+                      handleCloudinaryUpload({
+                        ...fileData,
+                        attachment_type: 'contract',
+                      })
+                    }
+                    onError={handleUploadError}
+                    accept=".pdf,.doc,.docx"
+                    maxSizeMB={10}
+                    buttonText="Upload Contract"
+                    existingFiles={
+                      opportunity?.attachments
+                        ?.filter(
+                          (att: any) => att.attachment_type === 'contract'
+                        )
+                        .map((att: any) => ({
+                          file_name: att.file_name,
+                          file_url: att.attachment,
+                          file_type: att.file_type,
+                        })) || []
+                    }
+                    onDeleteFile={handleDeleteFile}
+                    singleFile={true}
+                    showFileNameInButton={true}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         );
 
       case 'CLOSED LOST':
         return (
           <div style={fieldStyles.fieldContainer}>
-            <div style={fieldStyles.fieldRow}>
-              <div style={fieldStyles.fieldTitle as React.CSSProperties}>
-                Reason for Loss
-              </div>
-              <div style={fieldStyles.fieldInput}>
-                <TextField
-                  multiline
-                  rows={4}
-                  value={formData.reason || ''}
-                  onChange={(e) => handleFieldChange('reason', e.target.value)}
-                  fullWidth
-                  placeholder="Please provide a reason for closing as lost..."
-                  error={!!errors.reason}
-                  helperText={errors.reason}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      backgroundColor: '#F9FAFB',
-                    },
-                  }}
-                />
-              </div>
-            </div>
-
             <Box
               sx={{
                 display: 'flex',
@@ -905,60 +961,6 @@ function OpportunityPipeline() {
       case 'CLOSED WON':
         return (
           <div style={fieldStyles.fieldContainer}>
-            <div style={fieldStyles.fieldRow}>
-              <div style={fieldStyles.fieldTitle as React.CSSProperties}>
-                Contract
-              </div>
-              <div style={fieldStyles.fieldInput}>
-                {/* <CloudinaryFileUpload
-                  onFileUpload={(fileData) =>
-                    handleCloudinaryUpload({
-                      ...fileData,
-                      attachment_type: 'contract',
-                    })
-                  }
-                  onError={handleUploadError}
-                  accept=".pdf,.doc,.docx"
-                  maxSizeMB={10}
-                  buttonText="Upload Contract"
-                  variant="button"
-                  existingFiles={
-                    opportunity?.contract_attachment?.map((att: any) => ({
-                      file_name: att.file_name,
-                      file_url: att.url || att.file_url,
-                      file_type: att.file_type,
-                    })) || []
-                  }
-                  onDeleteFile={handleDeleteFile}
-                  disabled={saving}
-                  singleFile={true}
-                  showFileNameInButton={true}
-                /> */}
-                <CloudinaryFileUpload
-                  onFileUpload={(fileData) =>
-                    handleCloudinaryUpload({
-                      ...fileData,
-                      attachment_type: 'contract',
-                    })
-                  }
-                  onError={handleUploadError}
-                  accept=".pdf,.doc,.docx"
-                  maxSizeMB={10}
-                  buttonText="Upload Contract"
-                  existingFiles={
-                    opportunity?.attachments
-                      ?.filter((att: any) => att.attachment_type === 'contract')
-                      .map((att: any) => ({
-                        file_name: att.file_name,
-                        file_url: att.attachment,
-                        file_type: att.file_type,
-                      })) || []
-                  }
-                  onDeleteFile={handleDeleteFile}
-                />
-              </div>
-            </div>
-
             <Box
               sx={{
                 display: 'flex',
@@ -979,7 +981,6 @@ function OpportunityPipeline() {
             </Box>
           </div>
         );
-
       default:
         return null;
     }

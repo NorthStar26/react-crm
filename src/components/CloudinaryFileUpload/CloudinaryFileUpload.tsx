@@ -51,7 +51,7 @@ export const CloudinaryFileUpload: React.FC<CloudinaryFileUploadProps> = ({
   onFileUpload,
   onError,
   accept = '.pdf,.doc,.docx,.jpg,.jpeg,.png',
-  maxSizeMB = 10,
+  maxSizeMB = 100,
   buttonText = 'Upload File',
   variant = 'button',
   existingFiles = [],
