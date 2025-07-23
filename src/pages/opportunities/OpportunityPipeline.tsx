@@ -134,6 +134,13 @@ function OpportunityPipeline() {
   const [contractUploaded, setContractUploaded] = useState(false);
   const module = 'Opportunities';
   const crntPage = opportunity?.name || 'Opportunity';
+  const [showConfetti, setShowConfetti] = useState(false);
+
+  const handleConfetti = () => {
+    setShowConfetti(true);
+    // Автоматически скрыть через 3.5 секунды
+    setTimeout(() => setShowConfetti(false), 3500);
+  };
 
   const [uploadedFile, setUploadedFile] = useState<{
     fileName: string;
@@ -1008,6 +1015,33 @@ function OpportunityPipeline() {
           </div>
         );
 
+      // case 'CLOSED WON':
+      //   return (
+      //     <div style={fieldStyles.fieldContainer}>
+      //       <Box
+      //         sx={{
+      //           display: 'flex',
+      //           flexDirection: 'column',
+      //           alignItems: 'center',
+      //           gap: 2,
+      //           py: 4,
+      //           mt: 3,
+      //         }}
+      //       >
+      //         <CheckCircleIcon
+      //           sx={{ fontSize: 60, color: '#4caf50', cursor: 'pointer' }}
+      //           onClick={fireEuroConfetti} // ← вот здесь!
+      //           titleAccess="Celebrate!"
+      //         />
+      //         <Typography
+      //           variant="h5"
+      //           sx={{ color: '#4caf50', fontWeight: 500 }}
+      //         >
+      //           Deal Closed - Won!
+      //         </Typography>
+      //       </Box>
+      //     </div>
+      //   );
       case 'CLOSED WON':
         return (
           <div style={fieldStyles.fieldContainer}>
@@ -1021,9 +1055,10 @@ function OpportunityPipeline() {
                 mt: 3,
               }}
             >
+              {showConfetti && <EuroConfetti />}
               <CheckCircleIcon
                 sx={{ fontSize: 60, color: '#4caf50', cursor: 'pointer' }}
-                onClick={fireEuroConfetti} // ← вот здесь!
+                onClick={handleConfetti}
                 titleAccess="Celebrate!"
               />
               <Typography
