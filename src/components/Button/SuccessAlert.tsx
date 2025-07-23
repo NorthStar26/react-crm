@@ -1,5 +1,11 @@
 import React from 'react';
-import { Snackbar, Alert, AlertProps } from '@mui/material';
+import {
+  Snackbar,
+  Alert,
+  AlertProps,
+  Box,
+  LinearProgress,
+} from '@mui/material';
 
 export type AlertType = 'success' | 'error' | 'warning' | 'info';
 
@@ -10,6 +16,11 @@ interface SuccessAlertProps {
   autoHideDuration?: number;
   type?: AlertType;
   showCloseButton?: boolean;
+  showProgress?: boolean; // для отображения прогресса при переходе между этапами
+  position?: {
+    vertical: 'top' | 'bottom';
+    horizontal: 'left' | 'center' | 'right';
+  };
 }
 
 export const SuccessAlert: React.FC<SuccessAlertProps> = ({
@@ -19,6 +30,8 @@ export const SuccessAlert: React.FC<SuccessAlertProps> = ({
   autoHideDuration = 2000,
   type = 'success',
   showCloseButton = false,
+  showProgress = false,
+  position = { vertical: 'bottom', horizontal: 'left' },
 }) => {
   // Обработка закрытия
   const handleClose = (
@@ -37,7 +50,7 @@ export const SuccessAlert: React.FC<SuccessAlertProps> = ({
       open={open}
       autoHideDuration={autoHideDuration}
       onClose={handleClose}
-      anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+      anchorOrigin={position}
     >
       <Alert
         onClose={showCloseButton ? handleClose : undefined}
@@ -45,7 +58,20 @@ export const SuccessAlert: React.FC<SuccessAlertProps> = ({
         variant="filled"
         sx={{ width: '100%' }}
       >
-        {message}
+        <Box>
+          {message}
+          {showProgress && (
+            <LinearProgress
+              sx={{
+                mt: 1,
+                backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                '& .MuiLinearProgress-bar': {
+                  backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                },
+              }}
+            />
+          )}
+        </Box>
       </Alert>
     </Snackbar>
   );
@@ -67,4 +93,28 @@ export const WarningAlert = (props: Omit<SuccessAlertProps, 'type'>) => (
 
 export const InfoAlert = (props: Omit<SuccessAlertProps, 'type'>) => (
   <SuccessAlert {...props} type="info" />
+);
+
+// Pipeline specific alerts
+export const PipelineSuccessAlert = (
+  props: Omit<SuccessAlertProps, 'type' | 'position'>
+) => (
+  <SuccessAlert
+    {...props}
+    type="success"
+    position={{ vertical: 'top', horizontal: 'center' }}
+    autoHideDuration={3000}
+  />
+);
+
+export const PipelineTransitionAlert = (
+  props: Omit<SuccessAlertProps, 'type' | 'showProgress'>
+) => (
+  <SuccessAlert
+    {...props}
+    type="success"
+    showProgress={true}
+    autoHideDuration={4000}
+    position={{ vertical: 'top', horizontal: 'center' }}
+  />
 );
