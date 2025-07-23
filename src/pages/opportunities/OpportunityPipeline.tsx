@@ -42,7 +42,7 @@ import {
   PipelineTransitionAlert,
 } from '../../components/Button/SuccessAlert';
 import { CloudinaryFileUpload } from '../../components/CloudinaryFileUpload';
-
+import { fireEuroConfetti } from '../../utils/fireConfetti';
 import {
   SectionContainer,
   SectionTitle,
@@ -70,6 +70,8 @@ import {
   deleteOpportunityAttachment,
   uploadAndAttachFileToOpportunity,
 } from '../../utils/uploadFileToCloudinary';
+// import { fireEuroConfetti } from '../../utils/fireConfetti';
+import EuroConfetti from '../../components/EuroConfetti';
 
 // Используем стили PipelineIcons для кастомного коннектора
 const CustomConnector = styled(StepConnector)(() => ({
@@ -922,7 +924,7 @@ function OpportunityPipeline() {
                     error={!!errors.reason}
                     helperText={errors.reason}
                     sx={{
-                      width: '344px',
+                      width: '312px',
                       height: '115px',
                       '& .MuiOutlinedInput-root': {
                         backgroundColor: '#F9FAFB',
@@ -1019,7 +1021,11 @@ function OpportunityPipeline() {
                 mt: 3,
               }}
             >
-              <CheckCircleIcon sx={{ fontSize: 60, color: '#4caf50' }} />
+              <CheckCircleIcon
+                sx={{ fontSize: 60, color: '#4caf50', cursor: 'pointer' }}
+                onClick={fireEuroConfetti} // ← вот здесь!
+                titleAccess="Celebrate!"
+              />
               <Typography
                 variant="h5"
                 sx={{ color: '#4caf50', fontWeight: 500 }}
