@@ -11,8 +11,8 @@ import {
   Select,
   MenuItem,
   Avatar,
+  Badge,
   FormHelperText,
-  Alert,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { CompaniesUrl } from '../../services/ApiUrls';
@@ -26,6 +26,9 @@ import COUNTRIES from '../../data/countries';
 import INDCHOICES from '../../data/INDCHOICES';
 import { SuccessAlert, ErrorAlert } from '../../components/Button/SuccessAlert';
 import { DialogModal } from '../../components/DialogModal';
+import { uploadImageToCloudinary } from '../../utils/uploadImageToCloudinary';
+import GreenCameraIcon from './GreenCameraIcon'; // Adjust the path if needed
+
 
 type FormErrors = {
   name?: string[];
@@ -38,6 +41,7 @@ type FormErrors = {
   billing_city?: string[];
   billing_postcode?: string[];
   billing_country?: string[];
+  logo?: string[];
   non_field_errors?: string[];
   detail?: string[];
 };
@@ -54,30 +58,107 @@ interface FormData {
   billing_state: string;
   billing_postcode: string;
   billing_country: string;
-  logo?: File | null;
-}
+  logo?: string | null;
+};
 
-const CompanyLogo = () => {
+type CompanyLogoProps = {
+  logo: string | null | undefined;
+  setLogo: (logo: string) => void;
+  error?: string[];
+  clearError: () => void;
+  setError: (err: string[]) => void;
+};
+
+const CompanyLogo: React.FC<CompanyLogoProps> = ({
+  logo,
+  setLogo,
+  error,
+  clearError,
+  setError,
+}) => {
   return (
     <div
       style={{
         display: 'flex',
-        justifyContent: 'center',
-        marginBottom: '20px',
+        flexDirection: 'column',
+        alignItems: 'center',
+        marginBottom: 20,
       }}
     >
-      <Avatar
-        sx={{
-          width: 100,
-          height: 100,
-          backgroundColor: '#f5f5f5',
-          border: '2px dashed #ddd',
+      <Badge
+        overlap="circular"
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
         }}
+        badgeContent={
+          <span
+            style={{
+              background: '#fff',
+              borderRadius: '50%',
+              boxShadow: '0 0 2px #ccc',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 32,
+              height: 32,
+              cursor: 'pointer',
+            }}
+            onClick={() => {
+              document.getElementById('company-logo-upload')?.click();
+            }}
+          >
+            <GreenCameraIcon />
+          </span>
+        }
       >
-        <Typography variant="caption" color="textSecondary">
-          Logo
-        </Typography>
-      </Avatar>
+        <Avatar
+          src={typeof logo === 'string' ? logo : undefined}
+          sx={{
+            width: 100,
+            height: 100,
+            backgroundColor: '#f5f5f5',
+            border: '2px dashed #ddd',
+            mb: 1,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            '&:hover': {
+              opacity: 0.8,
+            },
+          }}
+          onClick={() => {
+            document.getElementById('company-logo-upload')?.click();
+          }}
+        />
+      </Badge>
+      <input
+        type="file"
+        accept="image/*"
+        style={{ display: 'none' }}
+        id="company-logo-upload"
+        onChange={async (e) => {
+          const file = e.target.files?.[0];
+          if (!file) return;
+          if (file.size > 2 * 1024 * 1024) {
+            alert(['Logo must be less than 2 MB']);
+            return;
+          }
+          try {
+            const { url } = await uploadImageToCloudinary(file);
+            if (url) {
+              setLogo(url);
+              clearError();
+            }
+          } catch (err) {
+            setError(['Failed to upload logo. Please try again.']);
+          }
+        }}
+      />
+      {error && (
+        <FormHelperText error>{error[0]}</FormHelperText>
+      )}
     </div>
   );
 };
@@ -154,7 +235,14 @@ function AddCompany() {
     setLoading(true);
     setError(null);
     setErrors({});
-
+    const fileInput = document.getElementById('company-logo-upload') as HTMLInputElement;
+    const file = fileInput?.files?.[0];
+    if (file && file.size > 2 * 1024 * 1024) {
+      setErrors((prev) => ({ ...prev, logo: ['Logo must be less than 2 MB'] }));
+      setLoading(false);
+      setError('Please fix the logo error before submitting.');
+      return;
+    }
     try {
       const token = localStorage.getItem('Token');
       const org = localStorage.getItem('org');
@@ -184,6 +272,7 @@ function AddCompany() {
         billing_city: formData.billing_city,
         billing_postcode: formData.billing_postcode,
         billing_country: formData.billing_country,
+        logo_url: formData.logo,
       };
 
       console.log('Submitting company data:', data);
@@ -450,157 +539,152 @@ function AddCompany() {
                 </AccordionSummary>
                 <Divider className="divider" />
                 <AccordionDetails>
-                  <Box
-                    sx={{
-                      width: '98%',
-                      color: '#1A3353',
-                      mb: 1,
-                      '& .fieldContainer, & .fieldContainer2': {
-                        paddingLeft: '1%',
-                        paddingRight: '8%',
-                      },
-                    }}
-                  >
-                    {/* Company Logo */}
-                    <CompanyLogo />
+                  {/* Company Logo */}
+                  <CompanyLogo
+                    logo={formData.logo}
+                    setLogo={(logo) => setFormData((prev) => ({ ...prev, logo }))}
+                    error={errors.logo}
+                    clearError={() => setErrors((prev) => ({ ...prev, logo: undefined }))}
+                    setError={(err) => setErrors((prev) => ({ ...prev, logo: err }))}
+                  />
 
-                    {/* Row 1 */}
-                    <div style={fieldStyles.fieldContainer}>
-                      <div style={fieldStyles.fieldSubContainer}>
-                        <div style={fieldStyles.fieldRow}>
-                          <div style={fieldStyles.fieldTitle}>Company Name</div>
-                          <div style={fieldStyles.fieldInput}>
-                            <RequiredTextField
-                              name="name"
-                              value={formData.name}
-                              onChange={handleChange}
-                              size="small"
-                              fullWidth
-                              helperText={errors?.name?.[0] || ''}
-                              error={!!errors?.name?.[0]}
-                              required
-                            />
-                          </div>
-                        </div>
-                      </div>
-                      <div style={fieldStyles.fieldSubContainer}>
-                        <div style={fieldStyles.fieldRow}>
-                          <div style={fieldStyles.fieldTitle}>Website</div>
-                          <div style={fieldStyles.fieldInput}>
-                            <TextField
-                              name="website"
-                              value={formData.website}
-                              onChange={handleChange}
-                              size="small"
-                              fullWidth
-                              placeholder="https://company.com"
-                              helperText={errors?.website?.[0] || ''}
-                              error={!!errors?.website?.[0]}
-                            />
-                          </div>
+                  {/* Row 1 */}
+                  <div style={fieldStyles.fieldContainer}>
+                    <div style={fieldStyles.fieldSubContainer}>
+                      <div style={fieldStyles.fieldRow}>
+                        <div style={fieldStyles.fieldTitle}>Company Name</div>
+                        <div style={fieldStyles.fieldInput}>
+                          <RequiredTextField
+                            name="name"
+                            value={formData.name}
+                            onChange={handleChange}
+                            size="small"
+                            fullWidth
+                            helperText={errors?.name?.[0] || ''}
+                            error={!!errors?.name?.[0]}
+                            required
+                          />
                         </div>
                       </div>
                     </div>
-
-                    {/* Row 2 -  */}
-                    <div style={fieldStyles.fieldContainer}>
-                      <div style={fieldStyles.fieldSubContainer}>
-                        <div style={fieldStyles.fieldRow}>
-                          <div style={fieldStyles.fieldTitle}>Email</div>
-                          <div style={fieldStyles.fieldInput}>
-                            <TextField
-                              name="email"
-                              type="email"
-                              value={formData.email}
-                              onChange={handleChange}
-                              size="small"
-                              fullWidth
-                              helperText={errors?.email?.[0] || ''}
-                              error={!!errors?.email?.[0]}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                      <div style={fieldStyles.fieldSubContainer}>
-                        <div style={fieldStyles.fieldRow}>
-                          <div style={fieldStyles.fieldTitle}>Phone</div>
-                          <div style={fieldStyles.fieldInput}>
-                            <TextField
-                              name="phone"
-                              value={formData.phone}
-                              onChange={handleChange}
-                              size="small"
-                              fullWidth
-                              placeholder="+12345678900"
-                              helperText={
-                                errors?.phone?.[0]
-                                  ? errors.phone[0]
-                                  : 'International format: +1234567890'
-                              }
-                              error={!!errors?.phone?.[0]}
-                            />
-                          </div>
+                    <div style={fieldStyles.fieldSubContainer}>
+                      <div style={fieldStyles.fieldRow}>
+                        <div style={fieldStyles.fieldTitle}>Website</div>
+                        <div style={fieldStyles.fieldInput}>
+                          <TextField
+                            name="website"
+                            value={formData.website}
+                            onChange={handleChange}
+                            size="small"
+                            fullWidth
+                            placeholder="https://company.com"
+                            helperText={errors?.website?.[0] || ''}
+                            error={!!errors?.website?.[0]}
+                          />
                         </div>
                       </div>
                     </div>
+                  </div>
 
-                    {/* Row 3 */}
-                    <div style={fieldStyles.fieldContainer}>
-                      <div style={fieldStyles.fieldSubContainer}>
-                        <div style={fieldStyles.fieldRow}>
-                          <div style={fieldStyles.fieldTitle}>Industry</div>
-                          <div style={fieldStyles.fieldInput}>
-                            <FormControl fullWidth>
-                              <Select
-                                name="industry"
-                                value={formData.industry}
-                                onOpen={() => setIndustrySelectOpen(true)}
-                                onClose={() => setIndustrySelectOpen(false)}
-                                open={industrySelectOpen}
-                                IconComponent={() => (
-                                  <div className="select-icon-background">
-                                    {industrySelectOpen ? (
-                                      <FiChevronUp className="select-icon" />
-                                    ) : (
-                                      <FiChevronDown className="select-icon" />
-                                    )}
-                                  </div>
-                                )}
-                                className={'select'}
-                                onChange={handleChange}
-                                error={!!errors?.industry?.[0]}
-                              >
-                                {INDCHOICES.map(([code, name]) => (
-                                  <MenuItem key={code} value={code}>
-                                    {name}
-                                  </MenuItem>
-                                ))}
-                              </Select>
-                              <FormHelperText error={!!errors?.industry?.[0]}>
-                                {errors?.industry?.[0] || ''}
-                              </FormHelperText>
-                            </FormControl>
-                          </div>
-                        </div>
-                      </div>
-                      <div style={fieldStyles.fieldSubContainer}>
-                        <div style={fieldStyles.fieldRow}>
-                          <div style={fieldStyles.fieldTitle}>Tags:</div>
-                          <div style={fieldStyles.fieldInput}>
-                            <TextField
-                              name="tags"
-                              value=""
-                              size="small"
-                              fullWidth
-                              placeholder="Tags (Coming Soon)"
-                              disabled={true}
-                              helperText="Tag functionality will be available soon"
-                            />
-                          </div>
+                  {/* Row 2 -  */}
+                  <div style={fieldStyles.fieldContainer}>
+                    <div style={fieldStyles.fieldSubContainer}>
+                      <div style={fieldStyles.fieldRow}>
+                        <div style={fieldStyles.fieldTitle}>Email</div>
+                        <div style={fieldStyles.fieldInput}>
+                          <TextField
+                            name="email"
+                            type="email"
+                            value={formData.email}
+                            onChange={handleChange}
+                            size="small"
+                            fullWidth
+                            helperText={errors?.email?.[0] || ''}
+                            error={!!errors?.email?.[0]}
+                          />
                         </div>
                       </div>
                     </div>
-                  </Box>
+                    <div style={fieldStyles.fieldSubContainer}>
+                      <div style={fieldStyles.fieldRow}>
+                        <div style={fieldStyles.fieldTitle}>Phone</div>
+                        <div style={fieldStyles.fieldInput}>
+                          <TextField
+                            name="phone"
+                            value={formData.phone}
+                            onChange={handleChange}
+                            size="small"
+                            fullWidth
+                            placeholder="+12345678900"
+                            helperText={
+                              errors?.phone?.[0]
+                                ? errors.phone[0]
+                                : 'International format: +1234567890'
+                            }
+                            error={!!errors?.phone?.[0]}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Row 3 */}
+                  <div style={fieldStyles.fieldContainer}>
+                    <div style={fieldStyles.fieldSubContainer}>
+                      <div style={fieldStyles.fieldRow}>
+                        <div style={fieldStyles.fieldTitle}>Industry</div>
+                        <div style={fieldStyles.fieldInput}>
+                          <FormControl fullWidth>
+                            <Select
+                              name="industry"
+                              value={formData.industry}
+                              onOpen={() => setIndustrySelectOpen(true)}
+                              onClose={() => setIndustrySelectOpen(false)}
+                              open={industrySelectOpen}
+                              IconComponent={() => (
+                                <div className="select-icon-background">
+                                  {industrySelectOpen ? (
+                                    <FiChevronUp className="select-icon" />
+                                  ) : (
+                                    <FiChevronDown className="select-icon" />
+                                  )}
+                                </div>
+                              )}
+                              className={'select'}
+                              onChange={handleChange}
+                              error={!!errors?.industry?.[0]}
+                            >
+                              {INDCHOICES.map(([code, name]) => (
+                                <MenuItem key={code} value={code}>
+                                  {name}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                            <FormHelperText error={!!errors?.industry?.[0]}>
+                              {errors?.industry?.[0] || ''}
+                            </FormHelperText>
+                          </FormControl>
+                        </div>
+                      </div>
+                    </div>
+                    <div style={fieldStyles.fieldSubContainer}>
+                      <div style={fieldStyles.fieldRow}>
+                        <div style={fieldStyles.fieldTitle}>Tags:</div>
+                        <div style={fieldStyles.fieldInput}>
+                          <TextField
+                            name="tags"
+                            value=""
+                            size="small"
+                            fullWidth
+                            placeholder="Tags (Coming Soon)"
+                            disabled={true}
+                            helperText="Tag functionality will be available soon"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  {/* End of Company Information AccordionDetails */}
                 </AccordionDetails>
               </Accordion>
             </div>
