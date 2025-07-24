@@ -25,7 +25,11 @@ export default function ViewOpportunity() {
     return (
       <Box sx={{ mt: '120px', p: 3, textAlign: 'center' }}>
         <Typography variant="h6">No opportunity data found</Typography>
-        <Button variant="contained" onClick={() => navigate('/app/opportunities')} sx={{ mt: 2 }}>
+        <Button
+          variant="contained"
+          onClick={() => navigate('/app/opportunities')}
+          sx={{ mt: 2 }}
+        >
           Back to Opportunities
         </Button>
       </Box>
@@ -67,7 +71,12 @@ export default function ViewOpportunity() {
         <Box>
           <Typography
             component="span"
-            sx={{ cursor: 'pointer', color: 'lightgray', fontWeight: 600, mr: 1 }}
+            sx={{
+              cursor: 'pointer',
+              color: 'lightgray',
+              fontWeight: 600,
+              mr: 1,
+            }}
             onClick={() => navigate('/app/dashboard')}
           >
             Dashboard
@@ -80,7 +89,12 @@ export default function ViewOpportunity() {
           </Typography>
           <Typography
             component="span"
-            sx={{ cursor: 'pointer', color: 'lightgray', fontWeight: 600, mr: 1 }}
+            sx={{
+              cursor: 'pointer',
+              color: 'lightgray',
+              fontWeight: 600,
+              mr: 1,
+            }}
             onClick={() => navigate('/app/opportunities')}
           >
             Opportunities
@@ -109,25 +123,53 @@ export default function ViewOpportunity() {
       </Box>
 
       {/* Main Content */}
-      <Box sx={{ mt: '24px', px: 3, backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
+      <Box
+        sx={{
+          mt: '24px',
+          px: 3,
+          backgroundColor: '#f5f5f5',
+          minHeight: '100vh',
+        }}
+      >
         <Grid container spacing={3}>
           {/* Left Column */}
           <Grid item xs={12} md={8}>
             {/* Header Card */}
             <Card sx={{ p: 3, mb: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  flexWrap: 'wrap',
+                }}
+              >
                 <Typography variant="h5" fontWeight={600}>
                   {name}
                 </Typography>
                 <Chip label={stage || 'Stage'} color="success" />
               </Box>
 
-              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center', mt: 2 }}>
-                <Button startIcon={<BusinessIcon />} variant="outlined" disabled>
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: 2,
+                  flexWrap: 'wrap',
+                  alignItems: 'center',
+                  mt: 2,
+                }}
+              >
+                <Button
+                  startIcon={<BusinessIcon />}
+                  variant="outlined"
+                  disabled
+                >
                   {company?.name || 'Company Name'}
                 </Button>
                 <Button startIcon={<PersonIcon />} variant="outlined" disabled>
-                  {contact ? `${contact.first_name} ${contact.last_name}` : 'Contact'}
+                  {contact
+                    ? `${contact.first_name} ${contact.last_name}`
+                    : 'Contact'}
                 </Button>
               </Box>
             </Card>
@@ -144,7 +186,9 @@ export default function ViewOpportunity() {
                 </Grid>
                 <Grid item xs={12} sm={6} md={4}>
                   <Typography variant="subtitle2">Probability</Typography>
-                  <Typography>{probability ? `${probability}%` : '---'}</Typography>
+                  <Typography>
+                    {probability ? `${probability}%` : '---'}
+                  </Typography>
                 </Grid>
                 <Grid item xs={12} sm={6} md={4}>
                   <Typography variant="subtitle2">Expected Result</Typography>
@@ -152,7 +196,9 @@ export default function ViewOpportunity() {
                 </Grid>
                 <Grid item xs={12} sm={6} md={4}>
                   <Typography variant="subtitle2">Assigned To</Typography>
-                  <Typography>{assigned_to?.[0]?.user_details?.first_name || '---'}</Typography>
+                  <Typography>
+                    {assigned_to?.[0]?.user_details?.first_name || '---'}
+                  </Typography>
                 </Grid>
                 <Grid item xs={12} sm={6} md={4}>
                   <Typography variant="subtitle2">Days To Close</Typography>
