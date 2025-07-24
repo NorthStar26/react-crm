@@ -178,7 +178,7 @@ export function LeadToOpportunity() {
       description: formData.description,
       assigned_to: formData.assigned_to,
       stage: 'QUALIFICATION',
-      contact: state.leadData?.lead_obj?.contact?.id,
+      contacts: state.leadData?.lead_obj?.contact?.id,
       lead_source: state.leadData?.lead_obj?.lead_source?.toUpperCase() || '',
       expected_revenue: (
         parseFloat(formData.amount) *
