@@ -286,13 +286,30 @@ export function EditUser() {
       .then(async (res: any) => {
         if (!res.error) {
           resetForm();
+
+          // If the user being edited is the current logged-in user, refresh the context
+          // Convert both IDs to strings for comparison to avoid type mismatch
           const currentUserId = user?.user_details?.id?.toString();
           const editedUserId = state?.id?.toString();
-          
-          if (user && currentUserId && editedUserId && currentUserId === editedUserId) {
+
+          console.log('Current user ID:', currentUserId);
+          console.log('Edited user ID:', editedUserId);
+          console.log('IDs match:', currentUserId === editedUserId);
+
+          if (
+            user &&
+            currentUserId &&
+            editedUserId &&
+            currentUserId === editedUserId
+          ) {
+            console.log(
+              'User edited their own profile - refreshing page to update all components...'
+            );
+            // When user edits their own profile, refresh the page to ensure all components update
             window.location.href = '/app/users';
             return;
           }
+
           navigate('/app/users');
         }
         if (res.error) {
@@ -498,6 +515,11 @@ export function EditUser() {
   const crntPage = 'Edit User';
   const backBtn = state?.edit ? 'Back To Users' : 'Back To UserDetails';
 
+
+  // isCurrentUser
+  const isCurrentUser =
+    user && user.user_details?.id?.toString() === state?.id?.toString();
+
   return (
     <Box sx={{ mt: '60px' }}>
       <CustomAppBar
@@ -683,13 +705,21 @@ export function EditUser() {
                         />
                       </div>
                       <div className="fieldSubContainer">
-                        <div className="fieldTitle">Password</div>
-                        <Button
-                          variant="contained"
-                          onClick={() => handleOpen()}
-                        >
-                          Change Password
-                        </Button>
+                        {isCurrentUser && (
+                          <div className="fieldTitle">Password</div>
+                        )}
+                        {/* add change password button */}
+                        {/*  */}
+                        {isCurrentUser && (
+                          <Button
+                            variant="contained"
+                            onClick={() => handleOpen()}
+                          >
+                            Change Password
+                          </Button>
+                        )}
+                        {/* add change password button */}
+
                         <Modal
                           open={open}
                           onClose={handleClose}
