@@ -1111,6 +1111,8 @@ function OpportunityPipeline() {
     );
   }
 
+  console.log(opportunity);
+
   return (
     <Box sx={{ mt: '60px' }}>
       {/* AppBar */}
@@ -1297,7 +1299,7 @@ function OpportunityPipeline() {
                           height: '36px',
                         }}
                       >
-                        {opportunity.account?.name || 'Company Name'}
+                        {opportunity.lead?.company?.name || 'Company Name'}
                       </Typography>
                     </FieldContainer>
                   </Grid>
@@ -1312,10 +1314,12 @@ function OpportunityPipeline() {
                           color: '#1A3353',
                         }}
                       >
-                        {opportunity.contacts_info?.length > 0
-                          ? opportunity.contacts_info
-                              .map((c: any) => c.name)
-                              .join(', ')
+                        {opportunity.lead?.contact.first_name.length +
+                          opportunity.lead?.contact.last_name.length >
+                        0
+                          ? opportunity.lead?.contact.first_name +
+                            ' ' +
+                            opportunity.lead?.contact.last_name
                           : 'Contact'}
                       </Typography>
                     </FieldContainer>
