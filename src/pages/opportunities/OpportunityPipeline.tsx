@@ -1437,21 +1437,29 @@ function OpportunityPipeline() {
                         fullWidth
                       />
                     </Grid>
-                    <Grid item xs={4}>
-                      <FieldLabel>Meeting Date</FieldLabel>
-                      <StyledTextField
-                        value={
-                          opportunity.meeting_date
-                            ? new Date(
-                                opportunity.meeting_date
-                              ).toLocaleDateString()
-                            : ''
-                        }
-                        InputProps={{ readOnly: true }}
-                        size="small"
-                        fullWidth
-                      />
-                    </Grid>
+                    {[
+                      'PROPOSAL',
+                      'NEGOTIATION',
+                      'CLOSE',
+                      'CLOSED WON',
+                      'CLOSED LOST',
+                    ].includes(pipelineMetadata.current_stage) && (
+                      <Grid item xs={4}>
+                        <FieldLabel>Meeting Date</FieldLabel>
+                        <StyledTextField
+                          value={
+                            opportunity.meeting_date
+                              ? new Date(
+                                  opportunity.meeting_date
+                                ).toLocaleDateString()
+                              : ''
+                          }
+                          InputProps={{ readOnly: true }}
+                          size="small"
+                          fullWidth
+                        />
+                      </Grid>
+                    )}{' '}
                   </Grid>
                 </SectionContainer>
                 {/* Opportunity Information Section */}
@@ -1484,129 +1492,93 @@ function OpportunityPipeline() {
                         fullWidth
                       />
                     </Grid>
-                    <Grid item xs={4}>
-                      <FieldLabel>Proposed Documents</FieldLabel>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: 1,
-                        }}
-                      >
-                        {opportunity.attachments
-                          ?.filter(
-                            (att: any) => att.attachment_type === 'proposal'
-                          )
-                          .map((att: any, idx: number) => {
-                            const ext = att.file_name
-                              .split('.')
-                              .pop()
-                              ?.toLowerCase();
-                            const isPdf = ext === 'pdf';
-                            return (
-                              <Box
-                                key={att.file_name + idx}
-                                sx={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: 1,
-                                }}
-                              >
-                                <a
-                                  href={att.attachment}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    textDecoration: 'none',
-                                    color: '#1976D2',
-                                  }}
-                                >
-                                  {isPdf ? (
-                                    <PictureAsPdfIcon
-                                      sx={{ color: '#d32f2f', mr: 0.5 }}
-                                    />
-                                  ) : (
-                                    <InsertDriveFileIcon
-                                      sx={{ color: '#1976D2', mr: 0.5 }}
-                                    />
-                                  )}
-                                  <span
-                                    style={{
-                                      whiteSpace: 'nowrap',
-                                      overflow: 'hidden',
-                                      textOverflow: 'ellipsis',
-                                      maxWidth: 160,
-                                    }}
-                                  >
-                                    {att.file_name}
-                                  </span>
-                                </a>
-                              </Box>
-                            );
-                          })}
-                        {opportunity.attachments &&
-                        opportunity.attachments.length > 0 ? (
-                          opportunity.attachments.map(
-                            (att: any, idx: number) => {
-                              const ext = att.file_name
-                                .split('.')
-                                .pop()
-                                ?.toLowerCase();
-                              const isPdf = ext === 'pdf';
-                              return (
-                                <Box
-                                  key={att.file_name + idx}
-                                  sx={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 1,
-                                  }}
-                                >
-                                  <a
-                                    href={att.attachment}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    style={{
+                    {[
+                      'NEGOTIATION',
+                      'CLOSE',
+                      'CLOSED WON',
+                      'CLOSED LOST',
+                    ].includes(pipelineMetadata.current_stage) && (
+                      <Grid item xs={4}>
+                        <FieldLabel>Proposed Documents</FieldLabel>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 1,
+                          }}
+                        >
+                          {opportunity.attachments &&
+                          opportunity.attachments.length > 0 ? (
+                            opportunity.attachments.map(
+                              (att: any, idx: number) => {
+                                const ext = att.file_name
+                                  .split('.')
+                                  .pop()
+                                  ?.toLowerCase();
+                                const isPdf = ext === 'pdf';
+                                return (
+                                  <Box
+                                    key={att.file_name + idx}
+                                    sx={{
                                       display: 'flex',
                                       alignItems: 'center',
-                                      textDecoration: 'none',
-                                      color: '#1976D2',
+                                      gap: 1,
                                     }}
                                   >
-                                    {isPdf ? (
-                                      <PictureAsPdfIcon
-                                        sx={{ color: '#d32f2f', mr: 0.5 }}
-                                      />
-                                    ) : (
-                                      <InsertDriveFileIcon
-                                        sx={{ color: '#1976D2', mr: 0.5 }}
-                                      />
-                                    )}
-                                    <span
+                                    <a
+                                      href={
+                                        att.file_path?.startsWith('/media/')
+                                          ? decodeURIComponent(
+                                              att.file_path.replace(
+                                                '/media/',
+                                                ''
+                                              )
+                                            )
+                                          : att.file_path
+                                      }
+                                      target="_blank"
+                                      rel="noopener noreferrer"
                                       style={{
-                                        whiteSpace: 'nowrap',
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        maxWidth: 160,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        textDecoration: 'none',
+                                        color: '#1976D2',
                                       }}
                                     >
-                                      {att.file_name}
-                                    </span>
-                                  </a>
-                                </Box>
-                              );
-                            }
-                          )
-                        ) : (
-                          <Typography variant="body2" color="text.secondary">
-                            No documents
-                          </Typography>
-                        )}
-                      </Box>
-                    </Grid>
-                    {/* Остальные поля */}
+                                      {isPdf ? (
+                                        <PictureAsPdfIcon
+                                          sx={{ color: '#d32f2f', mr: 0.5 }}
+                                        />
+                                      ) : (
+                                        <InsertDriveFileIcon
+                                          sx={{ color: '#1976D2', mr: 0.5 }}
+                                        />
+                                      )}
+                                      <span
+                                        style={{
+                                          whiteSpace: 'nowrap',
+                                          overflow: 'hidden',
+                                          textOverflow: 'ellipsis',
+                                          maxWidth: 160,
+                                        }}
+                                      >
+                                        {att.file_name}
+                                      </span>
+                                    </a>
+                                  </Box>
+                                );
+                              }
+                            )
+                          ) : (
+                            <Typography variant="body2" color="text.secondary">
+                              No documents
+                            </Typography>
+                          )}
+                        </Box>
+                      </Grid>
+                    )}
+
+                    {/* */}
                     <Grid item xs={12}>
                       <FieldLabel>Description</FieldLabel>
                       <StyledTextField
@@ -1617,6 +1589,20 @@ function OpportunityPipeline() {
                         fullWidth
                       />
                     </Grid>
+                    {['CLOSE', 'CLOSED WON', 'CLOSED LOST'].includes(
+                      pipelineMetadata.current_stage
+                    ) && (
+                      <Grid item xs={12}>
+                        <FieldLabel>Feedback</FieldLabel>
+                        <StyledTextField
+                          value={opportunity.feedback || ''}
+                          InputProps={{ readOnly: true }}
+                          multiline
+                          rows={3}
+                          fullWidth
+                        />
+                      </Grid>
+                    )}
                   </Grid>
                 </SectionContainer>
               </Box>
