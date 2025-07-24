@@ -72,6 +72,8 @@ import {
 } from '../../utils/uploadFileToCloudinary';
 // import { fireEuroConfetti } from '../../utils/fireConfetti';
 import EuroConfetti from '../../components/EuroConfetti';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 
 // Используем стили PipelineIcons для кастомного коннектора
 const CustomConnector = styled(StepConnector)(() => ({
@@ -87,15 +89,17 @@ const fieldStyles = {
     flexDirection: 'column' as const,
     gap: '24px',
     marginTop: '16px',
+    paddingLeft: '62px',
   },
   fieldRow: {
     display: 'flex',
     alignItems: 'center',
-    gap: '16px',
+    gap: '8px',
+    justifyContent: 'flex-start',
   },
   fieldTitle: {
-    minWidth: '150px',
-    textAlign: 'right',
+    minWidth: '70px',
+    textAlign: 'left',
     fontFamily: 'Roboto',
     fontWeight: 500,
     fontSize: '15px',
@@ -686,11 +690,11 @@ function OpportunityPipeline() {
         // Для QUALIFICATION показываем поле meeting_date, так как мы редактируем его для перехода на IDENTIFY_DECISION_MAKERS
         return (
           <div style={fieldStyles.fieldContainer}>
-            <div style={fieldStyles.fieldRow}>
+            <div style={{ ...fieldStyles.fieldRow, marginLeft: '-60px' }}>
               <div style={fieldStyles.fieldTitle as React.CSSProperties}>
                 Meeting Date
               </div>
-              <div style={fieldStyles.fieldInput}>
+              <div style={{ ...fieldStyles.fieldInput, marginLeft: '1px' }}>
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                   <DatePicker
                     value={
@@ -769,7 +773,7 @@ function OpportunityPipeline() {
       case 'PROPOSAL':
         return (
           <div style={fieldStyles.fieldContainer}>
-            <div style={fieldStyles.fieldRow}>
+            <div style={{ ...fieldStyles.fieldRow, marginLeft: '-55px' }}>
               <div style={fieldStyles.fieldTitle as React.CSSProperties}>
                 Proposal Document
               </div>
@@ -829,7 +833,13 @@ function OpportunityPipeline() {
       case 'NEGOTIATION':
         return (
           <div style={fieldStyles.fieldContainer}>
-            <div style={{ ...fieldStyles.fieldRow, marginLeft: '-80px' }}>
+            <div
+              style={{
+                ...fieldStyles.fieldRow,
+                marginLeft: '-80px',
+                gap: '8px',
+              }}
+            >
               <div style={fieldStyles.fieldTitle as React.CSSProperties}>
                 Feedback
               </div>
@@ -860,7 +870,7 @@ function OpportunityPipeline() {
       case 'CLOSE':
         return (
           <div style={fieldStyles.fieldContainer}>
-            <div style={{ ...fieldStyles.fieldRow, marginLeft: '-110px' }}>
+            <div style={{ ...fieldStyles.fieldRow, marginLeft: '-70px' }}>
               <div style={fieldStyles.fieldTitle as React.CSSProperties}>
                 Result
               </div>
@@ -914,7 +924,7 @@ function OpportunityPipeline() {
             </div>
             {/* Показываем поле Reason только если выбран Close Lost */}
             {formData.close_option === 'CLOSED LOST' && (
-              <div style={{ ...fieldStyles.fieldRow, marginLeft: '-110px' }}>
+              <div style={{ ...fieldStyles.fieldRow, marginLeft: '-70px' }}>
                 <div style={fieldStyles.fieldTitle as React.CSSProperties}>
                   Reason
                 </div>
@@ -944,7 +954,7 @@ function OpportunityPipeline() {
 
             {/* Showing Contract Upload for Close Won */}
             {formData.close_option === 'CLOSED WON' && (
-              <div style={{ ...fieldStyles.fieldRow, marginLeft: '-110px' }}>
+              <div style={{ ...fieldStyles.fieldRow, marginLeft: '-70px' }}>
                 <div style={fieldStyles.fieldTitle as React.CSSProperties}>
                   Contract
                 </div>
@@ -1316,7 +1326,6 @@ function OpportunityPipeline() {
                 <Box sx={{ mt: 3 }}>{renderStageContent()}</Box>
               </Box>
             </SectionContainer>
-
             {/* Financial Details Section */}
             <SectionContainer>
               <SectionTitle>Financial Details</SectionTitle>
@@ -1383,16 +1392,30 @@ function OpportunityPipeline() {
                     fullWidth
                   />
                 </Grid>
+                <Grid item xs={4}>
+                  <FieldLabel>Meeting Date</FieldLabel>
+                  <StyledTextField
+                    value={
+                      opportunity.meeting_date
+                        ? new Date(
+                            opportunity.meeting_date
+                          ).toLocaleDateString()
+                        : ''
+                    }
+                    InputProps={{ readOnly: true }}
+                    size="small"
+                    fullWidth
+                  />
+                </Grid>
               </Grid>
             </SectionContainer>
-
             {/* Opportunity Information Section */}
             <SectionContainer>
               <SectionTitle>Opportunity Information</SectionTitle>
               <Divider sx={{ mb: 3 }} />
 
               <Grid container spacing={3}>
-                <Grid item xs={6}>
+                <Grid item xs={4}>
                   <FieldLabel>Lead Source</FieldLabel>
                   <StyledTextField
                     value={opportunity.lead_source || ''}
@@ -1401,7 +1424,7 @@ function OpportunityPipeline() {
                     fullWidth
                   />
                 </Grid>
-                <Grid item xs={6}>
+                <Grid item xs={4}>
                   <FieldLabel>Created</FieldLabel>
                   <StyledTextField
                     value={
@@ -1414,6 +1437,121 @@ function OpportunityPipeline() {
                     fullWidth
                   />
                 </Grid>
+                <Grid item xs={4}>
+                  <FieldLabel>Proposed Documents</FieldLabel>
+                  <Box
+                    sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}
+                  >
+                    {opportunity.attachments
+                      ?.filter((att: any) => att.attachment_type === 'proposal')
+                      .map((att: any, idx: number) => {
+                        const ext = att.file_name
+                          .split('.')
+                          .pop()
+                          ?.toLowerCase();
+                        const isPdf = ext === 'pdf';
+                        return (
+                          <Box
+                            key={att.file_name + idx}
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1,
+                            }}
+                          >
+                            <a
+                              href={att.attachment}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                textDecoration: 'none',
+                                color: '#1976D2',
+                              }}
+                            >
+                              {isPdf ? (
+                                <PictureAsPdfIcon
+                                  sx={{ color: '#d32f2f', mr: 0.5 }}
+                                />
+                              ) : (
+                                <InsertDriveFileIcon
+                                  sx={{ color: '#1976D2', mr: 0.5 }}
+                                />
+                              )}
+                              <span
+                                style={{
+                                  whiteSpace: 'nowrap',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  maxWidth: 160,
+                                }}
+                              >
+                                {att.file_name}
+                              </span>
+                            </a>
+                          </Box>
+                        );
+                      })}
+                    {opportunity.attachments &&
+                    opportunity.attachments.length > 0 ? (
+                      opportunity.attachments.map((att: any, idx: number) => {
+                        const ext = att.file_name
+                          .split('.')
+                          .pop()
+                          ?.toLowerCase();
+                        const isPdf = ext === 'pdf';
+                        return (
+                          <Box
+                            key={att.file_name + idx}
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1,
+                            }}
+                          >
+                            <a
+                              href={att.attachment}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                textDecoration: 'none',
+                                color: '#1976D2',
+                              }}
+                            >
+                              {isPdf ? (
+                                <PictureAsPdfIcon
+                                  sx={{ color: '#d32f2f', mr: 0.5 }}
+                                />
+                              ) : (
+                                <InsertDriveFileIcon
+                                  sx={{ color: '#1976D2', mr: 0.5 }}
+                                />
+                              )}
+                              <span
+                                style={{
+                                  whiteSpace: 'nowrap',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  maxWidth: 160,
+                                }}
+                              >
+                                {att.file_name}
+                              </span>
+                            </a>
+                          </Box>
+                        );
+                      })
+                    ) : (
+                      <Typography variant="body2" color="text.secondary">
+                        No documents
+                      </Typography>
+                    )}
+                  </Box>
+                </Grid>
+                {/* Остальные поля */}
                 <Grid item xs={12}>
                   <FieldLabel>Description</FieldLabel>
                   <StyledTextField
@@ -1425,7 +1563,7 @@ function OpportunityPipeline() {
                   />
                 </Grid>
               </Grid>
-            </SectionContainer>
+            </SectionContainer>{' '}
           </Box>
 
           {/* Right Panel - Activities */}
