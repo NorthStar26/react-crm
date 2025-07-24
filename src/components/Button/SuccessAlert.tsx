@@ -114,7 +114,7 @@ export const PipelineTransitionAlert = (
     {...props}
     type="success"
     showProgress={true}
-    autoHideDuration={4000}
+    autoHideDuration={2000}
     position={{ vertical: 'top', horizontal: 'center' }}
   />
 );

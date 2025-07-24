@@ -11,7 +11,7 @@ import { useMyContext } from '../context/Context';
 import { FaCheckCircle, FaEdit, FaTimesCircle } from 'react-icons/fa';
 import { FiChevronLeft } from '@react-icons/all-files/fi/FiChevronLeft';
 import { PipelineSaveButton, PipelineCancelButton } from './PipelineButtons';
-
+import VectorStop from '../assets/images/VectorStop.png';
 // Типизация пропсов
 interface CustomAppBarProps {
   module: string;
@@ -200,7 +200,7 @@ export function CustomAppBar({
               {customButtons}
 
               {/* Кнопка Save в тулбаре */}
-              <Button
+              {/* <Button
                 onClick={onSave}
                 variant="contained"
                 disabled={saving}
@@ -250,22 +250,21 @@ export function CustomAppBar({
                 }}
               >
                 {saving ? 'Saving...' : 'Save'}
-              </Button>
+              </Button> */}
 
               {/* Кнопка Close Step */}
               <Button
                 onClick={onCancel}
                 variant="contained"
                 startIcon={
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12L19 6.41Z"
-                      fill="white"
-                    />
-                  </svg>
+                  <img
+                    src={VectorStop}
+                    alt="Stop"
+                    style={{ width: 20, height: 20 }}
+                  />
                 }
                 sx={{
-                  position: 'relative',
+                  position: 'rilative',
                   height: '40px',
                   width: '164px',
                   backgroundColor: '#D32F2F',
@@ -285,7 +284,7 @@ export function CustomAppBar({
                   },
                   '& .MuiButton-startIcon': {
                     position: 'absolute',
-                    left: '24px',
+                    left: '15px',
                     marginLeft: 0,
                     marginRight: 0,
                   },

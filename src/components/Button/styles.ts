@@ -9,38 +9,38 @@ const getButtonColors = (variant: ButtonVariant) => {
       bg: '#1976D2',
       hover: '#1565C0',
       color: '#FFFFFF',
-      border: '#1976D2'
+      border: '#1976D2',
     },
     secondary: {
       bg: '#1A3353',
       hover: '#0F2A55',
-      color: '#FFFFFF', 
-      border: '#1A3353'
+      color: '#FFFFFF',
+      border: '#1A3353',
     },
     outline: {
       bg: 'transparent',
       hover: '#f0f4ff',
       color: '#0F2A55',
-      border: '#0F2A55'
+      border: '#0F2A55',
     },
     ghost: {
       bg: 'transparent',
       hover: '#f5f5f5',
       color: '#1A3353',
-      border: 'transparent'
+      border: 'transparent',
     },
     danger: {
       bg: '#d32f2f',
       hover: '#c62828',
       color: '#FFFFFF',
-      border: '#d32f2f'
+      border: '#d32f2f',
     },
     success: {
       bg: '#4caf50',
       hover: '#43a047',
       color: '#FFFFFF',
-      border: '#4caf50'
-    }
+      border: '#4caf50',
+    },
   };
   return colors[variant];
 };
@@ -51,18 +51,18 @@ const getButtonSize = (size: ButtonSize) => {
     small: {
       height: '32px',
       padding: '6px 16px',
-      fontSize: '0.875rem'
+      fontSize: '0.875rem',
     },
     medium: {
       height: '40px',
       padding: '8px 20px',
-      fontSize: '0.875rem'
+      fontSize: '0.875rem',
     },
     large: {
       height: '48px',
       padding: '12px 24px',
-      fontSize: '1rem'
-    }
+      fontSize: '1rem',
+    },
   };
   return sizes[size];
 };
@@ -72,7 +72,7 @@ const getButtonShape = (shape: ButtonShape) => {
   const shapes = {
     rounded: '4px',
     pill: '999px',
-    square: '0px'
+    square: '0px',
   };
   return shapes[shape];
 };
@@ -87,7 +87,7 @@ export const StyledButton = styled(Button)<{
     const colors = getButtonColors($variant);
     const sizeStyles = getButtonSize($size);
     const borderRadius = getButtonShape($shape);
-    
+
     return `
       height: ${sizeStyles.height};
       padding: ${sizeStyles.padding};
@@ -96,7 +96,11 @@ export const StyledButton = styled(Button)<{
       text-transform: none;
       font-weight: 600;
       transition: all 0.2s ease-in-out;
-      box-shadow: ${$variant === 'outline' || $variant === 'ghost' ? 'none' : '0px 1px 5px 0px #0000001F, 0px 2px 2px 0px #00000024, 0px 3px 1px -2px #00000033'};
+      box-shadow: ${
+        $variant === 'outline' || $variant === 'ghost'
+          ? 'none'
+          : '0px 1px 5px 0px #0000001F, 0px 2px 2px 0px #00000024, 0px 3px 1px -2px #00000033'
+      };
       
       background-color: ${colors.bg};
       color: ${colors.color};
@@ -105,7 +109,11 @@ export const StyledButton = styled(Button)<{
       &:hover {
         background-color: ${colors.hover};
         border-color: ${$variant === 'outline' ? colors.border : colors.hover};
-        box-shadow: ${$variant === 'outline' || $variant === 'ghost' ? 'none' : '0px 2px 8px 0px #0000002F, 0px 4px 4px 0px #00000024, 0px 6px 2px -2px #00000033'};
+        box-shadow: ${
+          $variant === 'outline' || $variant === 'ghost'
+            ? 'none'
+            : '0px 2px 8px 0px #0000002F, 0px 4px 4px 0px #00000024, 0px 6px 2px -2px #00000033'
+        };
       }
       
       &:disabled {
@@ -132,19 +140,19 @@ export const StyledIconButton = styled(IconButton)<{
   ${({ $variant, $size }) => {
     const sizeMap = {
       small: '32px',
-      medium: '40px', 
-      large: '48px'
+      medium: '40px',
+      large: '48px',
     };
-    
+
     const colors = {
       default: { bg: 'transparent', hover: '#f5f5f5', color: '#1A3353' },
       primary: { bg: '#1976D2', hover: '#1565C0', color: '#FFFFFF' },
       secondary: { bg: '#1A3353', hover: '#0F2A55', color: '#FFFFFF' },
-      danger: { bg: '#d32f2f', hover: '#c62828', color: '#FFFFFF' }
+      danger: { bg: '#d32f2f', hover: '#c62828', color: '#FFFFFF' },
     };
-    
+
     const buttonColors = colors[$variant];
-    
+
     return `
       width: ${sizeMap[$size]};
       height: ${sizeMap[$size]};
@@ -175,14 +183,14 @@ export const StyledFab = styled(Fab)<{
     const sizeMap = {
       small: { height: '32px', width: '16px' },
       medium: { height: '40px', width: '20px' },
-      large: { height: '48px', width: '24px' }
+      large: { height: '48px', width: '24px' },
     };
-    
+
     const fabSize = sizeMap[$size];
-    
+
     let borderRadius = '8px';
     let margin = '0';
-    
+
     if ($direction === 'left') {
       borderRadius = '7px 0px 0px 7px';
       margin = '0 7px 0 0';
@@ -190,7 +198,7 @@ export const StyledFab = styled(Fab)<{
       borderRadius = '0px 7px 7px 0px';
       margin = '0 0 0 7px';
     }
-    
+
     return `
       height: ${fabSize.height};
       min-height: ${fabSize.height};
