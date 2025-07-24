@@ -973,6 +973,7 @@ export function AddLeads() {
                             options={companyOptions}
                             getOptionLabel={(option) => option.name || ''}
                             value={selectedCompany}
+                            isOptionEqualToValue={(option, value) => option.id === value.id}
                             onChange={(event, newValue) => {
                               setSelectedCompany(newValue);
                               setFormData({

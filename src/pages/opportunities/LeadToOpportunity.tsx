@@ -183,7 +183,7 @@ export function LeadToOpportunity() {
       expected_revenue: (
         parseFloat(formData.amount) *
         (formData.probability / 100)
-      ).toFixed(0),
+      ).toFixed(2),
       expected_close_date: formData.expected_close_date,
     };
 

@@ -42,7 +42,7 @@ import { useNavigate } from 'react-router-dom';
 import { fetchData } from '../../components/FetchData';
 import { getComparator, stableSort } from '../../components/Sorting';
 import { Label } from '../../components/Label';
-import { FaTrashAlt } from 'react-icons/fa';
+import { FaTrashAlt,FaEdit } from 'react-icons/fa';
 import { OpportunityUrl } from '../../services/ApiUrls';
 import { DeleteModal } from '../../components/DeleteModal';
 import { FiChevronUp } from '@react-icons/all-files/fi/FiChevronUp';
@@ -234,7 +234,7 @@ export default function Opportunities(props: any) {
     return selected.indexOf(name) !== -1;
   };
 
-  const opportunityDetail = (opportunityId: any) => {
+const opportunityDetail = (opportunityId: any) => {
     navigate(`/app/opportunities/${opportunityId}/pipeline`, {
       state: {
         opportunityId,
@@ -251,6 +251,12 @@ export default function Opportunities(props: any) {
       },
     });
   };
+  const handleViewOpportunity = (opportunity: any) => {
+    navigate('view', {
+      state: { opportunityData: opportunity }
+    });
+  };
+
 
   const deleteRow = (id: any) => {
     setSelectedId(id);
@@ -557,7 +563,8 @@ export default function Opportunities(props: any) {
                                                                 </TableCell> */}
                           <TableCell
                             className="tableCell-link"
-                            onClick={() => opportunityDetail(item.id)}
+                            onClick={() => handleViewOpportunity(item)}
+
                           >
                             {item?.name ? item?.name : '---'}
                           </TableCell>
@@ -620,12 +627,12 @@ export default function Opportunities(props: any) {
                             {item?.lead_source ? item?.lead_source : '---'}
                           </TableCell>
                           <TableCell className="tableCell">
-                            {/* <IconButton>
+                            <IconButton>
                                                                         <FaEdit
-                                                                            onClick={() => EditItem(item?.id)}
+                                                                            onClick={() => opportunityDetail(item.id)}
                                                                             style={{ fill: '#1A3353', cursor: 'pointer', width: '18px' }}
                                                                         />
-                                                                    </IconButton> */}
+                                                                    </IconButton> 
                             <IconButton>
                               <FaTrashAlt
                                 onClick={() => deleteRow(item?.id)}

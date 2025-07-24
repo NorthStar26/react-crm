@@ -6,6 +6,7 @@ import {
   Typography,
   TextField,
   Grid,
+  styled,
   Button,
   Accordion,
   AccordionSummary,
@@ -14,19 +15,33 @@ import {
   FormControl,
   Select,
   MenuItem,
-  FormHelperText
+  FormHelperText,
+  IconButton,
+  Snackbar,
+  Tooltip,
+  Input
 } from '@mui/material';
-import { FaChevronDown } from 'react-icons/fa';
+import { FaChevronDown, FaTrashAlt, FaUpload } from 'react-icons/fa';
 import { FiChevronDown } from '@react-icons/all-files/fi/FiChevronDown';
+import { FiChevronUp } from '@react-icons/all-files/fi/FiChevronUp';
+import { MdOutlineMonochromePhotos } from 'react-icons/md';
 import { fetchData } from '../../components/FetchData';
 import { UserUrl } from '../../services/ApiUrls';
 import { COUNTRIES } from '../../data/countries';
 import { useUser } from '../../context/UserContext';
+import { uploadImageToCloudinary } from '../../utils/uploadImageToCloudinary';
+
+// File validation constants
+const SUPPORTED_FORMATS = ['image/jpg', 'image/jpeg', 'image/png'];
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
 
 type Response = {
   user_details: {
     email: string;
     profile_pic: string;
+    first_name: string;
+    last_name: string;
+    id: string;
   };
   address: {
     address_line: string;
@@ -36,14 +51,43 @@ type Response = {
     postcode: string;
     country: string;
     country_display: string;
+    street: string;
   };
   phone: string;
   alternate_phone: string;
 };
 
+const AvatarContainer = styled('div')({
+  position: 'relative',
+  width: 150,
+  height: 150,
+  '&:hover .avatar-actions': {
+    opacity: 1,
+  },
+});
+
+const AvatarActionButton = styled(IconButton)({
+  position: 'absolute',
+  backgroundColor: '#1A3353',
+  color: 'white',
+  transition: 'opacity 0.3s ease-in-out',
+  opacity: 0,
+  '&:hover': {
+    backgroundColor: '#1A3353',
+  },
+});
+
+const HiddenInput = styled('input')({
+  display: 'none',
+});
+
 export default function Profile() {
   const { user, updateProfile, isLoading } = useUser();
   const [countrySelectOpen, setCountrySelectOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState(false);
+  const [infoMessage, setInfoMessage] = useState('Profile picture updated successfully!');
+  const [profilePic, setProfilePic] = useState(user?.user_details.profile_pic || '');
+  const [profileErrors, setProfileErrors] = useState<{profile_pic?: string[]}>({});
 
   const inputStyles = {
     width: '313px',
@@ -80,67 +124,234 @@ export default function Profile() {
       '0px 1px 5px 0px #0000001F, 0px 2px 2px 0px #00000024, 0px 3px 1px -2px #00000033'
   };
 
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    
+    if (!file) return;
+
+    if (!SUPPORTED_FORMATS.includes(file.type)) {
+      setProfileErrors({
+        profile_pic: ['Unsupported file format. Please upload a JPG or PNG image.']
+      });
+      return;
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      setProfileErrors({
+        profile_pic: ['File size exceeds 5MB limit.']
+      });
+      return;
+    }
+
+    setProfileErrors({ profile_pic: undefined });
+
+    try {
+      const { url } = await uploadImageToCloudinary(file);
+      if (url) {
+        await updateProfilePicture(url);
+      }
+    } catch (err) {
+      console.error('Error uploading image:', err);
+      setProfileErrors({
+        profile_pic: ['Failed to upload profile picture']
+      });
+    }
+  };
+
+  const handleDeleteAvatar = async () => {
+    try {
+      const headers = {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        Authorization: localStorage.getItem('Token') || '',
+        org: localStorage.getItem('org') || '',
+      };
+
+      const response = await fetchData(
+        `${UserUrl}/${user?.user_details.id}/image/`,
+        'PUT',
+        JSON.stringify({ profile_pic: '', email: user?.user_details.email }),
+        headers
+      );
+
+      if (!response.error) {
+        setProfilePic('');
+        setInfoMessage('Profile picture removed successfully!');
+        setSuccessMessage(true);
+        setTimeout(() => setSuccessMessage(false), 3000);
+      } else {
+        throw new Error('Failed to remove profile picture');
+      }
+    } catch (err) {
+      console.error('Error removing profile picture:', err);
+      setProfileErrors({
+        profile_pic: ['Failed to remove profile picture']
+      });
+    }
+  };
+
+  const updateProfilePicture = async (url: string) => {
+    try {
+      const headers = {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        Authorization: localStorage.getItem('Token') || '',
+        org: localStorage.getItem('org') || '',
+      };
+
+      const response = await fetchData(
+        `${UserUrl}/${user?.user_details.id}/image/`,
+        'PUT',
+        JSON.stringify({ profile_pic: url, email: user?.user_details.email }),
+        headers
+      );
+
+      if (!response.error) {
+        setProfilePic(url);
+        setInfoMessage('Profile picture updated successfully!');
+        setSuccessMessage(true);
+        setTimeout(() => setSuccessMessage(false), 3000);
+      } else {
+        throw new Error(response.error);
+      }
+    } catch (err) {
+      console.error('Error updating profile picture:', err);
+      setProfileErrors({
+        profile_pic: ['Failed to update profile picture']
+      });
+    }
+  };
+
   if (isLoading || !user) {
     return <Box sx={{ mt: 8, px: 2 }}>Loading...</Box>;
   }
 
   return (
     <Box sx={{ mt: 8, px: 2 }}>
-      <Box
+      <Snackbar
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        autoHideDuration={5000}
+        onClose={() => setSuccessMessage(false)}
+        open={successMessage}
+        message={infoMessage}
+        key={'top' + 'center'}
         sx={{
-          height: 50,
-          backgroundColor: 'var(--color-azure-21, #1A3353)',
-          borderRadius: '4px 4px 0 0',
-          display: 'flex',
-          alignItems: 'center',
-          px: 2
+          '& .MuiSnackbarContent-root': {
+            backgroundColor: '#4caf50',
+            color: '#fff',
+          },
         }}
-      >
+      />
+      
+      <Box sx={{
+        height: 50,
+        backgroundColor: 'var(--color-azure-21, #1A3353)',
+        borderRadius: '4px 4px 0 0',
+        display: 'flex',
+        alignItems: 'center',
+        px: 2
+      }}>
         <Typography variant="subtitle1" sx={{ color: '#FFFFFF !important' }}>
           My Profile
         </Typography>
         <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
-          <Button variant="contained" sx={cancelButtonSx}>
-            Cancel
-          </Button>
-          <Button variant="contained" sx={saveButtonSx}>
-            Save
-          </Button>
+          <Button variant="contained" sx={cancelButtonSx}>Cancel</Button>
+          <Button variant="contained" sx={saveButtonSx}>Save</Button>
         </Box>
       </Box>
 
-      <Card
-        sx={{
-          borderRadius: '0 0 4px 4px',
-          backgroundColor: 'var(--color-white-solid, #FFFFFF)',
-          p: 4
-        }}
-      >
+      <Card sx={{
+        borderRadius: '0 0 4px 4px',
+        backgroundColor: 'var(--color-white-solid, #FFFFFF)',
+        p: 4
+      }}>
         <Accordion defaultExpanded>
           <AccordionSummary expandIcon={<FaChevronDown />}>
-            <Typography
-              variant="h6"
-              sx={{
-                fontFamily: 'Roboto',
-                fontWeight: 600,
-                fontSize: '18px',
-                lineHeight: '27px',
-                letterSpacing: '0.17px',
-                verticalAlign: 'middle'
-              }}
-            >
+            <Typography variant="h6" sx={{
+              fontFamily: 'Roboto',
+              fontWeight: 600,
+              fontSize: '18px',
+              lineHeight: '27px',
+              letterSpacing: '0.17px',
+              verticalAlign: 'middle'
+            }}>
               User Information
             </Typography>
           </AccordionSummary>
           <Divider sx={{ height: '2px', backgroundColor: 'rgba(0,0,0,0.12)', mx: 4, mb: 2 }} />
           <AccordionDetails>
             <Grid container spacing={4} justifyContent="center" alignItems="flex-start">
-              <Grid item xs={12} container justifyContent="center">
-                <Avatar
-                  src={user?.user_details.profile_pic}
-                  sx={{ width: 140, height: 140, border: '2px solid', borderColor: 'grey.400' }}
-                />
+              <Grid item xs={12} container justifyContent="center" sx={{ flexDirection: 'column', alignItems: 'center' }}>
+                <AvatarContainer>
+                  <Avatar
+                    src={profilePic || ''}
+                    alt="Profile"
+                    sx={{ width: 150, height: 150, border: '2px solid pink' }}
+                  />
+
+                  <HiddenInput
+                    id="avatar-upload"
+                    type="file"
+                    accept=".jpg,.jpeg,.png"
+                    onChange={handleAvatarChange}
+                  />
+
+                  <label htmlFor="avatar-upload" style={{ cursor: 'pointer' }}>
+                    <AvatarActionButton
+                      title="Upload"
+                      className="avatar-actions"
+                      sx={{
+                        top: '10px',
+                        right: '-35px',
+                      }}
+                      onClick={() => document.getElementById('avatar-upload')?.click()}
+
+                    >
+                      <FaUpload />
+                    </AvatarActionButton>
+                  </label>
+
+                  <AvatarActionButton
+                    title="Camera"
+                    className="avatar-actions"
+                    sx={{
+                      top: '55px',
+                      right: '-42px',
+                    }}
+                  >
+                    <MdOutlineMonochromePhotos />
+                  </AvatarActionButton>
+
+                  {profilePic && (
+                    <AvatarActionButton
+                      title="Remove"
+                      className="avatar-actions"
+                      sx={{
+                        top: '100px',
+                        right: '-35px',
+                      }}
+                      onClick={handleDeleteAvatar}
+                    >
+                      <FaTrashAlt />
+                    </AvatarActionButton>
+                  )}
+                </AvatarContainer>
+                
+                {profileErrors?.profile_pic?.[0] && (
+                  <Typography 
+                    color="error" 
+                    variant="caption" 
+                    sx={{ 
+                      display: 'block', 
+                      textAlign: 'center', 
+                      mt: 1 
+                    }}
+                  >
+                    {profileErrors.profile_pic[0]}
+                  </Typography>
+                )}
               </Grid>
+              
               <Grid item xs={12} sm={6}>
                 <Box display="flex" flexDirection="column" gap={2}>
                   <Box display="flex" alignItems="center">
@@ -162,6 +373,7 @@ export default function Profile() {
                   </Box>
                 </Box>
               </Grid>
+              
               <Grid item xs={12} sm={6}>
                 <Box display="flex" flexDirection="column" gap={2}>
                   <Box display="flex" alignItems="center">
@@ -177,8 +389,7 @@ export default function Profile() {
                         height: 40,
                         borderRadius: '4px',
                         background: '#1976D2',
-                        boxShadow:
-                          '0px 1px 5px 0px #0000001F, 0px 2px 2px 0px #00000024, 0px 3px 1px -2px #00000033'
+                        boxShadow: '0px 1px 5px 0px #0000001F, 0px 2px 2px 0px #00000024, 0px 3px 1px -2px #00000033'
                       }}
                     >
                       Change Password
@@ -199,19 +410,16 @@ export default function Profile() {
           </AccordionDetails>
         </Accordion>
 
-        <Accordion defaultExpanded sx={{ mt: 3, backgroundColor: 'var(--color-white-solid, #FFFFFF)' }}>
+        <Accordion defaultExpanded sx={{ mt: 3 }}>
           <AccordionSummary expandIcon={<FaChevronDown />}>
-            <Typography
-              variant="h6"
-              sx={{
-                fontFamily: 'Roboto',
-                fontWeight: 600,
-                fontSize: '18px',
-                lineHeight: '27px',
-                letterSpacing: '0.17px',
-                verticalAlign: 'middle'
-              }}
-            >
+            <Typography variant="h6" sx={{
+              fontFamily: 'Roboto',
+              fontWeight: 600,
+              fontSize: '18px',
+              lineHeight: '27px',
+              letterSpacing: '0.17px',
+              verticalAlign: 'middle'
+            }}>
               Address
             </Typography>
           </AccordionSummary>
@@ -249,6 +457,7 @@ export default function Profile() {
                   </Box>
                 </Box>
               </Grid>
+              
               <Grid item xs={12} sm={6}>
                 <Box display="flex" flexDirection="column" gap={2}>
                   <Box display="flex" alignItems="center">
