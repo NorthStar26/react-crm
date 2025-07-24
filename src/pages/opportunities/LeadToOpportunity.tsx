@@ -185,6 +185,7 @@ export function LeadToOpportunity() {
         (formData.probability / 100)
       ).toFixed(2),
       expected_close_date: formData.expected_close_date,
+      lead: state.leadData?.lead_obj?.id,
     };
 
     fetchData(`${OpportunityUrl}/`, 'POST', JSON.stringify(data), Header)
