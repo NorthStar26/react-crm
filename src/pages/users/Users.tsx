@@ -422,8 +422,9 @@ export default function Users() {
       cellStyle: {
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'flex-start',
         height: '100%',
+        paddingLeft: '8px',
       },
       cellRenderer: (params: any) => (
         <Stack direction="row" alignItems="center" spacing={1}>
@@ -450,7 +451,7 @@ export default function Users() {
       cellStyle: {
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'flex-start'
       },
     },
     {
@@ -459,13 +460,23 @@ export default function Users() {
       flex: 1,
       sortable: true,
       filter: true,
+      cellStyle: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'flex-start'
+      },
     },
     {
       headerName: 'Actions',
       field: 'id',
-      minWidth: 120,
+      width: 120,
       sortable: false,
       suppressClickEventBubbling: true,
+      cellStyle: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'flex-end'
+      },
       cellRenderer: (params: ICellRendererParams) => (
         <Stack direction="row" spacing={1}>
           <IconButton

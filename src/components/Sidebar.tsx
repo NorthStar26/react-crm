@@ -47,6 +47,7 @@ import EditContact from '../pages/contacts/EditContacts';
 import ContactDetails from '../pages/contacts/ContactDetails';
 import Users from '../pages/users/Users';
 import Opportunities from '../pages/opportunities/Opportunities';
+import ViewOpportunity from '../pages/opportunities/ViewOpportunity';
 import Cases from '../pages/cases/Cases';
 import { AddLeads } from '../pages/leads/AddLeads';
 import Accounts from '../pages/accounts/Accounts';
@@ -443,10 +444,10 @@ export default function Sidebar(props: any) {
                 path="/app/opportunities/add-opportunity-from-lead"
                 element={<LeadToOpportunity />}
               />
-              <Route
+              {/* <Route
                 path="/app/opportunities/opportunity-details"
                 element={<OpportunityDetails />}
-              />
+              /> */}
               <Route
                 path="/app/opportunities/edit-opportunity"
                 element={<EditOpportunity />}
@@ -456,6 +457,7 @@ export default function Sidebar(props: any) {
                 path="/app/opportunities/pipeline/:id"
                 element={<OpportunityPipeline />}
               />
+              <Route path="/app/opportunities/view" element={<ViewOpportunity />} />
               <Route
                 path="/app/opportunities/:id/pipeline"
                 element={<OpportunityPipeline />}

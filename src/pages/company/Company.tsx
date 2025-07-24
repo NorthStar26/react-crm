@@ -272,7 +272,9 @@ export default function Company() {
       cellRenderer: (params: any) => (
         <Stack direction="row" alignItems="center" spacing={1}>
           <Avatar
-            sx={{ bgcolor: '#284871', width: 32, height: 32, fontSize: 14 }}
+            src={params.data.logo_url || undefined}
+            alt={params.value}
+            sx={{ width: 32, height: 32, fontSize: 14, bgcolor: '#284871' }}
           >
             {params.value?.charAt(0).toUpperCase() || 'C'}
           </Avatar>
@@ -559,15 +561,15 @@ export default function Company() {
                       ...gridTheme,
                       '--ag-icon-color': '#FFFFFF',
                       '& .ag-header-cell-label .ag-icon, & .ag-header-cell-label .ag-icon-wrapper svg':
-                        {
-                          fill: '#FFFFFF',
-                          color: '#FFFFFF',
-                        },
+                      {
+                        fill: '#FFFFFF',
+                        color: '#FFFFFF',
+                      },
                       '& .ag-sort-ascending-icon, & .ag-sort-descending-icon, & .ag-sort-none-icon':
-                        {
-                          fill: '#FFFFFF',
-                          color: '#FFFFFF',
-                        },
+                      {
+                        fill: '#FFFFFF',
+                        color: '#FFFFFF',
+                      },
                       '& .ag-row': {
                         display: 'flex',
                         alignItems: 'center',
