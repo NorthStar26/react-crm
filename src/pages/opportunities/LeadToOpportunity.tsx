@@ -178,13 +178,14 @@ export function LeadToOpportunity() {
       description: formData.description,
       assigned_to: formData.assigned_to,
       stage: 'QUALIFICATION',
-      contact: state.leadData?.lead_obj?.contact?.id,
+      contacts: state.leadData?.lead_obj?.contact?.id,
       lead_source: state.leadData?.lead_obj?.lead_source?.toUpperCase() || '',
       expected_revenue: (
         parseFloat(formData.amount) *
         (formData.probability / 100)
       ).toFixed(2),
       expected_close_date: formData.expected_close_date,
+      lead: state.leadData?.lead_obj?.id,
     };
 
     fetchData(`${OpportunityUrl}/`, 'POST', JSON.stringify(data), Header)
