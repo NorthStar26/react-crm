@@ -48,7 +48,7 @@ export default function EuroConfetti() {
         zIndex: 9999,
       }}
     >
-      {'WON'.split('').map((letter, index) => (
+      {'Congratulations!'.split('').map((letter, index) => (
         <Typography
           key={index}
           variant="h1"
@@ -56,7 +56,7 @@ export default function EuroConfetti() {
             color: index % 2 === 0 ? '#6181c3ff' : '#1eb4ddff',
             fontWeight: 'bold',
             fontSize: '5rem',
-            animation: `letterFadeInOut 2s ${index * 0.2}s forwards`,
+            animation: `letterFadeInOut 3s ${index * 0.2}s forwards`,
             opacity: 0,
             transform: 'translateY(50px)',
             '@keyframes letterFadeInOut': {
@@ -71,10 +71,10 @@ export default function EuroConfetti() {
               '40%': {
                 transform: 'translateY(0) scale(1)',
               },
-              '60%': {
+              '80%': {
                 transform: 'translateY(-10px) scale(1.1)',
               },
-              '80%': {
+              '99%': {
                 transform: 'translateY(0) scale(1)',
                 opacity: 1,
               },
