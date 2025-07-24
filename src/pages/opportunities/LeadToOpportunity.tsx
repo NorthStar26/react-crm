@@ -621,7 +621,7 @@ export function LeadToOpportunity() {
                               ? (
                                   parseFloat(formData.amount) *
                                   (formData.probability / 100)
-                                ).toFixed(0)
+                                ).toFixed(2)
                               : ''
                           }
                           onChange={handleChange}
