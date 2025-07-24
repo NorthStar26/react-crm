@@ -1136,7 +1136,6 @@ function OpportunityPipeline() {
             left: 0,
             width: '100vw',
             height: '100vh',
-            background: 'rgba(255,255,255,0.85)', // можно убрать если не нужен белый фон
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
