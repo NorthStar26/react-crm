@@ -5,6 +5,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { CompaniesUrl } from '../../services/ApiUrls';
 import { fetchData } from '../../components/FetchData';
 import { Spinner } from '../../components/Spinner';
+import { useUser } from '../../context/UserContext';
 import EditIcon from '@mui/icons-material/Edit';
 import LanguageIcon from '@mui/icons-material/Language';
 import EmailIcon from '@mui/icons-material/Email';
@@ -27,12 +28,18 @@ type CompanyDetailsType = {
   billing_postcode: string;
   billing_country: string;
   logo_url?: string;
+  created_by?: {
+    id: string;
+    email: string;
+    profile_pic?: string;
+  };
 };
 
 export default function CompanyDetails() {
   const navigate = useNavigate();
   const { state } = useLocation();
   const { companyId } = useParams<{ companyId: string }>();
+  const { user } = useUser();
   const [companyDetails, setCompanyDetails] =
     useState<CompanyDetailsType | null>(null);
   const [loading, setLoading] = useState(true);
@@ -236,8 +243,11 @@ export default function CompanyDetails() {
                 </Box>
               </Box>
 
-              {/* Edit Button */}
-              <EditButton onClick={editHandle}>Edit Company</EditButton>
+              {/* Edit Button - Show for ADMIN/MANAGER always, or for USER only if they created the company */}
+              {(user?.role === 'ADMIN' || user?.role === 'MANAGER' || 
+                (user?.role === 'USER' && user?.user_details?.id === companyDetails?.created_by?.id)) && (
+                <EditButton onClick={editHandle}>Edit Company</EditButton>
+              )}
             </Box>
           </Card>
 

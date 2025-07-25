@@ -17,8 +17,9 @@ import { FiChevronLeft } from "@react-icons/all-files/fi/FiChevronLeft";
 import { FiChevronRight } from "@react-icons/all-files/fi/FiChevronRight";
 import { CustomTab, CustomToolbar, FabLeft, FabRight } from '../../styles/CssStyled';
 import '../../styles/style.css'
-import { TextField } from '@mui/material';
-import { FaEdit } from 'react-icons/fa';
+import { TextField,InputAdornment } from '@mui/material';
+import { FaEdit } from 'react-icons/fa';import { FiSearch } from '@react-icons/all-files/fi/FiSearch';
+import { useUser } from '../../context/UserContext';
 
 
 export const CustomTablePagination = styled(TablePagination)`
@@ -83,6 +84,7 @@ export const ToolbarNew = styled(Toolbar)({
 
 export default function Leads(props: any) {
   const navigate = useNavigate()
+  const { user } = useUser();
   const [loading, setLoading] = useState(true);
   const [leads, setLeads] = useState([]);
   const [leadsCount, setLeadsCount] = useState(0);
@@ -259,62 +261,85 @@ const handleNextPage = () => {
   const recordsList = [[10, '10 Records per page'], [20, '20 Records per page'], [30, '30 Records per page'], [40, '40 Records per page'], [50, '50 Records per page']]
   
   return (
-    <Box sx={{ mt: '60px' }}>
-      <CustomToolbar>
-        {/* 🔍 Search Field */}
-        <Box sx={{ ml: 2 }}>
-          <input
-            type="text"
-            placeholder="Search..."
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                setSearchTerm(searchInput);
-                setCurrentPage(1); // Optional: reset pagination
-              }
-            }}
-            style={{
-              height: '35px',
-              padding: '5px 10px',
-              borderRadius: '4px',
-              border: '1px solid #ccc',
-              fontSize: '14px'
-            }}
-          />
-        </Box>
+    <Box sx={{ mt: '65px' }}>
+      <CustomToolbar sx={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',backgroundColor:"#1a3353"  }}>
+        {/* Search Bar and Filter Dropdowns - Left Side */}
+        <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2, flex: 1, maxWidth: '700px', ml: 2 }}>
+          {/* Search Field */}
+          <Box sx={{ maxWidth: '400px', minWidth: '300px' }}>
+            <TextField
+                fullWidth
+                placeholder="Search leads..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                size="small"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <FiSearch style={{ color: '#757575' }} />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  backgroundColor: 'white',
+                  borderRadius: '8px',
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': {
+                      borderColor: '#E0E0E0',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: '#1976d2',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#1976d2',
+                    },
+                  },
+                }}
+              />
+          </Box>
 
-
-        {/* Status Filter */}
-        <Select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          size="small"
-          displayEmpty
-          sx={{ mr: 2 }}
-        >
-          {statusList.map((status) => (
-            <MenuItem key={status.value} value={status.value}>
-              {status.label}
-            </MenuItem>
-          ))}
-        </Select>
-
-        
-
-  
-
-        <Select
-            value={sourceFilter}
-            onChange={(e) => setSourceFilter(e.target.value)}
+          {/* Status Filter */}
+          <Select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            size="small"
             displayEmpty
+            sx={{
+                minWidth: 120,
+                backgroundColor: 'white',
+                '& .MuiSelect-select': {
+                  padding: '8px 14px',
+                },
+              }}
           >
-            {sourceList.map((source) => (
-              <MenuItem key={source.value} value={source.value}>
-                {source.label}
+            {statusList.map((status) => (
+              <MenuItem key={status.value} value={status.value}>
+                {status.label}
               </MenuItem>
             ))}
           </Select>
+
+          {/* Source Filter */}
+          <Select
+              value={sourceFilter}
+              onChange={(e) => setSourceFilter(e.target.value)}
+              displayEmpty
+              size="small"
+              sx={{
+                minWidth: 120,
+                backgroundColor: 'white',
+                '& .MuiSelect-select': {
+                  padding: '8px 14px',
+                },
+              }}
+            >
+              {sourceList.map((source) => (
+                <MenuItem key={source.value} value={source.value}>
+                  {source.label}
+                </MenuItem>
+              ))}
+            </Select>
+        </Box>
 
         
         <Stack sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
@@ -437,10 +462,13 @@ const handleNextPage = () => {
                         onClick={() => redirectToEditLead(item.id)}
                         style={{ width: '18px', height: '18px', cursor: 'pointer', color: '#1A3353' }}
                       />
-                      <FaTrashAlt
-                        onClick={() => deleteLead(item?.id)}
-                        style={{ cursor: 'pointer', color: 'red' }}
-                      />
+                      {/* Only show delete button for ADMIN and MANAGER roles */}
+                      {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
+                        <FaTrashAlt
+                          onClick={() => deleteLead(item?.id)}
+                          style={{ cursor: 'pointer', color: 'red' }}
+                        />
+                      )}
                     </Box>
                   </Stack>
                 </Box>

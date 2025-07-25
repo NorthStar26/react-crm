@@ -1,6 +1,7 @@
 // @ts-nocheck
 import React, { SyntheticEvent, useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+
 import {
   Box,
   Button,
@@ -58,6 +59,7 @@ import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 import { ICellRendererParams } from 'ag-grid-community';
 import { Grid } from '@mui/material';
+import { useUser } from '../../context/UserContext';
 
 ModuleRegistry.registerModules([ClientSideRowModelModule]);
 
@@ -125,7 +127,7 @@ export default function Users() {
   const [inactiveUsersCount, setInactiveUsersCount] = useState(0);
   const [inactiveUsersOffset, setInactiveUsersOffset] = useState(0);
   const [deleteRowModal, setDeleteRowModal] = useState(false);
-
+  const { user, logout: contextLogout } = useUser();
   const [selectOpen, setSelectOpen] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
   const [selectedId, setSelectedId] = useState<string>('');
@@ -411,99 +413,111 @@ export default function Users() {
     [50, '50 Records per page'],
   ];
   // console.log(!!(selectedId?.length === 0), 'asd');
-  const columnDefs = [
-    {
-      headerName: 'Email Address',
-      field: 'email',
-      flex: 2,
-      sortable: true,
-      filter: true,
-      domLayout: 'normal',
-      cellStyle: {
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'flex-start',
-        height: '100%',
-        paddingLeft: '8px',
+  const getColumnDefs = () => {
+    const baseColumns = [
+      {
+        headerName: 'Email Address',
+        field: 'email',
+        flex: 2,
+        sortable: true,
+        filter: true,
+        domLayout: 'normal',
+        cellStyle: {
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-start',
+          height: '100%',
+          paddingLeft: '8px',
+        },
+        cellRenderer: (params: any) => (
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <Avatar
+              sx={{ bgcolor: '#284871', width: 32, height: 32, fontSize: 14 }}
+            >
+              {params.value?.charAt(0).toUpperCase() || 'U'}
+            </Avatar>
+            <Typography
+              sx={{ color: '#1a73e8', cursor: 'pointer', textTransform: 'none' }}
+              onClick={() => userDetail(params.data.id)}
+            >
+              {params.value}
+            </Typography>
+          </Stack>
+        ),
       },
-      cellRenderer: (params: any) => (
-        <Stack direction="row" alignItems="center" spacing={1}>
-          <Avatar
-            sx={{ bgcolor: '#284871', width: 32, height: 32, fontSize: 14 }}
-          >
-            {params.value?.charAt(0).toUpperCase() || 'U'}
-          </Avatar>
-          <Typography
-            sx={{ color: '#1a73e8', cursor: 'pointer', textTransform: 'none' }}
-            onClick={() => userDetail(params.data.id)}
-          >
-            {params.value}
-          </Typography>
-        </Stack>
-      ),
-    },
-    {
-      headerName: 'Mobile Number',
-      field: 'phone',
-      flex: 1,
-      sortable: true,
-      filter: true,
-      cellStyle: {
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'flex-start'
+      {
+        headerName: 'Mobile Number',
+        field: 'phone',
+        flex: 1,
+        sortable: true,
+        filter: true,
+        cellStyle: {
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-start'
+        },
       },
-    },
-    {
-      headerName: 'Role',
-      field: 'role',
-      flex: 1,
-      sortable: true,
-      filter: true,
-      cellStyle: {
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'flex-start'
+      {
+        headerName: 'Role',
+        field: 'role',
+        flex: 1,
+        sortable: true,
+        filter: true,
+        cellStyle: {
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-start'
+        },
       },
-    },
-    {
-      headerName: 'Actions',
-      field: 'id',
-      width: 120,
-      sortable: false,
-      suppressClickEventBubbling: true,
-      cellStyle: {
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'flex-end'
-      },
-      cellRenderer: (params: ICellRendererParams) => (
-        <Stack direction="row" spacing={1}>
-          <IconButton
-            size="small"
-            onClick={(e) => {
-              e.stopPropagation();
-              EditItem(params.value);
-            }}
-            sx={{ color: '#0F2A55' }} // dark-blue edit icon
-          >
-            <FaEdit />
-          </IconButton>
+    ];
 
-          <IconButton
-            size="small"
-            onClick={(e) => {
-              e.stopPropagation();
-              deleteRow(params.value);
-            }}
-            sx={{ color: '#D32F2F' }} // red trash icon
-          >
-            <FaTrashAlt />
-          </IconButton>
-        </Stack>
-      ),
-    },
-  ];
+    // Only add Actions column for ADMIN role
+    if (user?.role === 'ADMIN') {
+      baseColumns.push({
+        headerName: 'Actions',
+        field: 'id',
+        width: 120,
+        sortable: false,
+        suppressClickEventBubbling: true,
+        cellStyle: {
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-end'
+        },
+        cellRenderer: (params: ICellRendererParams) => {
+          return (
+            <Stack direction="row" spacing={1}>
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  EditItem(params.value);
+                }}
+                sx={{ color: '#0F2A55' }} // dark-blue edit icon
+              >
+                <FaEdit />
+              </IconButton>
+
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  deleteRow(params.value);
+                }}
+                sx={{ color: '#D32F2F' }} // red trash icon
+              >
+                <FaTrashAlt />
+              </IconButton>
+            </Stack>
+          );
+        },
+      });
+    }
+
+    return baseColumns;
+  };
+
+  const columnDefs = getColumnDefs();
   const rowData = (tab === 'active' ? activeUsers : inactiveUsers).map((u) => ({
     email: u.user_details?.email || '—',
     phone: u.phone || '—',
@@ -628,22 +642,25 @@ export default function Users() {
           >
             Export
           </Button>
-          <Button
-            variant="contained"
-            startIcon={<FiPlus />}
-            onClick={onAddUser}
-            sx={{
-              borderRadius: '999px',
-              textTransform: 'none',
-              bgcolor: '#1E3A5F',
-              color: 'white',
-              fontWeight: 600,
-              px: 2,
-              '&:hover': { bgcolor: '#1E3A5F' },
-            }}
-          >
-            Add User
-          </Button>
+          {/* Only show Add User button for ADMIN role */}
+          {user?.role === 'ADMIN' && (
+            <Button
+              variant="contained"
+              startIcon={<FiPlus />}
+              onClick={onAddUser}
+              sx={{
+                borderRadius: '999px',
+                textTransform: 'none',
+                bgcolor: '#1E3A5F',
+                color: 'white',
+                fontWeight: 600,
+                px: 2,
+                '&:hover': { bgcolor: '#1E3A5F' },
+              }}
+            >
+              Add User
+            </Button>
+          )}
         </Stack>
       </CustomToolbar>
 

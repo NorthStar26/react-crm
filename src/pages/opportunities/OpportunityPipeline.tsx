@@ -1334,10 +1334,10 @@ function OpportunityPipeline() {
                               fontSize: '15px',
                               fontWeight: 400,
                               color: '#1A3353',
-                              height: '36px',
+                              
                             }}
                           >
-                            {opportunity.lead?.company?.name || 'Company Name'}
+                            {opportunity.contacts_info?.[0]?.company?.name || 'Company Name'}
                           </Typography>
                         </FieldContainer>
                       </Grid>
@@ -1352,13 +1352,9 @@ function OpportunityPipeline() {
                               color: '#1A3353',
                             }}
                           >
-                            {opportunity.lead?.contact.first_name.length +
-                              opportunity.lead?.contact.last_name.length >
-                            0
-                              ? opportunity.lead?.contact.first_name +
-                                ' ' +
-                                opportunity.lead?.contact.last_name
-                              : 'Contact'}
+                            {opportunity.contacts_info?.[0]?.first_name && opportunity.contacts_info?.[0]?.last_name
+                              ? `${opportunity.contacts_info[0].salutation || ''} ${opportunity.contacts_info[0].first_name} ${opportunity.contacts_info[0].last_name}`.trim()
+                              : opportunity.contacts_info?.[0]?.primary_email || 'Contact'}
                           </Typography>
                         </FieldContainer>
                       </Grid>
@@ -1408,14 +1404,9 @@ function OpportunityPipeline() {
                       <FieldLabel>Assigned To</FieldLabel>
                       <StyledTextField
                         value={
-                          opportunity.lead?.assigned_to?.user_details
-                            ?.first_name
-                            ? opportunity.lead?.assigned_to?.user_details
-                                ?.first_name +
-                              ' ' +
-                              opportunity.lead?.assigned_to?.user_details
-                                ?.last_name
-                            : ''
+                          opportunity.assigned_to_info?.[0]?.user_details?.first_name && opportunity.assigned_to_info?.[0]?.user_details?.last_name
+                            ? `${opportunity.assigned_to_info[0].user_details.first_name} ${opportunity.assigned_to_info[0].user_details.last_name}`
+                            : opportunity.assigned_to_info?.[0]?.user_details?.email || ''
                         }
                         InputProps={{ readOnly: true }}
                         size="small"

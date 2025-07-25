@@ -41,11 +41,13 @@ import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 import { ICellRendererParams } from 'ag-grid-community';
 import { Grid } from '@mui/material';
+import { useUser } from '../../context/UserContext';
 
 ModuleRegistry.registerModules([ClientSideRowModelModule]);
 
 export default function Company() {
   const navigate = useNavigate();
+  const { user } = useUser();
   const [loading, setLoading] = useState(true);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [companyList, setCompanyList] = useState([]);
@@ -335,26 +337,33 @@ export default function Company() {
       suppressClickEventBubbling: true,
       cellRenderer: (params: ICellRendererParams) => (
         <Stack direction="row" spacing={1}>
-          <IconButton
-            size="small"
-            onClick={(e) => {
-              e.stopPropagation();
-              editCompany(params.value);
-            }}
-            sx={{ color: '#0F2A55' }}
-          >
-            <FaEdit />
-          </IconButton>
-          <IconButton
-            size="small"
-            onClick={(e) => {
-              e.stopPropagation();
-              deleteRow(params.value);
-            }}
-            sx={{ color: '#D32F2F' }}
-          >
-            <FaTrashAlt />
-          </IconButton>
+          {/* Show edit button for ADMIN/MANAGER always, or for USER only if they created the company */}
+          {(user?.role === 'ADMIN' || user?.role === 'MANAGER' || 
+            (user?.role === 'USER' && user?.user_details?.id === params.data.created_by?.id)) && (
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                editCompany(params.value);
+              }}
+              sx={{ color: '#0F2A55' }}
+            >
+              <FaEdit />
+            </IconButton>
+          )}
+          {/* Only show delete button for ADMIN and MANAGER roles */}
+          {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                deleteRow(params.value);
+              }}
+              sx={{ color: '#D32F2F' }}
+            >
+              <FaTrashAlt />
+            </IconButton>
+          )}
         </Stack>
       ),
     },

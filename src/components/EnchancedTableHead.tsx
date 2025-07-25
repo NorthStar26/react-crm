@@ -17,7 +17,7 @@ export const EnhancedTableHead = (props: any) => {
 
     return (
         <TableHead>
-            <TableRow>
+            <TableRow sx={{ backgroundColor: '#1A3353' }}>
                 {/* <TableCell padding='checkbox'>
                     <Checkbox
                         onChange={onSelectAllClick}
@@ -26,15 +26,27 @@ export const EnhancedTableHead = (props: any) => {
                     />
                 </TableCell> */}
                 {
-                    headCells.map((headCell: any) => (
+                    headCells.map((headCell: any, index: number) => (
                         headCell.label === 'Actions' || headCell.label === 'Tags' ?
                             <TableCell
-                                sx={{ fontWeight: 'bold', color: 'rgb(26, 51, 83)' }}
+                                sx={{ 
+                                    fontWeight: 'bold', 
+                                    color: 'white',
+                                    borderBottom: '1px solid rgba(255, 255, 255, 0.12)',
+                                    ...(index === 0 && { borderTopLeftRadius: '8px' }),
+                                    ...(index === headCells.length - 1 && { borderTopRightRadius: '8px' }),
+                                }}
                                 key={headCell.id}
                                 align={headCell.numeric ? 'left' : 'left'}
                                 padding={headCell.disablePadding ? 'none' : 'normal'}>{headCell.label}</TableCell>
                             : <TableCell
-                                sx={{ fontWeight: 'bold', color: 'rgb(26, 51, 83)' }}
+                                sx={{ 
+                                    fontWeight: 'bold', 
+                                    color: 'white',
+                                    borderBottom: '1px solid rgba(255, 255, 255, 0.12)',
+                                    ...(index === 0 && { borderTopLeftRadius: '8px' }),
+                                    ...(index === headCells.length - 1 && { borderTopRightRadius: '8px' }),
+                                }}
                                 key={headCell.id}
                                 align={headCell.numeric ? 'left' : 'left'}
                                 padding={headCell.disablePadding ? 'none' : 'normal'}
@@ -44,6 +56,21 @@ export const EnhancedTableHead = (props: any) => {
                                     active={orderBy === headCell.id}
                                     direction={orderBy === headCell.id ? order : 'asc'}
                                     onClick={createSortHandler(headCell.id)}
+                                    sx={{
+                                        color: 'white !important',
+                                        '&:hover': {
+                                            color: 'white !important',
+                                        },
+                                        '&.Mui-active': {
+                                            color: 'white !important',
+                                            '& .MuiTableSortLabel-icon': {
+                                                color: 'white !important',
+                                            },
+                                        },
+                                        '& .MuiTableSortLabel-icon': {
+                                            color: 'white !important',
+                                        },
+                                    }}
                                 >
                                     {headCell.label}
                                     {

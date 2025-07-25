@@ -23,6 +23,7 @@ import { EditButton } from '../../components/Button';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ContactUrl } from '../../services/ApiUrls';
 import { fetchData } from '../../components/FetchData';
+import { useUser } from '../../context/UserContext';
 import {
   DoNotCallChip,
   ContactDetailCard,
@@ -47,6 +48,7 @@ type ContactResponse = {
   country: string;
   country_name: string;
   department: string;
+  created_by: { id: string; };
 };
 
 export const formatDate = (dateString: any) => {
@@ -61,6 +63,7 @@ export const formatDate = (dateString: any) => {
 export default function ContactDetails() {
   const navigate = useNavigate();
   const { state } = useLocation();
+  const { user } = useUser();
   const [contactDetails, setContactDetails] = useState<ContactResponse | null>(
     null
   );
@@ -200,10 +203,13 @@ export default function ContactDetails() {
               </Box>
 
               {/* Edit Button */}
-              <EditButton onClick={editHandle}>
-                <FaEdit style={{ marginRight: 8 }} />
-                Edit Contact
-              </EditButton>
+              {((user?.role === 'ADMIN' || user?.role === 'MANAGER') || 
+                (user?.role === 'USER' && contactDetails?.created_by?.id === user?.user_details?.id)) && (
+                <EditButton onClick={editHandle}>
+                  <FaEdit style={{ marginRight: 8 }} />
+                  Edit Contact
+                </EditButton>
+              )}
             </Box>
             {/* Contact Info Section */}
             <Grid container spacing={4} sx={{ mb: 4 }}>

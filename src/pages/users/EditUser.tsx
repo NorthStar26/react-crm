@@ -718,6 +718,47 @@ export function EditUser() {
                             Change Password
                           </Button>
                         )}
+                        
+                        {/* Role management for other users */}
+                        {!isCurrentUser && (
+                          <>
+                            <div className="fieldTitle">Role</div>
+                            <FormControl sx={{ width: '70%' }}>
+                              <Select
+                                name="role"
+                                value={formData.role}
+                                open={roleSelectOpen}
+                                onClick={() => setRoleSelectOpen(!roleSelectOpen)}
+                                IconComponent={() => (
+                                  <div
+                                    onClick={() =>
+                                      setRoleSelectOpen(!roleSelectOpen)
+                                    }
+                                    className="select-icon-background"
+                                  >
+                                    {roleSelectOpen ? (
+                                      <FiChevronUp className="select-icon" />
+                                    ) : (
+                                      <FiChevronDown className="select-icon" />
+                                    )}
+                                  </div>
+                                )}
+                                className={'select'}
+                                onChange={handleChange}
+                                error={!!errors?.role?.[0]}
+                              >
+                                {['ADMIN','MANAGER', 'USER'].map((option) => (
+                                  <MenuItem key={option} value={option}>
+                                    {option}
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                              <FormHelperText>
+                                {errors?.role?.[0] || profileErrors?.role?.[0] || userErrors?.role?.[0] || ''}
+                              </FormHelperText>
+                            </FormControl>
+                          </>
+                        )}
                         {/* add change password button */}
 
                         <Modal
