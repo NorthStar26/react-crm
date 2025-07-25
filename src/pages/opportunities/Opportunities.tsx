@@ -688,7 +688,13 @@ export default function Opportunities(props: any) {
                   headCells={headCells}
                 />
                 <TableBody>
-                  {filteredOpportunities?.length > 0 ? (
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={7} sx={{ border: 0 }}>
+                        <Spinner />
+                      </TableCell>
+                    </TableRow>
+                  ) : filteredOpportunities?.length > 0 ? (
                     stableSort(
                       filteredOpportunities,
                       getComparator(order, orderBy)
@@ -834,9 +840,18 @@ export default function Opportunities(props: any) {
                     })
                   ) : (
                     <TableRow>
-                      {' '}
-                      <TableCell colSpan={7} sx={{ border: 0 }}>
-                        <Spinner />
+                      <TableCell colSpan={7} sx={{ border: 0, textAlign: 'center', py: 4 }}>
+                        <Typography variant="h6" color="text.secondary">
+                          {searchTerm || selectedStage || selectedContact 
+                            ? `No opportunities found matching your search criteria${searchTerm ? ` "${searchTerm}"` : ''}`
+                            : 'No opportunities available'
+                          }
+                        </Typography>
+                        {(searchTerm || selectedStage || selectedContact) && (
+                          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                            Try adjusting your search terms or filters
+                          </Typography>
+                        )}
                       </TableCell>
                     </TableRow>
                   )}
