@@ -23,6 +23,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { AntSwitch } from '../../styles/CssStyled';
 import { ContactUrl, UserUrl } from '../../services/ApiUrls';
 import { fetchData, Header } from '../../components/FetchData';
+import { useUser } from '../../context/UserContext';
 
 type response = {
   user_details: {
@@ -62,6 +63,7 @@ export const formatDate = (dateString: any) => {
 export default function UserDetails() {
   const navigate = useNavigate();
   const { state } = useLocation();
+  const { user } = useUser();
   const [userDetails, setUserDetails] = useState<response | null>(null);
 
   useEffect(() => {
@@ -138,6 +140,10 @@ export default function UserDetails() {
   const module = 'Users';
   const crntPage = 'User Detail';
   const backBtn = 'Back To Users';
+  
+  // Determine variant based on user role - only ADMIN can edit
+  const appBarVariant = user?.role === 'ADMIN' ? 'detail' : 'view';
+  
   // console.log(userDetails, 'user');
 
   return (
@@ -149,6 +155,7 @@ export default function UserDetails() {
           backBtn={backBtn}
           crntPage={crntPage}
           editHandle={editHandle}
+          variant={appBarVariant}
         />
         <Box
           sx={{

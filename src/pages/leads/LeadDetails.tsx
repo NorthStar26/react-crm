@@ -44,6 +44,7 @@ import {
   uploadAndAttachFileToLead,
   isFileTypeAllowed,
 } from '../../utils/uploadFileToCloudinary';
+import { useUser } from '../../context/UserContext';
 
 export const formatDate = (dateString: any) => {
   const options: Intl.DateTimeFormatOptions = {
@@ -215,6 +216,7 @@ const truncateFilename = (fileName: string, maxLength: number = 20) => {
 
 function LeadDetails() {
   const navigate = useNavigate();
+  const { user } = useUser();
   // Get leadId from URL parameters
   const { leadId } = useParams<{ leadId: string }>();
   const [leadData, setLeadData] = useState<LeadResponse | null>(null);
@@ -668,22 +670,25 @@ function LeadDetails() {
           editHandle={editHandle}
           variant="detail"
           customButtons={
-            <Button
-              size="small"
-              className="header-button"
-              onClick={handleDeleteLead}
-              variant="contained"
-              sx={{
-                backgroundColor: '#d32f2f',
-                color: 'white',
-                textTransform: 'capitalize',
-                fontWeight: 'bold',
-                fontSize: '16px',
-                ':hover': { backgroundColor: '#b71c1c' },
-              }}
-            >
-              Delete Lead
-            </Button>
+            /* Only show delete button for ADMIN and MANAGER roles */
+            (user?.role === 'ADMIN' || user?.role === 'MANAGER') ? (
+              <Button
+                size="small"
+                className="header-button"
+                onClick={handleDeleteLead}
+                variant="contained"
+                sx={{
+                  backgroundColor: '#d32f2f',
+                  color: 'white',
+                  textTransform: 'capitalize',
+                  fontWeight: 'bold',
+                  fontSize: '16px',
+                  ':hover': { backgroundColor: '#b71c1c' },
+                }}
+              >
+                Delete Lead
+              </Button>
+            ) : null
           }
         />
 

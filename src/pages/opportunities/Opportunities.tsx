@@ -24,12 +24,16 @@ import {
   TableBody,
   IconButton,
   Container,
+  Chip,
+  TextField,
+  InputAdornment,
 } from '@mui/material';
 import React, { SyntheticEvent, useEffect, useState } from 'react';
 import { Spinner } from '../../components/Spinner';
 import { FiPlus } from '@react-icons/all-files/fi/FiPlus';
 import { FiChevronLeft } from '@react-icons/all-files/fi/FiChevronLeft';
 import { FiChevronRight } from '@react-icons/all-files/fi/FiChevronRight';
+import { FiSearch } from '@react-icons/all-files/fi/FiSearch';
 import {
   CustomTab,
   CustomToolbar,
@@ -48,6 +52,7 @@ import { DeleteModal } from '../../components/DeleteModal';
 import { FiChevronUp } from '@react-icons/all-files/fi/FiChevronUp';
 import { FiChevronDown } from '@react-icons/all-files/fi/FiChevronDown';
 import { EnhancedTableHead } from '../../components/EnchancedTableHead';
+import { useUser } from '../../context/UserContext';
 
 interface HeadCell {
   disablePadding: boolean;
@@ -69,16 +74,10 @@ const headCells: readonly HeadCell[] = [
     label: 'Name',
   },
   {
-    id: 'account',
+    id: 'contact',
     numeric: false,
     disablePadding: false,
-    label: 'Account',
-  },
-  {
-    id: 'assigned_to',
-    numeric: false,
-    disablePadding: false,
-    label: 'Assigned To',
+    label: 'Contact',
   },
   {
     id: 'stage',
@@ -87,22 +86,22 @@ const headCells: readonly HeadCell[] = [
     label: 'Stage',
   },
   {
-    id: 'created_on',
+    id: 'expected_result',
     numeric: false,
     disablePadding: false,
-    label: 'Created On',
+    label: 'Expected Result',
   },
   {
-    id: 'tags',
+    id: 'expected_close_date',
     numeric: false,
     disablePadding: false,
-    label: 'Tags',
+    label: 'Close Date',
   },
   {
-    id: 'lead_source',
+    id: 'assigned_to',
     numeric: false,
     disablePadding: false,
-    label: 'Lead Source',
+    label: 'Assigned To',
   },
   {
     id: '',
@@ -118,8 +117,24 @@ type Item = {
 
 export default function Opportunities(props: any) {
   const navigate = useNavigate();
+  const { user } = useUser();
   const [tab, setTab] = useState('open');
   const [loading, setLoading] = useState(true);
+
+  // Function to get stage color based on stage name
+  const getStageColor = (stage: string) => {
+    const stageColors: { [key: string]: string } = {
+
+      'NEGOTIATION': '#9C27B0', // Purple
+      'QUALIFICATION': '#51CF66', // Green
+      'IDENTIFY_DECISION_MAKERS': '#FF9800', // Orange
+      'CLOSED WON': '#4CAF50', // Green
+      'CLOSED LOST': '#F44336', // Red
+      'PROPOSAL': '#339Af0', // Blue Grey
+      'CLOSE': '#3F51B5', // Indigo
+    };
+    return stageColors[stage] || '#757575'; // Default grey color
+  };
 
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [page, setPage] = useState(0);
@@ -153,6 +168,9 @@ export default function Opportunities(props: any) {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [recordsPerPage, setRecordsPerPage] = useState<number>(10);
   const [totalPages, setTotalPages] = useState<number>(0);
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [selectedStage, setSelectedStage] = useState<string>('');
+  const [selectedContact, setSelectedContact] = useState<string>('');
 
   useEffect(() => {
     getOpportunities();
@@ -178,6 +196,7 @@ export default function Opportunities(props: any) {
           // console.log(res, 'Opportunity')
           if (!res.error) {
             setOpportunities(res?.opportunities);
+            console.log('Opportunities loaded:', res?.opportunities); // Debug log
             // setOpenOpportunities(res?.open_leads?.open_leads)
             // setOpenOpportunitiesCount(res?.open_leads?.leads_count)
             // setClosedOpportunities(res?.close_leads?.close_leads)
@@ -351,6 +370,64 @@ export default function Opportunities(props: any) {
   const modalDialog = 'Are You Sure You want to delete selected Opportunity?';
   const modalTitle = 'Delete Opportunity';
 
+  // Get unique stages from opportunities
+  const getUniqueStages = () => {
+    if (!opportunities || opportunities.length === 0) return [];
+    
+    const stages = opportunities
+      .map((item: any) => item?.stage)
+      .filter((stage: string) => stage && stage.trim() !== '')
+      .filter((stage: string, index: number, arr: string[]) => arr.indexOf(stage) === index);
+    
+    console.log('Available stages:', stages); // Debug log
+    return stages;
+  };
+
+  // Get unique contacts from opportunities
+  const getUniqueContacts = () => {
+    const contacts = opportunities
+      .map((item: any) => {
+        if (item?.contact) {
+          const fullName = `${item.contact.salutation || ''} ${item.contact.first_name || ''} ${item.contact.last_name || ''}`.trim();
+          return { id: item.contact.id, name: fullName };
+        }
+        return null;
+      })
+      .filter((contact: any) => contact && contact.name)
+      .filter((contact: any, index: number, arr: any[]) => 
+        arr.findIndex((c: any) => c.id === contact.id) === index
+      );
+    return contacts;
+  };
+
+  // Filter opportunities based on search term, stage, and contact
+  const filteredOpportunities = opportunities.filter((item: any) => {
+    // Search term filter
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      const opportunityName = item?.name?.toLowerCase() || '';
+      const contactName = item?.contact 
+        ? `${item.contact.salutation || ''} ${item.contact.first_name || ''} ${item.contact.last_name || ''}`.toLowerCase().trim()
+        : '';
+      
+      if (!opportunityName.includes(searchLower) && !contactName.includes(searchLower)) {
+        return false;
+      }
+    }
+
+    // Stage filter
+    if (selectedStage && item?.stage !== selectedStage) {
+      return false;
+    }
+
+    // Contact filter
+    if (selectedContact && item?.contact?.id !== selectedContact) {
+      return false;
+    }
+
+    return true;
+  });
+
   const recordsList = [
     [10, '10 Records per page'],
     [20, '20 Records per page'],
@@ -388,23 +465,108 @@ export default function Opportunities(props: any) {
     'leading',
   ];
   return (
-    <Box sx={{ mt: '60px' }}>
-      <CustomToolbar sx={{ flexDirection: 'row-reverse' }}>
-        {/* <Tabs defaultValue={tab} onChange={handleChangeTab} sx={{ mt: '26px' }}>
-          <CustomTab value="open" label="Open"
-            sx={{
-              backgroundColor: tab === 'open' ? '#F0F7FF' : '#284871',
-              color: tab === 'open' ? '#3f51b5' : 'white',
-            }} />
-          <CustomTab value="closed" label="Closed"
-            sx={{
-              backgroundColor: tab === 'closed' ? '#F0F7FF' : '#284871',
-              color: tab === 'closed' ? '#3f51b5' : 'white',
-              ml: '5px',
-            }}
-          />
-        </Tabs> */}
+    <Box sx={{ mt: '65px' }}>
+      <CustomToolbar sx={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',backgroundColor:"#1a3353"  }}>
+        {/* Search Bar and Filter Dropdowns - Left Side */}
+        <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2, flex: 1, maxWidth: '700px' }}>
+          {/* Search Bar */}
+          <Box sx={{ maxWidth: '400px', minWidth: '300px' }}>
+            <TextField
+              fullWidth
+              placeholder="Search opportunities..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              size="small"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <FiSearch style={{ color: '#757575' }} />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                backgroundColor: 'white',
+                borderRadius: '8px',
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': {
+                    borderColor: '#E0E0E0',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#1976d2',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#1976d2',
+                  },
+                },
+              }}
+            />
+          </Box>
 
+          {/* Stage Filter */}
+          <Select
+            value={selectedStage}
+            onChange={(e) => setSelectedStage(e.target.value)}
+            displayEmpty
+            size="small"
+            disabled={loading || !opportunities || opportunities.length === 0}
+            sx={{
+              minWidth: 120,
+              backgroundColor: 'white',
+              '& .MuiSelect-select': {
+                padding: '8px 14px',
+              },
+            }}
+          >
+            <MenuItem value="">
+              <Typography sx={{ color: '#757575' }}>All Stages</Typography>
+            </MenuItem>
+            {!loading && opportunities && opportunities.length > 0 && getUniqueStages().map((stage: string, index: number) => (
+              <MenuItem key={`stage-${index}-${stage}`} value={stage}>
+                <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                  <Chip
+                    label={stage}
+                    size="small"
+                    sx={{
+                      backgroundColor: getStageColor(stage),
+                      color: 'white',
+                      fontWeight: 'bold',
+                      fontSize: '0.7rem',
+                      height: '20px',
+                      minWidth: '80px',
+                    }}
+                  />
+                </Box>
+              </MenuItem>
+            ))}
+          </Select>
+
+          {/* Contact Filter */}
+          <Select
+            value={selectedContact}
+            onChange={(e) => setSelectedContact(e.target.value)}
+            displayEmpty
+            size="small"
+            disabled={loading || !opportunities || opportunities.length === 0}
+            sx={{
+              minWidth: 140,
+              backgroundColor: 'white',
+              '& .MuiSelect-select': {
+                padding: '8px 14px',
+              },
+            }}
+          >
+            <MenuItem value="">
+              <Typography sx={{ color: '#757575' }}>All Contacts</Typography>
+            </MenuItem>
+            {!loading && opportunities && opportunities.length > 0 && getUniqueContacts().map((contact: any) => (
+              <MenuItem key={contact.id} value={contact.id}>
+                {contact.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </Box>
+
+        {/* Pagination and Add Button - Right Side */}
         <Stack
           sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}
         >
@@ -520,15 +682,15 @@ export default function Opportunities(props: any) {
                   // onSelectAllClick={handleSelectAllClick}
                   onRequestSort={handleRequestSort}
                   // rowCount={tab === 'open' ? openOpportunities?.length : closedOpportunities?.length}
-                  rowCount={opportunities?.length}
+                  rowCount={filteredOpportunities?.length}
                   numSelectedId={selectedId}
                   isSelectedId={isSelectedId}
                   headCells={headCells}
                 />
                 <TableBody>
-                  {opportunities?.length > 0 ? (
+                  {filteredOpportunities?.length > 0 ? (
                     stableSort(
-                      opportunities,
+                      filteredOpportunities,
                       getComparator(order, orderBy)
                     ).map((item: any, index: any) => {
                       // .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((item: any, index: any) => {
@@ -568,10 +730,48 @@ export default function Opportunities(props: any) {
                             {item?.name ? item?.name : '---'}
                           </TableCell>
                           <TableCell className="tableCell">
-                            {item?.account ? item?.account?.name : '---'}
+                            {item?.contact ? (
+                              `${item.contact.salutation || ''} ${item.contact.first_name || ''} ${item.contact.last_name || ''}`.trim()
+                            ) : (
+                              '---'
+                            )}
                           </TableCell>
                           <TableCell className="tableCell">
-                            {item?.assigned_to ? (
+                            {item?.stage ? (
+                              <Chip
+                                label={item.stage}
+                                sx={{
+                                  backgroundColor: getStageColor(item.stage),
+                                  color: 'white',
+                                  fontWeight: 'bold',
+                                  fontSize: '0.75rem',
+                                  height: '24px',
+                                  borderRadius: '12px',
+                                }}
+                              />
+                            ) : (
+                              '---'
+                            )}
+                          </TableCell>
+                          <TableCell className="tableCell">
+                            {item?.amount && item?.probability ? (
+                              <Stack>
+                                <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                                  {item.currency || '$'} {item.amount?.toLocaleString()}
+                                </Typography>
+                                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                  {item.probability}% Probability
+                                </Typography>
+                              </Stack>
+                            ) : (
+                              '---'
+                            )}
+                          </TableCell>
+                          <TableCell className="tableCell">
+                            {item?.expected_close_date ? item?.expected_close_date : '---'}
+                          </TableCell>
+                          <TableCell className="tableCell">
+                            {item?.assigned_to && item.assigned_to.length > 0 ? (
                               <Stack
                                 style={{
                                   display: 'flex',
@@ -581,49 +781,28 @@ export default function Opportunities(props: any) {
                               >
                                 <Avatar
                                   src={
-                                    item?.assigned_to?.user_details
-                                      ?.profile_pic || ''
+                                    item.assigned_to[0]?.user_details?.profile_pic || ''
                                   }
                                   alt={
-                                    item?.assigned_to?.user_details?.email ||
-                                    item?.assigned_to?.user_details
-                                      ?.first_name ||
+                                    item.assigned_to[0]?.user_details?.first_name ||
+                                    item.assigned_to[0]?.user_details?.email ||
                                     'User'
                                   }
-                                />
+                                  sx={{ width: 32, height: 32 }}
+                                >
+                                  {item.assigned_to[0]?.user_details?.first_name?.charAt(0).toUpperCase() || 'U'}
+                                </Avatar>
                                 <Stack sx={{ ml: 1 }}>
-                                  {item?.assigned_to?.user_details
-                                    ?.first_name &&
-                                  item?.assigned_to?.user_details?.last_name
-                                    ? `${item?.assigned_to?.user_details?.first_name} ${item?.assigned_to?.user_details?.last_name}`
-                                    : item?.assigned_to?.user_details?.email ||
+                                  {item.assigned_to[0]?.user_details?.first_name &&
+                                  item.assigned_to[0]?.user_details?.last_name
+                                    ? `${item.assigned_to[0].user_details.first_name} ${item.assigned_to[0].user_details.last_name}`
+                                    : item.assigned_to[0]?.user_details?.email ||
                                       '---'}
                                 </Stack>
                               </Stack>
                             ) : (
                               '---'
                             )}
-                          </TableCell>
-                          <TableCell className="tableCell">
-                            {item?.stage ? item?.stage : '---'}
-                          </TableCell>
-                          <TableCell className="tableCell">
-                            {item?.created_on_arrow
-                              ? item?.created_on_arrow
-                              : '---'}
-                          </TableCell>
-                          <TableCell className="tableCell">
-                            {item?.tags?.length
-                              ? item?.tags.map((tag: any, i: any) => (
-                                  <Stack sx={{ mr: 0.5 }}>
-                                    {' '}
-                                    <Label tags={tag} />
-                                  </Stack>
-                                ))
-                              : '---'}
-                          </TableCell>
-                          <TableCell className="tableCell">
-                            {item?.lead_source ? item?.lead_source : '---'}
                           </TableCell>
                           <TableCell className="tableCell">
                             <IconButton>
@@ -636,16 +815,19 @@ export default function Opportunities(props: any) {
                                 }}
                               />
                             </IconButton>
-                            <IconButton>
-                              <FaTrashAlt
-                                onClick={() => deleteRow(item?.id)}
-                                style={{
-                                  fill: '#1A3353',
-                                  cursor: 'pointer',
-                                  width: '15px',
-                                }}
-                              />
-                            </IconButton>
+                            {/* Only show delete button for ADMIN and MANAGER roles */}
+                            {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
+                              <IconButton>
+                                <FaTrashAlt
+                                  onClick={() => deleteRow(item?.id)}
+                                  style={{
+                                    fill: '#DC3545',
+                                    cursor: 'pointer',
+                                    width: '15px',
+                                  }}
+                                />
+                              </IconButton>
+                            )}
                           </TableCell>
                         </TableRow>
                       );
@@ -653,7 +835,7 @@ export default function Opportunities(props: any) {
                   ) : (
                     <TableRow>
                       {' '}
-                      <TableCell colSpan={8} sx={{ border: 0 }}>
+                      <TableCell colSpan={7} sx={{ border: 0 }}>
                         <Spinner />
                       </TableCell>
                     </TableRow>

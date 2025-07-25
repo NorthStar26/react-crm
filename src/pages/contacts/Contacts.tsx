@@ -39,6 +39,7 @@ ModuleRegistry.registerModules([ClientSideRowModelModule]);
 import LANGUAGE_CHOICES from '../../data/LANGUAGE';
 import '../../styles/contacts-table.css';
 import { CustomToolbar } from '../../styles/CssStyled';
+import { useUser } from '../../context/UserContext';
 // const JOB_TITLES = [
 //   'Head of Sales',
 //   'Project Manager',
@@ -131,6 +132,7 @@ const PhoneNumberCellRenderer = (props: ICellRendererParams) => {
 
 const ActionsCellRenderer = (props: ICellRendererParams) => {
   const navigate = useNavigate();
+  const user = props.context.user; // Get user from context
 
   const handleEdit = () => {
     navigate(`/app/contacts/contact-details`, {
@@ -142,22 +144,34 @@ const ActionsCellRenderer = (props: ICellRendererParams) => {
     props.context.componentParent.deleteRow(props.data.id);
   };
 
+  // Check if user can edit (ADMIN/MANAGER always, USER only if they created the contact)
+  const canEdit = user?.role === 'ADMIN' || user?.role === 'MANAGER' || 
+    (user?.role === 'USER' && user?.user_details?.id === props.data.created_by?.id);
+
+  // Check if user can delete (only ADMIN and MANAGER)
+  const canDelete = user?.role === 'ADMIN' || user?.role === 'MANAGER';
+
   return (
     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-      <FaEdit
-        style={{ cursor: 'pointer', color: '#1976d2', fontSize: '16px' }}
-        onClick={handleEdit}
-      />
-      <FaTrashAlt
-        style={{ cursor: 'pointer', color: '#d32f2f', fontSize: '16px' }}
-        onClick={handleDelete}
-      />
+      {canEdit && (
+        <FaEdit
+          style={{ cursor: 'pointer', color: '#1976d2', fontSize: '16px' }}
+          onClick={handleEdit}
+        />
+      )}
+      {canDelete && (
+        <FaTrashAlt
+          style={{ cursor: 'pointer', color: '#d32f2f', fontSize: '16px' }}
+          onClick={handleDelete}
+        />
+      )}
     </div>
   );
 };
 
 export default function Contacts() {
   const navigate = useNavigate();
+  const { user } = useUser();
   const [loading, setLoading] = useState(true);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [contactList, setContactList] = useState([]);
@@ -729,7 +743,7 @@ export default function Contacts() {
                     setGridApi(params.api);
                     params.api.sizeColumnsToFit();
                   }}
-                  context={{ componentParent: { deleteRow } }}
+                  context={{ componentParent: { deleteRow }, user }}
                   getRowId={(params) => params.data.id}
                   animateRows={true}
                   suppressNoRowsOverlay={false}

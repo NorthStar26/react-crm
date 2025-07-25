@@ -21,6 +21,7 @@ import {
   InputLabel,
   OutlinedInput,
   Stack,
+  CircularProgress,
 } from '@mui/material';
 import TextField from '@mui/material/TextField';
 import PercentIcon from '@mui/icons-material/Percent';
@@ -47,6 +48,8 @@ import '../../styles/style.css';
 import { UserOption } from '../../services/userService';
 import Avatar from '@mui/material/Avatar';
 import { AlertType, SuccessAlert } from '../../components/Button/SuccessAlert';
+import { fetchUserOptions } from '../../services/userService';
+import { useDebounce } from '../../hooks/useDebounce';
 
 type FormErrors = {
   opportunity_title?: string[];
@@ -86,6 +89,14 @@ export function LeadToOpportunity() {
 
   const [selectedUsers, setSelectedUsers] = useState<UserOption[]>([]);
 
+  // User search states (like in AddLeads.tsx)
+  const [userOptions, setUserOptions] = useState<UserOption[]>([]);
+  const [userSearchTerm, setUserSearchTerm] = useState('');
+  const [userLoading, setUserLoading] = useState(false);
+
+  // Debounce search term to prevent excessive API calls
+  const debouncedUserSearch = useDebounce(userSearchTerm, 400);
+
   const [errors, setErrors] = useState<FormErrors>({});
   const [formData, setFormData] = useState<FormData>({
     opportunity_title: '',
@@ -116,6 +127,43 @@ export function LeadToOpportunity() {
       initialContentRef.current = quillRef.current.firstChild.innerHTML;
     }
   }, [quill]);
+
+  // Load users when the component mounts or search term changes (like in AddLeads.tsx)
+  useEffect(() => {
+    const loadUsers = async () => {
+      setUserLoading(true);
+      const result = await fetchUserOptions(debouncedUserSearch);
+
+      if (result.options) {
+        setUserOptions(result.options);
+      }
+      setUserLoading(false);
+    };
+
+    loadUsers();
+  }, [debouncedUserSearch]);
+
+  // Initialize selected user if formData.assigned_to has a value (like in AddLeads.tsx)
+  useEffect(() => {
+    if (formData.assigned_to && selectedUsers.length === 0) {
+      const fetchSelectedUser = async () => {
+        setUserLoading(true);
+        const result = await fetchUserOptions('');
+
+        if (result.options) {
+          const user = result.options.find(
+            (option) => option.id === formData.assigned_to
+          );
+          if (user) {
+            setSelectedUsers([user]);
+          }
+        }
+        setUserLoading(false);
+      };
+
+      fetchSelectedUser();
+    }
+  }, [formData.assigned_to, selectedUsers]);
 
   const handleChange = (e: any) => {
     const { name, value, files, type, checked, id } = e.target;
@@ -244,6 +292,11 @@ export function LeadToOpportunity() {
       lead_source: '',
     });
     setErrors({});
+    
+    // Reset user search states (like in AddLeads.tsx)
+    setSelectedUsers([]);
+    setUserSearchTerm('');
+    setUserOptions([]);
   };
   const onCancel = () => {
     resetForm();
@@ -318,7 +371,7 @@ export function LeadToOpportunity() {
                           <Autocomplete
                             // Remove multiple selection since API expects a single user
                             id="assign-to-select"
-                            options={state?.leadData?.users || []}
+                            options={userOptions}
                             value={
                               selectedUsers.length > 0 ? selectedUsers[0] : null
                             }
@@ -350,9 +403,9 @@ export function LeadToOpportunity() {
                                   : 'None'
                               );
                             }}
-                            // onInputChange={(event, newInputValue) => {
-                            //   setUserSearchTerm(newInputValue);
-                            // }}
+                            onInputChange={(event, newInputValue) => {
+                              setUserSearchTerm(newInputValue);
+                            }}
                             getOptionLabel={(option) => {
                               // Get the name from user_details if available, otherwise fall back to old properties
                               const firstName =
@@ -375,15 +428,15 @@ export function LeadToOpportunity() {
                                 placeholder="Search users..."
                                 error={!!errors?.assigned_to?.[0]}
                                 helperText={errors?.assigned_to?.[0] || ''}
-                                // InputProps={{
-                                //   ...params.InputProps,
-                                //   endAdornment: (
-                                //     <>
-                                //       {userLoading ? <CircularProgress color="inherit" size={20} /> : null}
-                                //       {params.InputProps.endAdornment}
-                                //     </>
-                                //   ),
-                                // }}
+                                InputProps={{
+                                  ...params.InputProps,
+                                  endAdornment: (
+                                    <>
+                                      {userLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                                      {params.InputProps.endAdornment}
+                                    </>
+                                  ),
+                                }}
                               />
                             )}
                             renderOption={(props, option) => {

@@ -88,7 +88,7 @@ export default function Sidebar(props: any) {
 
   useEffect(() => {
     toggleScreen();
-  }, [navigate]);
+  }, [navigate, user]);
 
   // useEffect(() => {
   // navigate('/leads')
@@ -121,7 +121,14 @@ export default function Sidebar(props: any) {
     } else if (location.pathname.split('/')[2] === 'companies') {
       setScreen('companies');
     } else if (location.pathname.split('/')[2] === 'users') {
-      setScreen('CRM-Admin Dashboard');
+      // Only allow access to users page for ADMIN and MANAGER roles
+      if (user?.role === 'ADMIN' || user?.role === 'MANAGER') {
+        setScreen('users');
+      } else {
+        // Redirect USER role away from users page
+        navigate('/app/leads');
+        setScreen('leads');
+      }
     } else if (location.pathname.split('/')[2] === 'cases') {
       setScreen('cases');
     }
@@ -139,15 +146,26 @@ export default function Sidebar(props: any) {
       });
   };
 
-  const navList = [
-    'leads',
-    'contacts',
-    'opportunities',
-    'accounts',
-    'companies',
-    'users',
-    'cases',
-  ];
+  // Filter navigation items based on user role
+  const getFilteredNavList = () => {
+    const baseNavList = [
+      'leads',
+      'contacts',
+      'opportunities',
+      'accounts',
+      'companies',
+    ];
+
+    // Add users section for ADMIN and MANAGER roles only (not for USER role)
+    if (user?.role === 'ADMIN' || user?.role === 'MANAGER') {
+      baseNavList.push('users');
+    }
+
+    baseNavList.push('cases');
+    return baseNavList;
+  };
+
+  const navList = getFilteredNavList();
   const navIcons = (text: any, screen: any): React.ReactNode => {
     switch (text) {
       case 'leads':
@@ -264,7 +282,7 @@ export default function Sidebar(props: any) {
                   mt: '5px',
                 }}
               >
-                {screen}
+                {screen === 'users' ? 'User Management' : screen}
               </Typography>
             </Toolbar>
           </Box>
@@ -431,10 +449,21 @@ export default function Sidebar(props: any) {
                 path="/app/accounts/edit-account"
                 element={<EditAccount />}
               />
-              <Route path="/app/users" element={<Users />} />
-              <Route path="/app/users/add-users" element={<AddUsers />} />
-              <Route path="/app/users/edit-user" element={<EditUser />} />
-              <Route path="/app/users/user-details" element={<UserDetails />} />
+              {/* Users routes - role-based access */}
+              {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
+                <>
+                  <Route path="/app/users" element={<Users />} />
+                  <Route path="/app/users/user-details" element={<UserDetails />} />
+                  
+                  {/* Admin-only routes */}
+                  {user?.role === 'ADMIN' && (
+                    <>
+                      <Route path="/app/users/add-users" element={<AddUsers />} />
+                      <Route path="/app/users/edit-user" element={<EditUser />} />
+                    </>
+                  )}
+                </>
+              )}
               <Route path="/app/opportunities" element={<Opportunities />} />
               <Route
                 path="/app/opportunities/add-opportunity"
