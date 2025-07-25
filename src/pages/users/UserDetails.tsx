@@ -280,7 +280,7 @@ export default function UserDetails() {
                     style={{
                       fontSize: '16px',
                       color: '#1E90FF',
-                      marginTop: '5%',
+                     
                     }}
                   >
                     {userDetails?.role || '---'}
@@ -291,42 +291,13 @@ export default function UserDetails() {
                   <div className="title3">{userDetails?.phone || '---'}</div>
                 </div>
                 <div style={{ width: '32%' }}>
-                  <div className="title2">Marketing Access</div>
-                  <div className="title3">
-                    <AntSwitch checked={userDetails?.has_marketing_access} />
-                  </div>
-                </div>
-              </div>
-              <div
-                style={{
-                  padding: '20px',
-                  marginTop: '15px',
-                  display: 'flex',
-                  flexDirection: 'row',
-                  // , justifyContent: 'space-between'
-                }}
-              >
-                <div style={{ width: '34%' }}>
-                  <div className="title2">Sales Access</div>
-                  <div className="title3">
-                    <AntSwitch checked={userDetails?.has_sales_access} />
-                  </div>
-                </div>
-                <div style={{ width: '32%' }}>
                   <div className="title2">Date of joining</div>
                   <div className="title3">
                     {userDetails?.date_of_joining || '---'}
                   </div>
                 </div>
-                {/* <div style={{ width: '32%' }}>
-                                    <div className='title2'>Do Not Call</div>
-                                    <div className='title3'>
-                                        <AntSwitch
-                                            checked={contactDetails?.do_not_call}
-                                            inputProps={{ 'aria-label': 'ant design' }} />
-                                    </div>
-                                </div> */}
               </div>
+              
               {/* Address details */}
               <div style={{ marginTop: '15px' }}>
                 <div
