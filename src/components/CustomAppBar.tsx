@@ -24,8 +24,9 @@ interface CustomAppBarProps {
   onSave?: () => void;
   disabled?: boolean;
   saving?: boolean;
-  variant?: 'form' | 'detail' | 'view' | 'pipeline'; // New prop to define page type
+  variant?: 'form' | 'detail' | 'view' | 'pipeline' | 'edit'; // Added 'edit' variant
   customButtons?: React.ReactNode; // New prop to add custom buttons
+  isEditing?: boolean; // New prop to track editing state
 }
 
 export function CustomAppBar({
@@ -41,6 +42,7 @@ export function CustomAppBar({
   saving = false,
   variant,
   customButtons,
+  isEditing = false, // New prop with default value
 }: CustomAppBarProps) {
   const location = useLocation();
   const sharedData = useMyContext();
@@ -60,6 +62,85 @@ export function CustomAppBar({
   // Render buttons depending on page type
   const renderActionButtons = () => {
     switch (pageVariant) {
+      case 'edit':
+        return (
+          <div className="saveClose">
+            <div style={{ marginRight: '10px' }}>
+              <Button
+                size="small"
+                className="header-button"
+                onClick={backbtnHandle}
+                startIcon={
+                  <FiChevronLeft
+                    style={{ fontSize: '20px', marginRight: '-2px' }}
+                  />
+                }
+                style={{ backgroundColor: 'white', color: '#5B5C63' }}
+              >
+                {backBtn || 'Back'}
+              </Button>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              {customButtons}
+              {!isEditing ? (
+                <Button
+                  type="button"
+                  variant="contained"
+                  className="header-button"
+                  size="small"
+                  onClick={editHandle}
+                  startIcon={<FaEdit style={{ fill: 'white', width: '16px' }} />}
+                  style={{
+                    textTransform: 'capitalize',
+                    fontWeight: 'bold',
+                    fontSize: '16px',
+                  }}
+                >
+                  Edit
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    className="header-button"
+                    onClick={onCancel}
+                    size="small"
+                    variant="contained"
+                    startIcon={
+                      <FaTimesCircle
+                        style={{ fill: 'white', width: '16px', marginLeft: '2px' }}
+                      />
+                    }
+                    sx={{
+                      backgroundColor: '#2b5075',
+                      ':hover': { backgroundColor: '#1e3750' },
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    className="header-button"
+                    onClick={onSubmit}
+                    variant="contained"
+                    size="small"
+                    disabled={disabled}
+                    startIcon={
+                      <FaCheckCircle
+                        style={{
+                          fill: disabled ? 'rgba(255, 255, 255, 0.5)' : 'white',
+                          width: '16px',
+                          marginLeft: '2px',
+                        }}
+                      />
+                    }
+                  >
+                    Save
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+        );
+
       case 'detail':
         return (
           <div className="saveClose">

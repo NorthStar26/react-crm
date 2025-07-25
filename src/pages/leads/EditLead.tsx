@@ -22,9 +22,6 @@ import {
   Avatar,
   Stack,
   CircularProgress,
-  Switch,
-  FormControlLabel,
-  Paper,
   Alert,
   Snackbar,
   Link,
@@ -972,6 +969,13 @@ export function EditLead() {
     if (quill && initialContentRef.current !== null) {
       quill.clipboard.dangerouslyPasteHTML(initialContentRef.current);
     }
+    // Set form back to read-only mode
+    setIsEditable(false);
+    
+    // Disable Quill editor (read-only mode)
+    if (quill) {
+      quill.enable(false);
+    }
   }
 
   const backbtnHandle = () => {
@@ -1002,56 +1006,19 @@ export function EditLead() {
   }
 
   return (
-    <Box sx={{ mt: '60px' }}>
-      <CustomAppBar backbtnHandle={backbtnHandle} module={module} backBtn={backBtn} crntPage={crntPage} onCancel={onCancel} onSubmit={handleSubmit} />
+    <Box sx={{ mt: '130px' }}>
+      <CustomAppBar 
+        backbtnHandle={backbtnHandle} 
+        module={module} 
+        backBtn={backBtn} 
+        crntPage={crntPage} 
+        onCancel={onCancel} 
+        onSubmit={handleSubmit} 
+        variant='edit'
+        editHandle={toggleEditMode}
+        isEditing={isEditable}
+      />
       
-      
-      {/* Edit Mode Toggle */}
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mt: 18, mx: 3 }}>
-        {/* Prominent Edit Button */}
-        <Paper 
-          elevation={3} 
-          sx={{ 
-            p: 1, 
-            display: 'flex', 
-            alignItems: 'center', 
-            backgroundColor: isEditable ? '#e3f2fd' : 'white',
-            borderRadius: '8px',
-            border: isEditable ? '2px solid #2196f3' : '1px solid #e0e0e0',
-            width: '320px',  // Fixed width to prevent size changes
-            justifyContent: 'space-between' // Even spacing between elements
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', minWidth: '180px' }}>
-            {!isEditable && (
-              <Typography variant="body2" color="text.secondary">
-                <FaTimesCircle style={{ color: '#f44336', marginRight: '5px' }} />
-                Form is currently in read-only mode
-              </Typography>
-            )}
-            {isEditable && (
-              <Typography variant="body2" color="primary">
-                <FaCheckCircle style={{ color: '#4caf50', marginRight: '5px' }} />
-                Editing mode active
-              </Typography>
-            )}
-          </Box>
-          <Tooltip title={isEditable ? "Exit edit mode and return to read-only view" : "Click to edit this lead"}>
-            <FormControlLabel
-              control={
-                <Switch 
-                  checked={isEditable}
-                  onChange={toggleEditMode}
-                  color="primary"
-                />
-              }
-              label={isEditable ? "Edit Mode" : "Read-only"}
-              labelPlacement="start"
-              sx={{ m: 0 }} // Remove default margin
-            />
-          </Tooltip>
-        </Paper>
-      </Box>
       <Box >
         <form onSubmit={handleSubmit}>
           <div style={{ padding: '10px' }}>
