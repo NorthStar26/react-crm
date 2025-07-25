@@ -19,7 +19,8 @@ import {
   IconButton,
   Snackbar,
   Tooltip,
-  Input
+  Input,
+  Modal
 } from '@mui/material';
 import { FaChevronDown, FaTrashAlt, FaUpload } from 'react-icons/fa';
 import { FiChevronDown } from '@react-icons/all-files/fi/FiChevronDown';
@@ -34,6 +35,37 @@ import { uploadImageToCloudinary } from '../../utils/uploadImageToCloudinary';
 // File validation constants
 const SUPPORTED_FORMATS = ['image/jpg', 'image/jpeg', 'image/png'];
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
+
+type FormErrors = {
+  email?: string[];
+  phone?: string[];
+  alternate_phone?: string[];
+  address_line?: string[];
+  street?: string[];
+  city?: string[];
+  state?: string[];
+  postcode?: string[];
+  country?: string[];
+  profile_pic?: string[];
+  first_name?: string[];
+  last_name?: string[];
+  password?: string[];
+};
+
+interface FormData {
+  email: string;
+  phone: string;
+  alternate_phone: string;
+  address_line: string;
+  street: string;
+  city: string;
+  state: string;
+  postcode: string;
+  country: string;
+  profile_pic: string | null;
+  first_name: string;
+  last_name: string;
+}
 
 type Response = {
   user_details: {
@@ -82,12 +114,212 @@ const HiddenInput = styled('input')({
 });
 
 export default function Profile() {
-  const { user, updateProfile, isLoading } = useUser();
+  const { user, updateProfile, isLoading, loadUserProfile } = useUser();
   const [countrySelectOpen, setCountrySelectOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState(false);
   const [infoMessage, setInfoMessage] = useState('Profile picture updated successfully!');
   const [profilePic, setProfilePic] = useState(user?.user_details.profile_pic || '');
-  const [profileErrors, setProfileErrors] = useState<{profile_pic?: string[]}>({});
+  const [profileErrors, setProfileErrors] = useState<FormErrors>({});
+  const [userErrors, setUserErrors] = useState<FormErrors>({});
+  
+  // Form data state
+  const [formData, setFormData] = useState<FormData>({
+    email: '',
+    phone: '',
+    alternate_phone: '',
+    address_line: '',
+    street: '',
+    city: '',
+    state: '',
+    postcode: '',
+    country: '',
+    profile_pic: '',
+    first_name: '',
+    last_name: '',
+  });
+  
+  // Edit mode state
+  const [isEditing, setIsEditing] = useState(false);
+  
+  // Password change modal state
+  const [open, setOpen] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => {
+    setOpen(false);
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setProfileErrors({ ...profileErrors, password: undefined });
+  };
+
+  // Initialize form data when user loads
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        email: user.user_details.email || '',
+        phone: user.phone || '',
+        alternate_phone: user.alternate_phone || '',
+        address_line: user.address.address_line || '',
+        street: user.address.street || '',
+        city: user.address.city || '',
+        state: user.address.state || '',
+        postcode: user.address.postcode || '',
+        country: user.address.country || '',
+        profile_pic: user.user_details.profile_pic || '',
+        first_name: user.user_details.first_name || '',
+        last_name: user.user_details.last_name || '',
+      });
+      setProfilePic(user.user_details.profile_pic || '');
+    }
+  }, [user]);
+
+  const handleChange = (e: any) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    
+    // Clear errors for the specific field being changed
+    if (profileErrors[name as keyof FormErrors]) {
+      setProfileErrors({ ...profileErrors, [name]: undefined });
+    }
+    if (userErrors[name as keyof FormErrors]) {
+      setUserErrors({ ...userErrors, [name]: undefined });
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      const headers = {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        Authorization: localStorage.getItem('Token') || '',
+        org: localStorage.getItem('org') || '',
+      };
+
+      const data = {
+        email: formData.email,
+        phone: formData.phone,
+        alternate_phone: formData.alternate_phone,
+        address_line: formData.address_line,
+        street: formData.street,
+        city: formData.city,
+        state: formData.state,
+        postcode: formData.postcode,
+        country: formData.country,
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        role: user?.role || 'USER', // Include current user's role to satisfy backend requirement
+      };
+
+      const response = await fetchData(
+        `${UserUrl}/${user?.user_details.id}/`,
+        'PUT',
+        JSON.stringify(data),
+        headers
+      );
+
+      if (!response.error) {
+        setInfoMessage('Profile updated successfully!');
+        setSuccessMessage(true);
+        setIsEditing(false);
+        setTimeout(() => setSuccessMessage(false), 3000);
+        
+        // Reload user profile to get updated data
+        await loadUserProfile();
+      } else {
+        if (response.status === 400 && response.data) {
+          setProfileErrors(response.data?.errors?.profile_errors || {});
+          setUserErrors(response.data?.errors?.user_errors || {});
+        } else {
+          throw new Error(response.error || 'Failed to update profile');
+        }
+      }
+    } catch (err) {
+      console.error('Error updating profile:', err);
+      setInfoMessage('Failed to update profile');
+      setSuccessMessage(true);
+      setTimeout(() => setSuccessMessage(false), 3000);
+    }
+  };
+
+  const handleCancel = () => {
+    // Reset form data to original user data
+    if (user) {
+      setFormData({
+        email: user.user_details.email || '',
+        phone: user.phone || '',
+        alternate_phone: user.alternate_phone || '',
+        address_line: user.address.address_line || '',
+        street: user.address.street || '',
+        city: user.address.city || '',
+        state: user.address.state || '',
+        postcode: user.address.postcode || '',
+        country: user.address.country || '',
+        profile_pic: user.user_details.profile_pic || '',
+        first_name: user.user_details.first_name || '',
+        last_name: user.user_details.last_name || '',
+      });
+    }
+    setIsEditing(false);
+    setProfileErrors({});
+    setUserErrors({});
+  };
+
+  const handleChangePassword = async () => {
+    // Validate password fields
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setProfileErrors({ password: ['All password fields are required'] });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setProfileErrors({ password: ['New password and confirm password do not match'] });
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setProfileErrors({ password: ['New password must be at least 8 characters long'] });
+      return;
+    }
+
+    try {
+      const headers = {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        Authorization: localStorage.getItem('Token') || '',
+        org: localStorage.getItem('org') || '',
+      };
+
+      const data = {
+        current_password: currentPassword,
+        new_password: newPassword,
+        confirm_password: confirmPassword,
+        email: user?.user_details.email,
+      };
+
+      const response = await fetchData(
+        `auth/reset-password/`,
+        'PUT',
+        JSON.stringify(data),
+        headers
+      );
+
+      if (!response.error) {
+        setInfoMessage('Password changed successfully!');
+        setSuccessMessage(true);
+        handleClose();
+        setTimeout(() => setSuccessMessage(false), 3000);
+      } else {
+        setProfileErrors({ password: [response.error || 'Failed to change password'] });
+      }
+    } catch (err) {
+      console.error('Error changing password:', err);
+      setProfileErrors({ password: ['Failed to change password'] });
+    }
+  };
 
   const inputStyles = {
     width: '313px',
@@ -255,8 +487,24 @@ export default function Profile() {
           My Profile
         </Typography>
         <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
-          <Button variant="contained" sx={cancelButtonSx}>Cancel</Button>
-          <Button variant="contained" sx={saveButtonSx}>Save</Button>
+          {isEditing ? (
+            <>
+              <Button variant="contained" sx={cancelButtonSx} onClick={handleCancel}>
+                Cancel
+              </Button>
+              <Button variant="contained" sx={saveButtonSx} onClick={handleSave}>
+                Save
+              </Button>
+            </>
+          ) : (
+            <Button 
+              variant="contained" 
+              sx={saveButtonSx} 
+              onClick={() => setIsEditing(true)}
+            >
+              Edit
+            </Button>
+          )}
         </Box>
       </Box>
 
@@ -356,19 +604,41 @@ export default function Profile() {
                 <Box display="flex" flexDirection="column" gap={2}>
                   <Box display="flex" alignItems="center">
                     <Typography sx={labelStyles}>First Name</Typography>
-                    <TextField value={user?.user_details.first_name || ''} InputProps={{ readOnly: true }} placeholder="—" sx={inputStyles} />
+                    <TextField 
+                      name="first_name"
+                      value={formData.first_name || ''} 
+                      onChange={handleChange}
+                      InputProps={{ readOnly: !isEditing }} 
+                      placeholder="—" 
+                      sx={inputStyles}
+                      error={Boolean(profileErrors?.first_name?.[0] || userErrors?.first_name?.[0])}
+                      helperText={profileErrors?.first_name?.[0] || userErrors?.first_name?.[0] || ''}
+                    />
                   </Box>
                   <Box display="flex" alignItems="center" sx={{ minHeight: 40 }}>
                     <Typography sx={labelStyles}>Email</Typography>
-                    <Typography>{user?.user_details.email || 'sample@example.com'}</Typography>
+                    <TextField
+                      name="email"
+                      value={formData.email || ''}
+                      onChange={handleChange}
+                      InputProps={{ readOnly: !isEditing }}
+                      placeholder="sample@example.com"
+                      sx={inputStyles}
+                      error={Boolean(profileErrors?.email?.[0] || userErrors?.email?.[0])}
+                      helperText={profileErrors?.email?.[0] || userErrors?.email?.[0] || ''}
+                    />
                   </Box>
                   <Box display="flex" alignItems="center">
                     <Typography sx={labelStyles}>Phone Number</Typography>
                     <TextField
-                      value={user?.phone || ''}
-                      InputProps={{ readOnly: true }}
+                      name="phone"
+                      value={formData.phone || ''}
+                      onChange={handleChange}
+                      InputProps={{ readOnly: !isEditing }}
                       placeholder="—"
                       sx={inputStyles}
+                      error={Boolean(profileErrors?.phone?.[0] || userErrors?.phone?.[0])}
+                      helperText={profileErrors?.phone?.[0] || userErrors?.phone?.[0] || ''}
                     />
                   </Box>
                 </Box>
@@ -378,12 +648,22 @@ export default function Profile() {
                 <Box display="flex" flexDirection="column" gap={2}>
                   <Box display="flex" alignItems="center">
                     <Typography sx={labelStyles}>Last Name</Typography>
-                    <TextField value={user?.user_details.last_name || ''} InputProps={{ readOnly: true }} placeholder="—" sx={inputStyles} />
+                    <TextField 
+                      name="last_name"
+                      value={formData.last_name || ''} 
+                      onChange={handleChange}
+                      InputProps={{ readOnly: !isEditing }} 
+                      placeholder="—" 
+                      sx={inputStyles}
+                      error={Boolean(profileErrors?.last_name?.[0] || userErrors?.last_name?.[0])}
+                      helperText={profileErrors?.last_name?.[0] || userErrors?.last_name?.[0] || ''}
+                    />
                   </Box>
                   <Box display="flex" alignItems="center" sx={{ minHeight: 40 }}>
                     <Typography sx={labelStyles}>Password</Typography>
                     <Button
                       variant="contained"
+                      onClick={handleOpen}
                       sx={{
                         width: 180,
                         height: 40,
@@ -398,10 +678,14 @@ export default function Profile() {
                   <Box display="flex" alignItems="center">
                     <Typography sx={labelStyles}>Alternate Phone</Typography>
                     <TextField
-                      value={user?.alternate_phone || ''}
-                      InputProps={{ readOnly: true }}
+                      name="alternate_phone"
+                      value={formData.alternate_phone || ''}
+                      onChange={handleChange}
+                      InputProps={{ readOnly: !isEditing }}
                       placeholder="—"
                       sx={inputStyles}
+                      error={Boolean(profileErrors?.alternate_phone?.[0] || userErrors?.alternate_phone?.[0])}
+                      helperText={profileErrors?.alternate_phone?.[0] || userErrors?.alternate_phone?.[0] || ''}
                     />
                   </Box>
                 </Box>
@@ -431,28 +715,40 @@ export default function Profile() {
                   <Box display="flex" alignItems="center">
                     <Typography sx={labelStyles}>Address Lane</Typography>
                     <TextField
-                      value={user?.address.address_line || ''}
-                      InputProps={{ readOnly: true }}
+                      name="address_line"
+                      value={formData.address_line || ''}
+                      onChange={handleChange}
+                      InputProps={{ readOnly: !isEditing }}
                       placeholder="—"
                       sx={inputStyles}
+                      error={Boolean(profileErrors?.address_line?.[0] || userErrors?.address_line?.[0])}
+                      helperText={profileErrors?.address_line?.[0] || userErrors?.address_line?.[0] || ''}
                     />
                   </Box>
                   <Box display="flex" alignItems="center">
                     <Typography sx={labelStyles}>City</Typography>
                     <TextField
-                      value={user?.address.city || ''}
-                      InputProps={{ readOnly: true }}
+                      name="city"
+                      value={formData.city || ''}
+                      onChange={handleChange}
+                      InputProps={{ readOnly: !isEditing }}
                       placeholder="—"
                       sx={inputStyles}
+                      error={Boolean(profileErrors?.city?.[0] || userErrors?.city?.[0])}
+                      helperText={profileErrors?.city?.[0] || userErrors?.city?.[0] || ''}
                     />
                   </Box>
                   <Box display="flex" alignItems="center">
                     <Typography sx={labelStyles}>Postcode</Typography>
                     <TextField
-                      value={user?.address.postcode || ''}
-                      InputProps={{ readOnly: true }}
+                      name="postcode"
+                      value={formData.postcode || ''}
+                      onChange={handleChange}
+                      InputProps={{ readOnly: !isEditing }}
                       placeholder="—"
                       sx={inputStyles}
+                      error={Boolean(profileErrors?.postcode?.[0] || userErrors?.postcode?.[0])}
+                      helperText={profileErrors?.postcode?.[0] || userErrors?.postcode?.[0] || ''}
                     />
                   </Box>
                 </Box>
@@ -463,30 +759,40 @@ export default function Profile() {
                   <Box display="flex" alignItems="center">
                     <Typography sx={labelStyles}>Street</Typography>
                     <TextField
-                      value={user?.address.street || ''}
-                      InputProps={{ readOnly: true }}
+                      name="street"
+                      value={formData.street || ''}
+                      onChange={handleChange}
+                      InputProps={{ readOnly: !isEditing }}
                       placeholder="—"
                       sx={inputStyles}
+                      error={Boolean(profileErrors?.street?.[0] || userErrors?.street?.[0])}
+                      helperText={profileErrors?.street?.[0] || userErrors?.street?.[0] || ''}
                     />
                   </Box>
                   <Box display="flex" alignItems="center">
                     <Typography sx={labelStyles}>State</Typography>
                     <TextField
-                      value={user?.address.state || ''}
-                      InputProps={{ readOnly: true }}
+                      name="state"
+                      value={formData.state || ''}
+                      onChange={handleChange}
+                      InputProps={{ readOnly: !isEditing }}
                       placeholder="—"
                       sx={inputStyles}
+                      error={Boolean(profileErrors?.state?.[0] || userErrors?.state?.[0])}
+                      helperText={profileErrors?.state?.[0] || userErrors?.state?.[0] || ''}
                     />
                   </Box>
                   <Box display="flex" alignItems="center">
                     <Typography sx={labelStyles}>Country</Typography>
                     <FormControl sx={{ ...inputStyles, position: 'relative' }}>
                       <Select
-                        value={user?.address.country || ''}
+                        name="country"
+                        value={formData.country || ''}
+                        onChange={handleChange}
                         open={countrySelectOpen}
-                        onClick={() => setCountrySelectOpen(!countrySelectOpen)}
+                        onClick={() => isEditing && setCountrySelectOpen(!countrySelectOpen)}
                         displayEmpty
-                        inputProps={{ readOnly: true }}
+                        inputProps={{ readOnly: !isEditing }}
                         IconComponent={() => (
                           <Box
                             sx={{
@@ -501,7 +807,7 @@ export default function Profile() {
                               justifyContent: 'center',
                               borderTopRightRadius: '4px',
                               borderBottomRightRadius: '4px',
-                              pointerEvents: 'none'
+                              pointerEvents: isEditing ? 'auto' : 'none'
                             }}
                           >
                             <FiChevronDown style={{ fontSize: '20px', color: '#333' }} />
@@ -515,6 +821,7 @@ export default function Profile() {
                             paddingRight: '36px'
                           }
                         }}
+                        disabled={!isEditing}
                       >
                         {COUNTRIES.map(([code, name]) => (
                           <MenuItem key={code} value={code}>
@@ -522,7 +829,10 @@ export default function Profile() {
                           </MenuItem>
                         ))}
                       </Select>
-                      <FormHelperText>{user?.address.country_display || ''}</FormHelperText>
+                      <FormHelperText>
+                        {profileErrors?.country?.[0] || userErrors?.country?.[0] || 
+                         (user?.address.country_display || '')}
+                      </FormHelperText>
                     </FormControl>
                   </Box>
                 </Box>
@@ -531,6 +841,80 @@ export default function Profile() {
           </AccordionDetails>
         </Accordion>
       </Card>
+
+      {/* Password Change Modal */}
+      <Modal
+        open={open}
+        onClose={handleClose}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box
+          sx={{
+            p: 4,
+            bgcolor: 'background.paper',
+            borderRadius: 2,
+            boxShadow: 24,
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: '530px',
+            maxHeight: '80vh',
+          }}
+        >
+          <Typography sx={{ fontWeight: 'bold', mb: 2 }}>
+            Change Password
+          </Typography>
+          <Divider sx={{ my: 2 }} />
+
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <TextField
+              label="Current Password"
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              fullWidth
+              size="small"
+            />
+            <TextField
+              label="New Password"
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              fullWidth
+              size="small"
+            />
+            <TextField
+              label="Confirm New Password"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              fullWidth
+              size="small"
+            />
+
+            {profileErrors?.password?.[0] && (
+              <Typography color="error" variant="body2">
+                {profileErrors.password[0]}
+              </Typography>
+            )}
+
+            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 2 }}>
+              <Button variant="outlined" onClick={handleClose}>
+                Cancel
+              </Button>
+              <Button 
+                variant="contained" 
+                onClick={handleChangePassword}
+                sx={{ background: '#1976D2' }}
+              >
+                Change Password
+              </Button>
+            </Box>
+          </Box>
+        </Box>
+      </Modal>
     </Box>
   );
 }
