@@ -650,7 +650,7 @@ export default function Opportunities(props: any) {
       <Container sx={{ width: '100%', maxWidth: '100%', minWidth: '100%' }}>
         <Box sx={{ width: '100%', minWidth: '100%', m: '15px 0px 0px 0px' }}>
           <Paper
-            sx={{ width: 'cal(100%-15px)', mb: 2, p: '0px 15px 15px 15px' }}
+            sx={{ width: 'cal(100%-15px)', mb: 2, p: '0px 0px 15px 0px' }}
           >
             {/* <Toolbar sx={{ pl: { sm: 2 }, pr: { xs: 1, sm: 1 } }}>
                             <Tooltip title='Delete'>
