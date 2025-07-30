@@ -114,7 +114,7 @@ export const CaseDetails = (props: any) => {
             'Content-Type': 'application/json',
             Authorization: localStorage.getItem('Token'),
             org: localStorage.getItem('org')
-          }
+        }
         fetchData(`${CasesUrl}/${id}/`, 'GET', null as any, Header)
             .then((res) => {
                 // console.log(res, 'case');
@@ -261,15 +261,20 @@ export const CaseDetails = (props: any) => {
                                 <div style={{ width: '32%' }}>
                                     <div className='title2'>Assigned Users</div>
                                     <div className='title3'>
-                                        {caseDetails?.assigned_to?.length ? caseDetails?.assigned_to.map((val: any) => val) : '----'}
-                                        {/* {caseDetails?.assigned_to || '---'} */}
+                                        {caseDetails?.assigned_to?.length
+                                            ? caseDetails.assigned_to.map((val: any, idx: number) => (
+                                                <div key={val.id || idx}>
+                                                    {val.user_details?.email || val.user_details?.id || 'No Name'}
+                                                </div>
+                                            ))
+                                            : '----'}
                                     </div>
                                 </div>
                                 <div style={{ width: '32%' }}>
                                     <div className='title2'>Team</div>
                                     <div className='title3'>
-                                        {caseDetails?.teams?.length ? caseDetails?.teams.map((team: any) =>
-                                            <Chip label={team} sx={{ height: '20px', borderRadius: '4px' }} />
+                                        {caseDetails?.teams?.length ? caseDetails.teams.map((team: any, idx: number) =>
+                                            <Chip key={team.id || idx} label={team.name || 'No Name'} sx={{ height: '20px', borderRadius: '4px' }} />
                                         ) : '----'}
 
                                     </div>
