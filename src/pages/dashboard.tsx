@@ -34,6 +34,18 @@ const opportunityStatusColors: Record<string, string> = {
   proposal: '#339AF0',
   negotiation: '#845EF7',
 };
+const opportunityStageOrder = [
+  'qualification',
+  'identify_decision_makers',
+  'negotiation',
+  'proposal',
+];
+const opportunityStageShortNames: Record<string, string> = {
+  qualification: 'Qualification',
+  identify_decision_makers: 'Identified DM',
+  proposal: 'Proposal',
+  negotiation: 'Negotiation',
+};
 
 function Dashboard() {
   const [data, setData] = useState<any>(null);
@@ -128,7 +140,7 @@ function Dashboard() {
           <Grid item xs={2} key={item.label}>
             <Paper
               sx={{
-                width: '92%',
+                width: '95%',
                 minWidth: 100,
                 height: 90,
                 background: '#fff',
@@ -146,7 +158,7 @@ function Dashboard() {
                 sx={{
                   fontFamily: 'Roboto',
                   fontWeight: 600,
-                  fontSize: 12,
+                  fontSize: 16,
                   color: '#1A3353',
                   mb: 0.3,
                 }}
@@ -157,7 +169,7 @@ function Dashboard() {
                 sx={{
                   fontFamily: 'Roboto',
                   fontWeight: 700,
-                  fontSize: 16,
+                  fontSize: 24,
                   color: '#339AF0',
                 }}
               >
@@ -284,7 +296,8 @@ function Dashboard() {
                   <MenuItem value="">All</MenuItem>
                   {data.opportunity_stage_choices?.map((stage: any) => (
                     <MenuItem key={stage.value} value={stage.value}>
-                      {stage.label}
+                      {opportunityStageShortNames[stage.value?.toLowerCase()] ||
+                        capitalize(stage.label)}
                     </MenuItem>
                   ))}
                 </Select>
@@ -355,7 +368,10 @@ function Dashboard() {
                   align="right"
                   verticalAlign="middle"
                   iconType="square"
-                  formatter={(value: string) => capitalize(value)}
+                  formatter={(value: string) =>
+                    opportunityStageShortNames[value.toLowerCase()] ||
+                    capitalize(value)
+                  }
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -430,7 +446,11 @@ function Dashboard() {
                     <TableCell>{opp.updated_at}</TableCell>
                     <TableCell>
                       <Chip
-                        label={opp.stage_display || opp.stage}
+                        label={
+                          opportunityStageShortNames[
+                            (opp.stage_display || opp.stage)?.toLowerCase()
+                          ] || capitalize(opp.stage_display || opp.stage)
+                        }
                         sx={{
                           background:
                             opportunityStatusColors[opp.stage] || '#eee',
