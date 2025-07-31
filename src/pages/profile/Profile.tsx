@@ -461,12 +461,12 @@ export default function Profile() {
   return (
     <Box sx={{ mt: 8, px: 2 }}>
       <Snackbar
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
         autoHideDuration={5000}
         onClose={() => setSuccessMessage(false)}
         open={successMessage}
         message={infoMessage}
-        key={'top' + 'center'}
+        key={'bottom' + 'center'}
         sx={{
           '& .MuiSnackbarContent-root': {
             backgroundColor: '#4caf50',

@@ -125,7 +125,7 @@ export default function Opportunities(props: any) {
   const getStageColor = (stage: string) => {
     const stageColors: { [key: string]: string } = {
 
-      'NEGOTIATION': '#9C27B0', // Purple
+      'NEGOTIATION': '#7a4ec6ff', // Purple
       'QUALIFICATION': '#51CF66', // Green
       'IDENTIFY_DECISION_MAKERS': '#FF9800', // Orange
       'CLOSED WON': '#4CAF50', // Green
