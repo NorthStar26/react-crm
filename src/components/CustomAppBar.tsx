@@ -161,21 +161,22 @@ export function CustomAppBar({
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               {customButtons}
-              <Button
-                type="submit"
-                variant="contained"
-                className="header-button"
-                size="small"
-                onClick={editHandle}
-                startIcon={<FaEdit style={{ fill: 'white', width: '16px' }} />}
-                style={{
-                  textTransform: 'capitalize',
-                  fontWeight: 'bold',
-                  fontSize: '16px',
-                }}
-              >
-                Edit
-              </Button>
+              {editHandle && (
+                <Button
+                  onClick={editHandle}
+                  variant="contained"
+                  className="header-button"
+                  size="small"
+                  startIcon={<FaEdit style={{ fill: 'white', width: '16px' }} />}
+                  style={{
+                    textTransform: 'capitalize',
+                    fontWeight: 'bold',
+                    fontSize: '16px',
+                  }}
+                >
+                  Edit
+                </Button>
+              )}
             </div>
           </div>
         );
