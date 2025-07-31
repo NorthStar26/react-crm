@@ -104,10 +104,16 @@ function Dashboard() {
 
   const opportunityStages = Object.keys(data.opportunities_by_stage || {});
 
+  function capitalize(str: string) {
+    if (!str) return '';
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  }
   return (
     <Box sx={{ p: 2, mt: 8, pr: 4 }}>
       {/* ВЕРХНИЕ КАРТОЧКИ */}
       <Grid container spacing={4} mb={2}>
+        {' '}
+        {/* Используем mb для большего отступа между карточками вверзу и нижними */}{' '}
         {[
           { label: 'Companies', value: data.companies_count },
           { label: 'Contacts', value: data.contacts_count },
@@ -122,13 +128,13 @@ function Dashboard() {
           <Grid item xs={2} key={item.label}>
             <Paper
               sx={{
-                width: '100%',
+                width: '92%',
                 minWidth: 100,
-                height: 85,
+                height: 90,
                 background: '#fff',
                 boxShadow:
                   '0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px rgba(0,0,0,0.14),0px 1px 3px rgba(0,0,0,0.12)',
-                borderRadius: 2,
+                borderRadius: 1,
                 p: 1,
                 display: 'flex',
                 flexDirection: 'column',
@@ -211,9 +217,37 @@ function Dashboard() {
                   cy="50%"
                   outerRadius={100}
                   innerRadius={50}
-                  label={({ percent }) =>
-                    `${((percent ?? 0) * 100).toFixed(0)}%`
-                  }
+                  labelLine={false}
+                  label={({
+                    cx,
+                    cy,
+                    midAngle,
+                    innerRadius,
+                    outerRadius,
+                    percent,
+                  }) => {
+                    const RADIAN = Math.PI / 180;
+                    // вычисляем координаты для текста
+                    const safeMidAngle = midAngle ?? 0;
+                    const radius =
+                      innerRadius + (outerRadius - innerRadius) * 0.5;
+                    const x = cx + radius * Math.cos(-safeMidAngle * RADIAN);
+                    const y = cy + radius * Math.sin(-safeMidAngle * RADIAN);
+
+                    return (
+                      <text
+                        x={x}
+                        y={y}
+                        fill="#fff"
+                        textAnchor="middle"
+                        dominantBaseline="central"
+                        fontSize={14}
+                        fontWeight={600}
+                      >
+                        {`${((percent ?? 0) * 100).toFixed(0)}%`}
+                      </text>
+                    );
+                  }}
                 >
                   {leadsPie.map((entry) => (
                     <Cell key={entry.name} fill={entry.color} />
@@ -223,19 +257,21 @@ function Dashboard() {
                   layout="vertical"
                   align="right"
                   verticalAlign="middle"
-                  iconType="circle"
+                  iconType="square"
+                  formatter={(value: string) => capitalize(value)}
                 />
               </PieChart>
             </ResponsiveContainer>
           </Paper>
         </Grid>
-        <Grid item xs={6}>
+        {/* <Grid item xs={6} sx={{ marginLeft: 'auto' }}></Grid> */}
+        <Grid item xs={6} sx={{ ml: 0, pl: 7 }}>
           <Paper sx={{ p: 2, borderRadius: 2 }}>
             <Typography fontWeight={600} mb={2}>
               Opportunities ({data.opportunities_count})
             </Typography>
             <Box sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
-              <Typography sx={{ fontWeight: 500, mr: 1 }}>by</Typography>
+              <Typography sx={{ fontWeight: 500, mr: 2 }}>by</Typography>
               <FormControl size="small" sx={{ minWidth: 136 }}>
                 <InputLabel>Stage</InputLabel>
                 <Select
@@ -279,9 +315,36 @@ function Dashboard() {
                   cy="50%"
                   outerRadius={100}
                   innerRadius={50}
-                  label={({ percent }) =>
-                    `${((percent ?? 0) * 100).toFixed(0)}%`
-                  }
+                  labelLine={false}
+                  label={({
+                    cx,
+                    cy,
+                    midAngle,
+                    innerRadius,
+                    outerRadius,
+                    percent,
+                  }) => {
+                    const RADIAN = Math.PI / 180;
+                    const radius =
+                      innerRadius + (outerRadius - innerRadius) * 0.5;
+                    const safeMidAngle = midAngle ?? 0;
+                    const x = cx + radius * Math.cos(-safeMidAngle * RADIAN);
+                    const y = cy + radius * Math.sin(-safeMidAngle * RADIAN);
+
+                    return (
+                      <text
+                        x={x}
+                        y={y}
+                        fill="#fff"
+                        textAnchor="middle"
+                        dominantBaseline="central"
+                        fontSize={14}
+                        fontWeight={600}
+                      >
+                        {`${((percent ?? 0) * 100).toFixed(0)}%`}
+                      </text>
+                    );
+                  }}
                 >
                   {oppsPie.map((entry) => (
                     <Cell key={entry.name} fill={entry.color} />
@@ -291,7 +354,8 @@ function Dashboard() {
                   layout="vertical"
                   align="right"
                   verticalAlign="middle"
-                  iconType="circle"
+                  iconType="square"
+                  formatter={(value: string) => capitalize(value)}
                 />
               </PieChart>
             </ResponsiveContainer>
