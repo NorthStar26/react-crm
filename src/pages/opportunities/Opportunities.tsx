@@ -780,7 +780,10 @@ export default function Opportunities(props: any) {
                                 } ${item.contact.last_name || ''}`.trim()
                               : '---'}
                           </TableCell>
-                          <TableCell className="tableCell">
+                          <TableCell
+                            className="tableCell"
+                            sx={{ pl: 0, pr: 0 }}
+                          >
                             {item?.stage ? (
                               <Chip
                                 label={
