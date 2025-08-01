@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Card,
   Avatar,
@@ -20,16 +21,19 @@ import {
   Snackbar,
   Tooltip,
   Input,
-  Modal
+  Modal,
+  Slider,
+  IconButtonProps,
 } from '@mui/material';
-import { FaChevronDown, FaTrashAlt, FaUpload } from 'react-icons/fa';
+import { FaChevronDown, FaTrashAlt, FaUpload, FaTimesCircle } from 'react-icons/fa';
 import { FiChevronDown } from '@react-icons/all-files/fi/FiChevronDown';
 import { FiChevronUp } from '@react-icons/all-files/fi/FiChevronUp';
-import { MdOutlineMonochromePhotos } from 'react-icons/md';
 import { fetchData } from '../../components/FetchData';
 import { UserUrl } from '../../services/ApiUrls';
 import { COUNTRIES } from '../../data/countries';
 import { useUser } from '../../context/UserContext';
+import { MdOutlineMonochromePhotos } from 'react-icons/md';
+import { Camera, PhotoCamera } from '@mui/icons-material';
 import { uploadImageToCloudinary } from '../../utils/uploadImageToCloudinary';
 
 // File validation constants
@@ -67,6 +71,10 @@ interface FormData {
   last_name: string;
 }
 
+interface AvatarActionButtonProps extends IconButtonProps {
+  isEditing: boolean;
+}
+
 type Response = {
   user_details: {
     email: string;
@@ -89,25 +97,29 @@ type Response = {
   alternate_phone: string;
 };
 
-const AvatarContainer = styled('div')({
+const AvatarContainer = styled('div') <{ isEditing: boolean }>(({ isEditing }) => ({
   position: 'relative',
   width: 150,
   height: 150,
-  '&:hover .avatar-actions': {
-    opacity: 1,
+  '& .avatar-actions': {
+    transition: 'opacity 0.3s ease-in-out',
+    opacity: isEditing ? 0 : 0, // Hidden by default when isEditing is true
+    pointerEvents: isEditing ? 'auto' : 'none',
   },
-});
+  '&:hover .avatar-actions': {
+    opacity: isEditing ? 1 : 0, // Show only when isEditing is true and hovering
+    pointerEvents: isEditing ? 'auto' : 'none',
+  },
+}));
 
-const AvatarActionButton = styled(IconButton)({
+const AvatarActionButton = styled(IconButton)<AvatarActionButtonProps>(({ isEditing }) => ({
   position: 'absolute',
   backgroundColor: '#1A3353',
   color: 'white',
-  transition: 'opacity 0.3s ease-in-out',
-  opacity: 0,
   '&:hover': {
-    backgroundColor: '#1A3353',
+    backgroundColor: '#1e3750',
   },
-});
+}));
 
 const HiddenInput = styled('input')({
   display: 'none',
@@ -121,6 +133,14 @@ export default function Profile() {
   const [profilePic, setProfilePic] = useState(user?.user_details.profile_pic || '');
   const [profileErrors, setProfileErrors] = useState<FormErrors>({});
   const [userErrors, setUserErrors] = useState<FormErrors>({});
+
+  // use camera for user's avatar
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [image, setImage] = useState<string | null>(null);
+  const [zoom, setZoom] = useState<number>(1); // Default zoom level is 1 (no zoom)
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   
   // Form data state
   const [formData, setFormData] = useState<FormData>({
@@ -138,6 +158,13 @@ export default function Profile() {
     last_name: '',
   });
   
+  const { state } = useLocation();
+
+  // isCurrentUser
+  const isCurrentUser = user && user.user_details?.id
+  ? (state?.id ? user.user_details.id.toString() === state.id.toString() : true)
+  : false;
+
   // Edit mode state
   const [isEditing, setIsEditing] = useState(false);
   
@@ -176,6 +203,40 @@ export default function Profile() {
       setProfilePic(user.user_details.profile_pic || '');
     }
   }, [user]);
+
+  // Initialize and clean up camera stream
+  useEffect(() => {
+    if (cameraOpen) {
+      // Start the camera stream when modal opens
+      const startCamera = async () => {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          console.log('Stream initialized:', stream);
+          streamRef.current = stream;
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+            videoRef.current.play().catch((error) => {
+              console.error('Error playing video:', error);
+            });
+          }
+        } catch (error) {
+          console.error('Error accessing camera:', error);
+          setCameraOpen(false); // Close modal if camera access fails
+        }
+      };
+
+      startCamera();
+    }
+
+    // Cleanup function to stop the stream when modal closes or component unmounts
+    return () => {
+      if (streamRef.current) {
+        console.log('Stopping stream');
+        streamRef.current.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+      }
+    };
+  }, [cameraOpen]);
 
   const handleChange = (e: any) => {
     const { name, value } = e.target;
@@ -320,6 +381,102 @@ export default function Profile() {
       setProfileErrors({ password: ['Failed to change password'] });
     }
   };
+
+    // camera
+
+    const handleOpenCamera = () => {
+      setCameraOpen(true); // Simply open the modal; stream is handled in useEffect
+    };
+  
+    const handleCapture = async () => {
+      if (canvasRef.current && videoRef.current) {
+        const context = canvasRef.current.getContext('2d');
+        if (context) {
+          const canvasWidth = canvasRef.current.width; // 500
+          const canvasHeight = canvasRef.current.height; // 500
+          const videoWidth = videoRef.current.videoWidth;
+          const videoHeight = videoRef.current.videoHeight;
+    
+          // Calculate the zoomed area to capture (centered)
+          const zoomFactor = zoom;
+          const zoomedWidth = videoWidth / zoomFactor;
+          const zoomedHeight = videoHeight / zoomFactor;
+          const offsetX = (videoWidth - zoomedWidth) / 2; // Center horizontally
+          const offsetY = (videoHeight - zoomedHeight) / 2; // Center vertically
+    
+          // Draw the zoomed portion of the video onto the canvas
+          context.drawImage(
+            videoRef.current,
+            offsetX,
+            offsetY,
+            zoomedWidth,
+            zoomedHeight,
+            0,
+            0,
+            canvasWidth,
+            canvasHeight
+          );
+    
+          const imageData = canvasRef.current.toDataURL('image/png');
+    
+          // Convert base64 to File
+          try {
+            const blob = await (await fetch(imageData)).blob();
+            const file = new File([blob], `captured_image_${Date.now()}.png`, { type: 'image/png' });
+    
+            // Validate file format and size
+            if (!SUPPORTED_FORMATS.includes(file.type)) {
+              setProfileErrors({
+                profile_pic: ['Unsupported file format. Please capture a JPG or PNG image.']
+              });
+              setCameraOpen(false); // Close modal on validation error
+              return;
+            }
+    
+            if (file.size > MAX_FILE_SIZE) {
+              setProfileErrors({
+                profile_pic: ['File size exceeds 5MB limit.']
+              });
+              setCameraOpen(false); // Close modal on validation error
+              return;
+            }
+    
+            setProfileErrors({
+              ...profileErrors,
+              profile_pic: undefined
+            });
+    
+            // Upload to Cloudinary and update profile picture
+            try {
+              const { url } = await uploadImageToCloudinary(file);
+              if (url) {
+                await updateProfilePicture(url);
+                setCameraOpen(false); // Close modal after successful upload
+              } else {
+                throw new Error('No URL returned from Cloudinary');
+              }
+            } catch (uploadErr) {
+              console.error('Error uploading to Cloudinary:', uploadErr);
+              setProfileErrors({
+                profile_pic: ['Failed to upload image to Cloudinary. Please try again.']
+              });
+              setCameraOpen(false); // Close modal on upload error
+            }
+          } catch (err) {
+            console.error('Error processing captured image:', err);
+            setProfileErrors({
+              profile_pic: ['Failed to process captured image']
+            });
+            setCameraOpen(false); // Close modal on processing error
+          }
+        }
+      }
+    };
+  
+    const handleCloseCamera = () => {
+      setCameraOpen(false); // Close modal; cleanup is handled in useEffect
+      setImage(null); // Clear captured image
+    };
 
   const inputStyles = {
     width: '313px',
@@ -530,7 +687,7 @@ export default function Profile() {
           <AccordionDetails>
             <Grid container spacing={4} justifyContent="center" alignItems="flex-start">
               <Grid item xs={12} container justifyContent="center" sx={{ flexDirection: 'column', alignItems: 'center' }}>
-                <AvatarContainer>
+                <AvatarContainer isEditing={isEditing}>
                   <Avatar
                     src={profilePic || ''}
                     alt="Profile"
@@ -544,34 +701,145 @@ export default function Profile() {
                     onChange={handleAvatarChange}
                   />
 
-                  <label htmlFor="avatar-upload" style={{ cursor: 'pointer' }}>
+                  {isEditing && (     
+                    <label htmlFor="avatar-upload" style={{ cursor: 'pointer' }}>
+                      <AvatarActionButton
+                        isEditing={isEditing}
+                        title="Upload"
+                        className="avatar-actions"
+                        sx={{
+                          top: '10px',
+                          right: '-35px',
+                        }}
+                        onClick={() => document.getElementById('avatar-upload')?.click()}
+
+                      >
+                        <FaUpload />
+                      </AvatarActionButton>
+                    </label>
+                  )}
+
+                  {isEditing && isCurrentUser && (
+                        <AvatarActionButton
+                          isEditing={isEditing}
+                          title="Camera"
+                          className="avatar-actions"
+                          sx={{
+                            top: '55px',
+                            right: '-42px',
+                          }}
+                          onClick={handleOpenCamera}
+                        >
+                          <MdOutlineMonochromePhotos />
+                        </AvatarActionButton>
+                      )}
+
+                    <Modal open={cameraOpen} onClose={handleCloseCamera}>
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          top: '50%',
+                          left: '50%',
+                          transform: 'translate(-50%, -50%)',
+                          width: '80%',
+                          maxWidth: '500px',
+                          backgroundColor: 'white',
+                          borderRadius: '8px',
+                          padding: '16px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          boxSizing: 'border-box',
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            width: '100%',
+                            height: 'auto',
+                            maxHeight: '400px',
+                            overflow: 'hidden', // Ensure zoomed video doesn't overflow
+                            borderRadius: '8px',
+                          }}
+                        >
+                          <video
+                            ref={videoRef}
+                            style={{
+                              width: '100%',
+                              height: 'auto',
+                              borderRadius: '8px',
+                              transform: `scale(${zoom})`, // Apply zoom via CSS transform
+                              transformOrigin: 'center center', // Zoom from center
+                            }}
+                            autoPlay
+                            playsInline
+                            muted
+                          />
+                        </Box>
+                        <canvas ref={canvasRef} style={{ display: 'none' }} width={500} height={500} />
+                        <Box sx={{ width: '80%', marginTop: '16px' }}>
+                          <Typography id="zoom-slider" gutterBottom>
+                            Zoom
+                          </Typography>
+                          <Slider
+                            value={zoom}
+                            onChange={(e, newValue) => setZoom(newValue as number)}
+                            aria-labelledby="zoom-slider"
+                            min={1}
+                            max={3}
+                            step={0.1}
+                            valueLabelDisplay="auto"
+                            sx={{ color: '#1A3353' }}
+                          />
+                        </Box>
+                        <Box sx={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
+                          <Button
+                            className="header-button"
+                            onClick={handleCloseCamera}
+                            size="small"
+                            variant="contained"
+                            startIcon={
+                              <FaTimesCircle
+                                style={{
+                                  fill: 'white',
+                                  width: '16px',
+                                  marginLeft: '2px',
+                                }}
+                              />
+                            }
+                            sx={{
+                              backgroundColor: '#2b5075',
+                              ':hover': { backgroundColor: '#1e3750' },
+                            }}
+                          >
+                            Close
+                          </Button>
+                          <Button
+                              className="header-button"
+                              color="primary"
+                              onClick={handleCapture}
+                              size="small"
+                              variant="contained"
+                              startIcon={
+                                <PhotoCamera
+                                  style={{
+                                    fill: 'white',
+                                    width: '16px',
+                                    marginLeft: '2px',
+                                  }}
+                                />
+                              }
+            
+                            >
+                              Make Photo
+                            </Button>
+                        </Box>
+                      </Box>
+                    </Modal>
+
+
+                  {isEditing && profilePic && (
                     <AvatarActionButton
-                      title="Upload"
-                      className="avatar-actions"
-                      sx={{
-                        top: '10px',
-                        right: '-35px',
-                      }}
-                      onClick={() => document.getElementById('avatar-upload')?.click()}
-
-                    >
-                      <FaUpload />
-                    </AvatarActionButton>
-                  </label>
-
-                  <AvatarActionButton
-                    title="Camera"
-                    className="avatar-actions"
-                    sx={{
-                      top: '55px',
-                      right: '-42px',
-                    }}
-                  >
-                    <MdOutlineMonochromePhotos />
-                  </AvatarActionButton>
-
-                  {profilePic && (
-                    <AvatarActionButton
+                      isEditing={isEditing}
                       title="Remove"
                       className="avatar-actions"
                       sx={{
