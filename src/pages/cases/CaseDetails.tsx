@@ -290,16 +290,8 @@ export const CaseDetails = (props: any) => {
                                 </Typography>
                                 {caseDetails?.opportunity?.stage && (
                                     <Chip
-                                        label={
-                                            caseDetails.opportunity.stage.trim().toLowerCase() === 'closed lost'
-                                                ? 'CLOSED LOST'
-                                                : caseDetails.opportunity.stage
-                                        }
-                                        color={
-                                            caseDetails.opportunity.stage.trim().toLowerCase() === 'closed lost'
-                                                ? 'error'
-                                                : 'success'
-                                        }
+                                        label="OPEN"
+                                        color="error"
                                     />
                                 )}
                             </Box>
