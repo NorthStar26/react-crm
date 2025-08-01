@@ -23,7 +23,7 @@ import { DashboardSummaryUrl } from '../services/ApiUrls';
 const leadStatusColors: Record<string, string> = {
   new: '#339AF0',
   qualified: '#51CF66',
-  recycled: '#FFD43B',
+  recycled: '#FFA94D',
   disqualified: '#FA5252',
 };
 
@@ -46,7 +46,22 @@ const opportunityStageShortNames: Record<string, string> = {
   proposal: 'Proposal',
   negotiation: 'Negotiation',
 };
-
+// function formatDate(dateStr: string) {
+//   if (!dateStr) return '';
+//   const date = new Date(dateStr);
+//   const day = String(date.getDate()).padStart(2, '0');
+//   const month = date.toLocaleString('en', { month: 'long' }); // Месяц буквами
+//   const year = date.getFullYear();
+//   return `${day} ${month} ${year}`;
+// }
+function formatDate(dateStr: string) {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = date.toLocaleString('en', { month: 'long' }); // Месяц буквами
+  const year = date.getFullYear();
+  return `${month} ${day} ${year}`;
+}
 function Dashboard() {
   const [data, setData] = useState<any>(null);
   const [leadStatus, setLeadStatus] = useState<string | undefined>();
@@ -106,13 +121,16 @@ function Dashboard() {
   );
 
   // Для оппорчунити используем opportunityStatusColors с нормализацией регистра
-  const oppsPie = Object.entries(data.opportunities_by_stage || {}).map(
-    ([name, value]) => ({
+  const oppsPie = Object.entries(data.opportunities_by_stage || {})
+    .filter(([name]) => {
+      const lower = name.toLowerCase();
+      return lower !== 'close' && lower !== 'closed won';
+    })
+    .map(([name, value]) => ({
       name,
       value,
       color: opportunityStatusColors[name.toLowerCase()] || '#eee',
-    })
-  );
+    }));
 
   const opportunityStages = Object.keys(data.opportunities_by_stage || {});
 
@@ -134,7 +152,7 @@ function Dashboard() {
           { label: 'Accounts', value: data.accounts_count || 140 },
           {
             label: 'Pipeline Value',
-            value: `$${Number(data.total_pipeline_value).toLocaleString()}`,
+            value: `€${Number(data.total_pipeline_value).toLocaleString()}`,
           },
         ].map((item, idx) => (
           <Grid item xs={2} key={item.label}>
@@ -270,6 +288,7 @@ function Dashboard() {
                   align="right"
                   verticalAlign="middle"
                   iconType="square"
+                  wrapperStyle={{ width: 130 }}
                   formatter={(value: string) => capitalize(value)}
                 />
               </PieChart>
@@ -318,6 +337,7 @@ function Dashboard() {
                 </Select>
               </FormControl>
             </Box>
+
             <ResponsiveContainer width="100%" height={220}>
               <PieChart>
                 <Pie
@@ -368,6 +388,7 @@ function Dashboard() {
                   align="right"
                   verticalAlign="middle"
                   iconType="square"
+                  wrapperStyle={{ width: 130 }}
                   formatter={(value: string) =>
                     opportunityStageShortNames[value.toLowerCase()] ||
                     capitalize(value)
@@ -399,10 +420,10 @@ function Dashboard() {
                     <TableCell>
                       <Typography fontWeight={600}>{lead.name}</Typography>
                       <Typography variant="body2" color="text.secondary">
-                        {lead.company_name}
+                        {lead.contact_name}
                       </Typography>
                     </TableCell>
-                    <TableCell>{lead.updated_at}</TableCell>
+                    <TableCell>{formatDate(lead.updated_at)}</TableCell>
                     <TableCell>
                       <Chip
                         label={lead.status}
@@ -412,6 +433,11 @@ function Dashboard() {
                             '#eee',
                           color: '#fff',
                           fontWeight: 600,
+                          minWidth: 110,
+                          justifyContent: 'center',
+                          borderRadius: '16px',
+                          boxShadow:
+                            'inset 0px 0px 0px 2px rgba(0, 153, 102, 0.2)',
                         }}
                       />
                     </TableCell>
@@ -443,7 +469,7 @@ function Dashboard() {
                         {opp.company_name}
                       </Typography>
                     </TableCell>
-                    <TableCell>{opp.updated_at}</TableCell>
+                    <TableCell>{formatDate(opp.updated_at)}</TableCell>
                     <TableCell>
                       <Chip
                         label={
@@ -456,6 +482,7 @@ function Dashboard() {
                             opportunityStatusColors[opp.stage] || '#eee',
                           color: '#fff',
                           fontWeight: 600,
+                          minWidth: 110,
                         }}
                       />
                     </TableCell>
