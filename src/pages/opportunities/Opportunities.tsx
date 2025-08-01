@@ -53,7 +53,7 @@ import { FiChevronUp } from '@react-icons/all-files/fi/FiChevronUp';
 import { FiChevronDown } from '@react-icons/all-files/fi/FiChevronDown';
 import { EnhancedTableHead } from '../../components/EnchancedTableHead';
 import { useUser } from '../../context/UserContext';
-
+import { opportunityStageShortNames } from '../../constants/stageNames';
 interface HeadCell {
   disablePadding: boolean;
   id: any;
@@ -124,14 +124,13 @@ export default function Opportunities(props: any) {
   // Function to get stage color based on stage name
   const getStageColor = (stage: string) => {
     const stageColors: { [key: string]: string } = {
-
-      'NEGOTIATION': '#9C27B0', // Purple
-      'QUALIFICATION': '#51CF66', // Green
-      'IDENTIFY_DECISION_MAKERS': '#FF9800', // Orange
+      NEGOTIATION: '#9C27B0', // Purple
+      QUALIFICATION: '#51CF66', // Green
+      IDENTIFY_DECISION_MAKERS: '#FF9800', // Orange
       'CLOSED WON': '#4CAF50', // Green
       'CLOSED LOST': '#F44336', // Red
-      'PROPOSAL': '#339Af0', // Blue Grey
-      'CLOSE': '#3F51B5', // Indigo
+      PROPOSAL: '#339Af0', // Blue Grey
+      CLOSE: '#3F51B5', // Indigo
     };
     return stageColors[stage] || '#757575'; // Default grey color
   };
@@ -373,12 +372,15 @@ export default function Opportunities(props: any) {
   // Get unique stages from opportunities
   const getUniqueStages = () => {
     if (!opportunities || opportunities.length === 0) return [];
-    
+
     const stages = opportunities
       .map((item: any) => item?.stage)
       .filter((stage: string) => stage && stage.trim() !== '')
-      .filter((stage: string, index: number, arr: string[]) => arr.indexOf(stage) === index);
-    
+      .filter(
+        (stage: string, index: number, arr: string[]) =>
+          arr.indexOf(stage) === index
+      );
+
     console.log('Available stages:', stages); // Debug log
     return stages;
   };
@@ -388,14 +390,17 @@ export default function Opportunities(props: any) {
     const contacts = opportunities
       .map((item: any) => {
         if (item?.contact) {
-          const fullName = `${item.contact.salutation || ''} ${item.contact.first_name || ''} ${item.contact.last_name || ''}`.trim();
+          const fullName = `${item.contact.salutation || ''} ${
+            item.contact.first_name || ''
+          } ${item.contact.last_name || ''}`.trim();
           return { id: item.contact.id, name: fullName };
         }
         return null;
       })
       .filter((contact: any) => contact && contact.name)
-      .filter((contact: any, index: number, arr: any[]) => 
-        arr.findIndex((c: any) => c.id === contact.id) === index
+      .filter(
+        (contact: any, index: number, arr: any[]) =>
+          arr.findIndex((c: any) => c.id === contact.id) === index
       );
     return contacts;
   };
@@ -406,11 +411,18 @@ export default function Opportunities(props: any) {
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
       const opportunityName = item?.name?.toLowerCase() || '';
-      const contactName = item?.contact 
-        ? `${item.contact.salutation || ''} ${item.contact.first_name || ''} ${item.contact.last_name || ''}`.toLowerCase().trim()
+      const contactName = item?.contact
+        ? `${item.contact.salutation || ''} ${item.contact.first_name || ''} ${
+            item.contact.last_name || ''
+          }`
+            .toLowerCase()
+            .trim()
         : '';
-      
-      if (!opportunityName.includes(searchLower) && !contactName.includes(searchLower)) {
+
+      if (
+        !opportunityName.includes(searchLower) &&
+        !contactName.includes(searchLower)
+      ) {
         return false;
       }
     }
@@ -466,9 +478,25 @@ export default function Opportunities(props: any) {
   ];
   return (
     <Box sx={{ mt: '65px' }}>
-      <CustomToolbar sx={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',backgroundColor:"#1a3353"  }}>
+      <CustomToolbar
+        sx={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          backgroundColor: '#1a3353',
+        }}
+      >
         {/* Search Bar and Filter Dropdowns - Left Side */}
-        <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2, flex: 1, maxWidth: '700px' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 2,
+            flex: 1,
+            maxWidth: '700px',
+          }}
+        >
           {/* Search Bar */}
           <Box sx={{ maxWidth: '400px', minWidth: '300px' }}>
             <TextField
@@ -520,24 +548,33 @@ export default function Opportunities(props: any) {
             <MenuItem value="">
               <Typography sx={{ color: '#757575' }}>All Stages</Typography>
             </MenuItem>
-            {!loading && opportunities && opportunities.length > 0 && getUniqueStages().map((stage: string, index: number) => (
-              <MenuItem key={`stage-${index}-${stage}`} value={stage}>
-                <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                  <Chip
-                    label={stage}
-                    size="small"
+            {!loading &&
+              opportunities &&
+              opportunities.length > 0 &&
+              getUniqueStages().map((stage: string, index: number) => (
+                <MenuItem key={`stage-${index}-${stage}`} value={stage}>
+                  <Box
                     sx={{
-                      backgroundColor: getStageColor(stage),
-                      color: 'white',
-                      fontWeight: 'bold',
-                      fontSize: '0.7rem',
-                      height: '20px',
-                      minWidth: '80px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      width: '100%',
                     }}
-                  />
-                </Box>
-              </MenuItem>
-            ))}
+                  >
+                    <Chip
+                      label={stage}
+                      size="small"
+                      sx={{
+                        backgroundColor: getStageColor(stage),
+                        color: 'white',
+                        fontWeight: 'bold',
+                        fontSize: '0.7rem',
+                        height: '20px',
+                        minWidth: '80px',
+                      }}
+                    />
+                  </Box>
+                </MenuItem>
+              ))}
           </Select>
 
           {/* Contact Filter */}
@@ -558,11 +595,14 @@ export default function Opportunities(props: any) {
             <MenuItem value="">
               <Typography sx={{ color: '#757575' }}>All Contacts</Typography>
             </MenuItem>
-            {!loading && opportunities && opportunities.length > 0 && getUniqueContacts().map((contact: any) => (
-              <MenuItem key={contact.id} value={contact.id}>
-                {contact.name}
-              </MenuItem>
-            ))}
+            {!loading &&
+              opportunities &&
+              opportunities.length > 0 &&
+              getUniqueContacts().map((contact: any) => (
+                <MenuItem key={contact.id} value={contact.id}>
+                  {contact.name}
+                </MenuItem>
+              ))}
           </Select>
         </Box>
 
@@ -649,9 +689,7 @@ export default function Opportunities(props: any) {
       </CustomToolbar>
       <Container sx={{ width: '100%', maxWidth: '100%', minWidth: '100%' }}>
         <Box sx={{ width: '100%', minWidth: '100%', m: '15px 0px 0px 0px' }}>
-          <Paper
-            sx={{ width: 'cal(100%-15px)', mb: 2, p: '0px 0px 15px 0px' }}
-          >
+          <Paper sx={{ width: 'cal(100%-15px)', mb: 2, p: '0px 0px 15px 0px' }}>
             {/* <Toolbar sx={{ pl: { sm: 2 }, pr: { xs: 1, sm: 1 } }}>
                             <Tooltip title='Delete'>
                                 <Button
@@ -736,16 +774,20 @@ export default function Opportunities(props: any) {
                             {item?.name ? item?.name : '---'}
                           </TableCell>
                           <TableCell className="tableCell">
-                            {item?.contact ? (
-                              `${item.contact.salutation || ''} ${item.contact.first_name || ''} ${item.contact.last_name || ''}`.trim()
-                            ) : (
-                              '---'
-                            )}
+                            {item?.contact
+                              ? `${item.contact.salutation || ''} ${
+                                  item.contact.first_name || ''
+                                } ${item.contact.last_name || ''}`.trim()
+                              : '---'}
                           </TableCell>
                           <TableCell className="tableCell">
                             {item?.stage ? (
                               <Chip
-                                label={item.stage}
+                                label={
+                                  opportunityStageShortNames[
+                                    item.stage?.toLowerCase()
+                                  ] || item.stage
+                                }
                                 sx={{
                                   backgroundColor: getStageColor(item.stage),
                                   color: 'white',
@@ -753,6 +795,10 @@ export default function Opportunities(props: any) {
                                   fontSize: '0.75rem',
                                   height: '24px',
                                   borderRadius: '12px',
+                                  minWidth: '120px',
+
+                                  boxShadow:
+                                    '0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px rgba(0,0,0,0.14),0px 1px 3px rgba(0,0,0,0.12)',
                                 }}
                               />
                             ) : (
@@ -762,10 +808,17 @@ export default function Opportunities(props: any) {
                           <TableCell className="tableCell">
                             {item?.amount && item?.probability ? (
                               <Stack>
-                                <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                                  {item.currency || '$'} {item.amount?.toLocaleString()}
+                                <Typography
+                                  variant="body2"
+                                  sx={{ fontWeight: 'bold' }}
+                                >
+                                  {item.currency || '$'}{' '}
+                                  {item.amount?.toLocaleString()}
                                 </Typography>
-                                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                <Typography
+                                  variant="caption"
+                                  sx={{ color: 'text.secondary' }}
+                                >
                                   {item.probability}% Probability
                                 </Typography>
                               </Stack>
@@ -774,10 +827,13 @@ export default function Opportunities(props: any) {
                             )}
                           </TableCell>
                           <TableCell className="tableCell">
-                            {item?.expected_close_date ? item?.expected_close_date : '---'}
+                            {item?.expected_close_date
+                              ? item?.expected_close_date
+                              : '---'}
                           </TableCell>
                           <TableCell className="tableCell">
-                            {item?.assigned_to && item.assigned_to.length > 0 ? (
+                            {item?.assigned_to &&
+                            item.assigned_to.length > 0 ? (
                               <Stack
                                 style={{
                                   display: 'flex',
@@ -787,23 +843,28 @@ export default function Opportunities(props: any) {
                               >
                                 <Avatar
                                   src={
-                                    item.assigned_to[0]?.user_details?.profile_pic || ''
+                                    item.assigned_to[0]?.user_details
+                                      ?.profile_pic || ''
                                   }
                                   alt={
-                                    item.assigned_to[0]?.user_details?.first_name ||
+                                    item.assigned_to[0]?.user_details
+                                      ?.first_name ||
                                     item.assigned_to[0]?.user_details?.email ||
                                     'User'
                                   }
                                   sx={{ width: 32, height: 32 }}
                                 >
-                                  {item.assigned_to[0]?.user_details?.first_name?.charAt(0).toUpperCase() || 'U'}
+                                  {item.assigned_to[0]?.user_details?.first_name
+                                    ?.charAt(0)
+                                    .toUpperCase() || 'U'}
                                 </Avatar>
                                 <Stack sx={{ ml: 1 }}>
-                                  {item.assigned_to[0]?.user_details?.first_name &&
+                                  {item.assigned_to[0]?.user_details
+                                    ?.first_name &&
                                   item.assigned_to[0]?.user_details?.last_name
                                     ? `${item.assigned_to[0].user_details.first_name} ${item.assigned_to[0].user_details.last_name}`
-                                    : item.assigned_to[0]?.user_details?.email ||
-                                      '---'}
+                                    : item.assigned_to[0]?.user_details
+                                        ?.email || '---'}
                                 </Stack>
                               </Stack>
                             ) : (
@@ -822,7 +883,8 @@ export default function Opportunities(props: any) {
                               />
                             </IconButton>
                             {/* Only show delete button for ADMIN and MANAGER roles */}
-                            {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
+                            {(user?.role === 'ADMIN' ||
+                              user?.role === 'MANAGER') && (
                               <IconButton>
                                 <FaTrashAlt
                                   onClick={() => deleteRow(item?.id)}
@@ -840,15 +902,23 @@ export default function Opportunities(props: any) {
                     })
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={7} sx={{ border: 0, textAlign: 'center', py: 4 }}>
+                      <TableCell
+                        colSpan={7}
+                        sx={{ border: 0, textAlign: 'center', py: 4 }}
+                      >
                         <Typography variant="h6" color="text.secondary">
-                          {searchTerm || selectedStage || selectedContact 
-                            ? `No opportunities found matching your search criteria${searchTerm ? ` "${searchTerm}"` : ''}`
-                            : 'No opportunities available'
-                          }
+                          {searchTerm || selectedStage || selectedContact
+                            ? `No opportunities found matching your search criteria${
+                                searchTerm ? ` "${searchTerm}"` : ''
+                              }`
+                            : 'No opportunities available'}
                         </Typography>
                         {(searchTerm || selectedStage || selectedContact) && (
-                          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{ mt: 1 }}
+                          >
                             Try adjusting your search terms or filters
                           </Typography>
                         )}
