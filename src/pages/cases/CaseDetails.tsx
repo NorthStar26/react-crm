@@ -14,6 +14,7 @@ import {
 import BusinessIcon from '@mui/icons-material/Business'
 import PersonIcon from '@mui/icons-material/Person'
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import { fetchData } from '../../components/FetchData'
 import { CasesUrl, LeadUrl, OpportunityUrl } from '../../services/ApiUrls'
 import { CustomAppBar } from '../../components/CustomAppBar'
@@ -211,6 +212,32 @@ export const CaseDetails = (props: any) => {
             })
     }
 
+    const handleDownload = async (url: string, fileName: string) => {
+        try {
+            const token = localStorage.getItem('Token');
+            const org = localStorage.getItem('org');
+            const response = await fetch(url, {
+                headers: {
+                    Authorization: token ? token : '',
+                    org: org ? org : '',
+                }
+            });
+            if (!response.ok) {
+                alert('Failed to download file: ' + response.statusText);
+                return;
+            }
+            const blob = await response.blob();
+            const link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (err) {
+            alert('Download failed');
+        }
+    };
+
     return (
         <Box sx={{ mt: '120px' }}>
             <div>
@@ -232,7 +259,7 @@ export const CaseDetails = (props: any) => {
                         flexDirection: 'row',
                         justifyContent: 'space-between',
                         alignItems: 'flex-start',
-                        gap: 3, // space between left and right columns
+                        gap: 3, 
                     }}
                 >
                     {/* Left Side: 3 separate cards */}
@@ -261,14 +288,20 @@ export const CaseDetails = (props: any) => {
                                 <Typography variant="h5" fontWeight={700} color="#101828">
                                     {caseDetails?.opportunity?.name || 'Opportunity Name'}
                                 </Typography>
-                                <Chip
-                                    label={caseDetails?.opportunity?.stage || 'Stage'}
-                                    color={
-                                        caseDetails?.opportunity?.stage?.trim().toLowerCase() === 'closed lost'
-                                            ? 'error'
-                                            : 'success'
-                                    }
-                                />
+                                {caseDetails?.opportunity?.stage && (
+                                    <Chip
+                                        label={
+                                            caseDetails.opportunity.stage.trim().toLowerCase() === 'closed lost'
+                                                ? 'CLOSED LOST'
+                                                : caseDetails.opportunity.stage
+                                        }
+                                        color={
+                                            caseDetails.opportunity.stage.trim().toLowerCase() === 'closed lost'
+                                                ? 'error'
+                                                : 'success'
+                                        }
+                                    />
+                                )}
                             </Box>
                             <Box
                                 sx={{
@@ -398,7 +431,7 @@ export const CaseDetails = (props: any) => {
                                     </div>
                                 </Box>
                                 <Box>
-                                    <div className="title2">Days to Close</div>
+                                    <div className="title2">Days To Close</div>
                                     <div className="value-box">
                                         {caseDetails?.opportunity?.days_to_close || '----'}
                                     </div>
@@ -455,26 +488,64 @@ export const CaseDetails = (props: any) => {
                                 </Box>
                                 <Box>
                                     <div className="title2">Attachment</div>
-
-                                    <div className="value-box" style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-                                        {Array.isArray(caseDetails?.opportunity?.file) && caseDetails.opportunity.file.length > 0 ? (
-                                            caseDetails.opportunity.file.map((att: any) => (
-                                                <IconButton
-                                                    key={att.attachment_id}
-                                                    component="a"
-                                                    href={att.url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    sx={{ p: 0, display: 'flex', alignItems: 'center' }}
-                                                    title={att.file_name}
+                                    <div
+                                        className="value-box"
+                                        style={{
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            gap: 0,
+                                            padding: 0,
+                                            overflow: 'visible',
+                                            maxWidth: '100%',
+                                        }}
+                                    >
+                                        {Array.isArray(caseDetails?.opportunity?.attachment_links) && caseDetails.opportunity.attachment_links.length > 0 ? (
+                                            caseDetails.opportunity.attachment_links.map((att: any, idx: number) => (
+                                                <Box
+                                                    key={att.attachment_id || att.file_name + idx}
+                                                    sx={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: 1,
+                                                        minHeight: '32px',
+                                                        pl: 0.5,
+                                                        mb: 0.5,
+                                                        width: '100%',
+                                                        // borderBottom removed
+                                                    }}
                                                 >
-                                                    <PictureAsPdfIcon sx={{ color: '#d32f2f', fontSize: 28, mr: 1 }} />
-                                                    <span style={{ marginLeft: 4, fontSize: 14, color: '#1976D2', textDecoration: 'underline' }}>
-                                                        {att.file_name}
+                                                    <PictureAsPdfIcon sx={{ color: '#d32f2f', mr: 1, fontSize: 22 }} />
+                                                    <span
+                                                        onClick={() => handleDownload(att.url, att.file_name)}
+                                                        style={{
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            textDecoration: 'underline',
+                                                            color: '#1976D2',
+                                                            fontWeight: 500,
+                                                            fontSize: 15,
+                                                            maxWidth: 240,
+                                                            overflow: 'hidden',
+                                                            cursor: 'pointer'
+                                                        }}
+                                                        title={att.file_name}
+                                                    >
+                                                        <span
+                                                            style={{
+                                                                whiteSpace: 'nowrap',
+                                                                overflow: 'hidden',
+                                                                textOverflow: 'ellipsis',
+                                                                maxWidth: 200,
+                                                            }}
+                                                        >
+                                                            {att.file_name}
+                                                        </span>
                                                     </span>
-                                                </IconButton>
+                                                </Box>
                                             ))
-                                        ) : '----'}
+                                        ) : (
+                                            <span style={{ color: '#aaa', minHeight: 32, display: 'flex', alignItems: 'center' }}>----</span>
+                                        )}
                                     </div>
                                 </Box>
                             </Box>
@@ -513,7 +584,7 @@ export const CaseDetails = (props: any) => {
                                 </div>
                             </Box>
                         </Box>
-                    </Box> {/* <-- This closes the left column */}
+                    </Box> 
 
                     {/* Right Side: Attachments */}
                     <Box
@@ -553,9 +624,9 @@ export const CaseDetails = (props: any) => {
                                 border: '1px solid var(--_components-input-outlined-enabledBorder, #0000003B)',
                                 borderRadius: '5px',
                                 mt: 2,
-                                p: 1, // thinner padding
+                                p: 1, 
                                 backgroundColor: 'transparent',
-                                minHeight: '40px', // smaller vertical height
+                                minHeight: '40px', 
                                 display: 'flex',
                                 flexDirection: 'column',
                             }}
@@ -563,7 +634,7 @@ export const CaseDetails = (props: any) => {
                             <textarea
                                 style={{
                                     width: '100%',
-                                    minHeight: '24px', // smaller textarea
+                                    minHeight: '24px', 
                                     resize: 'vertical',
                                     border: 'none',
                                     outline: 'none',
@@ -573,7 +644,7 @@ export const CaseDetails = (props: any) => {
                                     fontFamily: 'inherit',
                                 }}
                                 placeholder="Type your note here..."
-                                rows={1} // smaller by default
+                                rows={1} 
                                 onInput={e => {
                                     const target = e.target as HTMLTextAreaElement;
                                     target.style.height = 'auto';
