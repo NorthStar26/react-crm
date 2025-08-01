@@ -167,9 +167,9 @@ function Dashboard() {
                 borderRadius: 1,
                 p: 1,
                 display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                alignItems: 'flex-start',
+                flexDirection: 'сolumn',
+                justifyContent: 'space-between',
+                alignItems: 'stretch',
               }}
             >
               <Typography
@@ -179,6 +179,8 @@ function Dashboard() {
                   fontSize: 16,
                   color: '#1A3353',
                   mb: 0.3,
+                  // textAlign: 'left',
+                  whiteSpace: 'nowrap',
                 }}
               >
                 {item.label}
@@ -189,6 +191,8 @@ function Dashboard() {
                   fontWeight: 700,
                   fontSize: 24,
                   color: '#339AF0',
+                  textAlign: 'right',
+                  alignSelf: 'flex-end',
                 }}
               >
                 {item.value}
