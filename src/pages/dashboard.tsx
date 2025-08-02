@@ -153,6 +153,7 @@ function Dashboard() {
           {
             label: 'Pipeline Value',
             value: `€${Number(data.total_pipeline_value).toLocaleString()}`,
+            isPipeline: true,
           },
         ].map((item, idx) => (
           <Grid item xs={2} key={item.label}>
@@ -167,7 +168,7 @@ function Dashboard() {
                 borderRadius: 1,
                 p: 1,
                 display: 'flex',
-                flexDirection: 'сolumn',
+                flexDirection: 'column',
                 justifyContent: 'space-between',
                 alignItems: 'stretch',
               }}
@@ -189,10 +190,11 @@ function Dashboard() {
                 sx={{
                   fontFamily: 'Roboto',
                   fontWeight: 700,
-                  fontSize: 24,
+                  fontSize: String(item.value).length > 10 ? 18 : 24,
                   color: '#339AF0',
-                  textAlign: 'right',
-                  alignSelf: 'flex-end',
+                  textAlign: String(item.value).length > 3 ? 'center' : 'right',
+                  mt: 'auto',
+                  width: '100%',
                 }}
               >
                 {item.value}
