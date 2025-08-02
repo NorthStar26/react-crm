@@ -417,14 +417,18 @@ function Dashboard() {
                 <TableRow>
                   <TableCell>Lead Name</TableCell>
                   <TableCell>Last Update Date</TableCell>
-                  <TableCell>Status</TableCell>
+                  <TableCell align="left" sx={{ pl: 6 }}>
+                    Status
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {data.recent_leads?.map((lead: any) => (
                   <TableRow key={lead.id}>
                     <TableCell>
-                      <Typography fontWeight={600}>{lead.name}</Typography>
+                      <Typography fontWeight={600}>
+                        {lead.company_name}
+                      </Typography>
                       <Typography variant="body2" color="text.secondary">
                         {lead.contact_name}
                       </Typography>
