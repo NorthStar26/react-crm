@@ -18,6 +18,7 @@ import {
 import { fetchData } from '../components/FetchData';
 import { PieChart, Pie, Cell, Legend, ResponsiveContainer } from 'recharts';
 import { DashboardSummaryUrl } from '../services/ApiUrls';
+import '../styles/table-styles.css';
 
 // Цвета для лидов
 const leadStatusColors: Record<string, string> = {
@@ -412,49 +413,171 @@ function Dashboard() {
             <Typography fontWeight={600} mb={2}>
               Recent Leads
             </Typography>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Lead Name</TableCell>
-                  <TableCell>Last Update Date</TableCell>
-                  <TableCell align="left" sx={{ pl: 6 }}>
-                    Status
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {data.recent_leads?.map((lead: any) => (
-                  <TableRow key={lead.id}>
-                    <TableCell>
-                      <Typography fontWeight={600}>
-                        {lead.company_name}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {lead.contact_name}
-                      </Typography>
+            <Box
+              className="ag-theme-alpine leads-ag-theme"
+              sx={{
+                width: '100%',
+                // Стили темы AG Grid
+                '--ag-header-background-color': '#2E4258',
+                '--ag-header-foreground-color': '#FFFFFF',
+                '--ag-header-border-color': '#D9EBFE',
+                '--ag-odd-row-background-color': '#FFFFFF',
+                '--ag-even-row-background-color': '#F9FAFB',
+                '--ag-row-border-color': '#D9EBFE',
+                '--ag-cell-horizontal-padding': '4px',
+                '--ag-header-cell-padding': '8px 20px',
+                '& .ag-header-cell': {
+                  paddingLeft: '20px',
+                  paddingRight: '20px',
+                },
+                '& .ag-cell': {
+                  display: 'flex',
+                  alignItems: 'center',
+                  paddingLeft: '20px',
+                  paddingRight: '20px',
+                },
+                '& .ag-header-cell-label': {
+                  justifyContent: 'flex-start', // Выравнивание заголовков по левому краю
+                },
+              }}
+            >
+              <Table size="small">
+                <TableHead
+                  sx={{
+                    borderRadius: '8px 8px 0 0',
+                    overflow: 'hidden',
+                    '& .MuiTableRow-root': {
+                      borderRadius: '8px 8px 0 0',
+                    },
+                  }}
+                >
+                  <TableRow>
+                    <TableCell
+                      width="40%"
+                      sx={{
+                        background: '#2E4258',
+                        color: '#FFFFFF',
+                        fontWeight: 'bold',
+                        fontFamily: 'Roboto',
+                        fontSize: 16,
+                        borderBottom: '1px solid #D9EBFE',
+                        padding: '12px 20px',
+                        paddingLeft: '20px',
+                        '&:first-of-type': {
+                          borderRadius: '8px 0 0 0',
+                        },
+                      }}
+                    >
+                      Lead Name
                     </TableCell>
-                    <TableCell>{formatDate(lead.updated_at)}</TableCell>
-                    <TableCell>
-                      <Chip
-                        label={lead.status}
-                        sx={{
-                          background:
-                            leadStatusColors[lead.status?.toLowerCase()] ||
-                            '#eee',
-                          color: '#fff',
-                          fontWeight: 600,
-                          minWidth: 110,
-                          justifyContent: 'center',
-                          borderRadius: '16px',
-                          boxShadow:
-                            'inset 0px 0px 0px 2px rgba(0, 153, 102, 0.2)',
-                        }}
-                      />
+                    <TableCell
+                      width="30%"
+                      align="left"
+                      sx={{
+                        background: '#2E4258',
+                        color: '#FFFFFF',
+                        fontWeight: 'bold',
+                        fontFamily: 'Roboto',
+                        fontSize: 16,
+                        borderBottom: '1px solid #D9EBFE',
+                        padding: '12px 20px',
+                      }}
+                    >
+                      Last Update Date
+                    </TableCell>
+                    <TableCell
+                      width="30%"
+                      align="center"
+                      sx={{
+                        background: '#2E4258',
+                        color: '#FFFFFF',
+                        fontWeight: 'bold',
+                        fontFamily: 'Roboto',
+                        fontSize: 16,
+                        borderBottom: '1px solid #D9EBFE',
+                        padding: '12px 20px',
+                        paddingLeft: '20px',
+                        '&:last-of-type': {
+                          borderRadius: '0 8px 0 0',
+                        },
+                      }}
+                    >
+                      Status
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHead>
+                <TableBody>
+                  {data.recent_leads?.map((lead: any, index: number) => (
+                    <TableRow
+                      key={lead.id}
+                      sx={{
+                        backgroundColor:
+                          index % 2 === 0 ? '#FFFFFF' : '#F9FAFB',
+                        '&:hover': { backgroundColor: '#F3F8FF' },
+                        borderBottom: '1px solid #D9EBFE',
+                        height: '80px',
+                      }}
+                    >
+                      <TableCell sx={{ border: 'none' }}>
+                        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                          <Typography
+                            fontWeight={500}
+                            fontSize={16}
+                            color="#1A3353"
+                            sx={{
+                              cursor: 'pointer',
+                              '&:hover': { color: '#1976d2' },
+                            }}
+                          >
+                            {lead.company_name}
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            fontSize={14}
+                            color="#1A3353"
+                            sx={{ mt: 0.5 }}
+                          >
+                            {lead.contact_name}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell
+                        sx={{ border: 'none', color: '#1A3353', fontSize: 16 }}
+                      >
+                        {formatDate(lead.updated_at)}
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          border: 'none',
+                          textAlign: 'right',
+                          paddingRight: '20px',
+                        }}
+                      >
+                        <Chip
+                          label={lead.status}
+                          sx={{
+                            background:
+                              leadStatusColors[lead.status?.toLowerCase()] ||
+                              '#eee',
+                            color: '#fff',
+                            fontWeight: 500,
+                            fontSize: 14,
+                            minWidth: 110,
+                            height: 30,
+                            borderRadius: '1.67772e+07px',
+                            justifyContent: 'center',
+                            boxShadow:
+                              'inset 0px 0px 0px 2px rgba(0, 153, 102, 0.2)',
+                            padding: '4px 12px',
+                            border: '1px solid transparent',
+                          }}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Box>
           </Paper>
         </Grid>
         <Grid item xs={6}>
