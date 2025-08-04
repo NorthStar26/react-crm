@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import CasesListPage from '../cases/CasesListPage';
 import { useNavigate, Routes, Route } from 'react-router-dom';
 import { Box } from '@mui/material';
 import Sidebar from '../../components/Sidebar';
@@ -50,6 +51,7 @@ export const Home = (props: any) => {
             <Routes>
               <Route path="opportunities" element={<Opportunities />} />
               <Route path="opportunities/view" element={<ViewOpportunity />} />
+              <Route path="cases" element={<CasesListPage />} />
               {/* Add more routes here as needed */}
             </Routes>
           </Box>
