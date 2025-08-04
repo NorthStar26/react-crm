@@ -549,15 +549,15 @@ export default function Company() {
       </CustomToolbar>
 
       {/* Grid + Pagination */}
-      <Container maxWidth={false} disableGutters sx={{ px: 2, mt: 2 }}>
+      {/* <Container maxWidth={false} disableGutters sx={{ px: 2, mt: 2 }}> */}
+      <Container
+        maxWidth={false}
+        disableGutters
+        sx={{ pl: 1, pr: 1, mt: 2, px: 1 }}
+      >
         <Grid container spacing={0}>
           <Grid item xs={12}>
-            <Paper
-              sx={{ width: '100%', mb: 2, p: 0 }}
-              elevation={0}
-              square
-              variant="outlined"
-            >
+            <Paper sx={{ width: '100%', mb: 2, p: 0 }} elevation={0} square>
               {loading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
                   <Spinner />
@@ -566,11 +566,29 @@ export default function Company() {
                 <>
                   {/* AG Grid */}
                   <Box
-                    className="ag-theme-alpine"
+                    className="ag-theme-alpine contacts-ag-theme"
                     sx={{
                       width: '100%',
                       ...gridTheme,
                       '--ag-icon-color': '#FFFFFF',
+                      '& .ag-root-wrapper': {
+                        border: 'none',
+                      },
+                      // Добавленные стили для закругления углов заголовка
+                      '& .ag-header': {
+                        borderRadius: '8px 8px 0 0', // Закругление верхних углов
+                        overflow: 'hidden', // Обязательно для работы border-radius
+                      },
+                      '& .ag-header-cell:first-of-type': {
+                        borderTopLeftRadius: '8px', // Закругление левого верхнего угла
+                      },
+                      '& .ag-header-cell:last-of-type': {
+                        borderTopRightRadius: '8px', // Закругление правого верхнего угла
+                      },
+                      '& .ag-header-row': {
+                        borderBottom: 'none', // Убрать нижнюю границу у строки заголовка
+                      },
+
                       '& .ag-header-cell-label .ag-icon, & .ag-header-cell-label .ag-icon-wrapper svg':
                         {
                           fill: '#FFFFFF',
@@ -581,15 +599,20 @@ export default function Company() {
                           fill: '#FFFFFF',
                           color: '#FFFFFF',
                         },
-                      '& .ag-row': {
-                        display: 'flex',
-                        alignItems: 'center',
-                      },
+                      '& .ag-row': { display: 'flex', alignItems: 'center' },
                       '& .ag-cell': {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'flex-start',
-                        paddingLeft: '8px',
+                        paddingLeft: '4px',
+                        paddingRight: '4px',
+                      },
+                      '& .ag-header-cell': {
+                        paddingLeft: '4px',
+                        paddingRight: '4px',
+                      },
+                      '& .ag-pinned-right-cols-viewport .ag-cell': {
+                        paddingRight: '8px',
                       },
                     }}
                   >

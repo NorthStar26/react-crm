@@ -689,22 +689,46 @@ export default function Users() {
       </CustomToolbar>
 
       {/* ---------- grid + pagination ---------- */}
-      <Container maxWidth={false} disableGutters sx={{ px: 2 }}>
+      {/* <Container maxWidth={false} disableGutters sx={{ px: 2 }}> */}
+      <Container
+        maxWidth={false}
+        disableGutters
+        sx={{ pl: 1, pr: 1, mt: 2, px: 1 }}
+      >
         <Grid container spacing={0}>
           <Grid item xs={12}>
             <Paper
               sx={{ width: '100%', mb: 2, p: 0 }}
               elevation={0}
               square
-              variant="outlined"
+              variant="none"
             >
               {/* 1) ag-Grid wrapper (unchanged) */}
               <Box
-                className="ag-theme-alpine"
+                className="ag-theme-alpine users-ag-theme"
                 sx={{
                   width: '100%',
                   ...gridTheme,
                   '--ag-icon-color': '#FFFFFF',
+
+                  '& .ag-root-wrapper': {
+                    border: 'none',
+                  },
+
+                  '& .ag-header': {
+                    borderRadius: '8px 8px 0 0',
+                    overflow: 'hidden',
+                  },
+                  '& .ag-header-cell:first-of-type': {
+                    borderTopLeftRadius: '8px',
+                  },
+                  '& .ag-header-cell:last-of-type': {
+                    borderTopRightRadius: '8px',
+                  },
+                  '& .ag-header-row': {
+                    borderBottom: 'none',
+                  },
+
                   '& .ag-header-cell-label .ag-icon, & .ag-header-cell-label .ag-icon-wrapper svg':
                     {
                       fill: '#FFFFFF',
@@ -737,6 +761,7 @@ export default function Users() {
                   suppressCellSelection
                   suppressCellFocus
                   rowHeight={56}
+                  headerHeight={40}
                   // onFirstDataRendered={params => params.api.sizeColumnsToFit()}
                   // onGridSizeChanged={params => params.api.sizeColumnsToFit()}
                   onGridReady={(params) => {

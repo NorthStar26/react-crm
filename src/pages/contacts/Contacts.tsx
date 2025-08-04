@@ -685,7 +685,12 @@ export default function Contacts() {
       </Box>
 
       {/* Grid + Pagination */}
-      <Container maxWidth={false} disableGutters sx={{ px: 0.5, mt: 2 }}>
+      {/* <Container maxWidth={false} disableGutters sx={{ px: 0.5, mt: 2 }}> */}
+      <Container
+        maxWidth={false}
+        disableGutters
+        sx={{ pl: 1, pr: 1, mt: 2, px: 1 }}
+      >
         <Paper sx={{ width: '100%', mb: 2, p: 0 }} elevation={0} square>
           {loading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
