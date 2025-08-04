@@ -21,7 +21,7 @@ import { SuccessAlert, ErrorAlert } from '../../components/Button/SuccessAlert';
 import { Spinner } from '../../components/Spinner';
 import { FiPlus } from '@react-icons/all-files/fi/FiPlus';
 import { FiSearch } from '@react-icons/all-files/fi/FiSearch';
-import { FaDownload } from 'react-icons/fa';
+import { FaFileExport } from 'react-icons/fa';
 import { FiChevronUp } from '@react-icons/all-files/fi/FiChevronUp';
 import { FiChevronDown } from '@react-icons/all-files/fi/FiChevronDown';
 import { FaEdit, FaTrashAlt } from 'react-icons/fa';
@@ -338,7 +338,7 @@ export default function Company() {
       cellRenderer: (params: ICellRendererParams) => (
         <Stack direction="row" spacing={1}>
           {/* Show edit button for ADMIN/MANAGER always, or for USER only if they created the company */}
-          {(user?.role === 'ADMIN' || user?.role === 'MANAGER' || 
+          {(user?.role === 'ADMIN' || user?.role === 'MANAGER' ||
             (user?.role === 'USER' && user?.user_details?.id === params.data.created_by?.id)) && (
             <IconButton
               size="small"
@@ -530,7 +530,7 @@ export default function Company() {
           <CustomButton
             variant="outline"
             shape="rounded"
-            startIcon={<FaDownload />}
+            startIcon={<FaFileExport />}
             onClick={exportExcel}
           >
             Export
@@ -570,15 +570,15 @@ export default function Company() {
                       ...gridTheme,
                       '--ag-icon-color': '#FFFFFF',
                       '& .ag-header-cell-label .ag-icon, & .ag-header-cell-label .ag-icon-wrapper svg':
-                      {
-                        fill: '#FFFFFF',
-                        color: '#FFFFFF',
-                      },
+                        {
+                          fill: '#FFFFFF',
+                          color: '#FFFFFF',
+                        },
                       '& .ag-sort-ascending-icon, & .ag-sort-descending-icon, & .ag-sort-none-icon':
-                      {
-                        fill: '#FFFFFF',
-                        color: '#FFFFFF',
-                      },
+                        {
+                          fill: '#FFFFFF',
+                          color: '#FFFFFF',
+                        },
                       '& .ag-row': {
                         display: 'flex',
                         alignItems: 'center',
