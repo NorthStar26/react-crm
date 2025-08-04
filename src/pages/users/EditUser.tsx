@@ -1,4 +1,4 @@
-import React, { ChangeEvent, useEffect, useState } from 'react';
+import React, { ChangeEvent, useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FaTrashAlt } from 'react-icons/fa';
 import { ValidationModule } from 'ag-grid-community';
@@ -168,11 +168,19 @@ export function EditUser() {
     'Profile picture updated successfully!'
   );
 
+  // use camera for user's avatar
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [image, setImage] = useState<string | null>(null);
+  const [zoom, setZoom] = useState<number>(1); // Default zoom level is 1 (no zoom)
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
   useEffect(() => {
     setFormData(state?.value);
     getEditDetail(state?.id);
   }, [state?.id]);
-
+  
   useEffect(() => {
     if (reset) {
       setFormData(state?.value);
@@ -181,6 +189,40 @@ export function EditUser() {
       setReset(false);
     };
   }, [reset]);
+  
+  // Initialize and clean up camera stream
+  useEffect(() => {
+    if (cameraOpen) {
+      // Start the camera stream when modal opens
+      const startCamera = async () => {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          console.log('Stream initialized:', stream);
+          streamRef.current = stream;
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+            videoRef.current.play().catch((error) => {
+              console.error('Error playing video:', error);
+            });
+          }
+        } catch (error) {
+          console.error('Error accessing camera:', error);
+          setCameraOpen(false); // Close modal if camera access fails
+        }
+      };
+
+      startCamera();
+    }
+
+    // Cleanup function to stop the stream when modal closes or component unmounts
+    return () => {
+      if (streamRef.current) {
+        console.log('Stopping stream');
+        streamRef.current.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+      }
+    };
+  }, [cameraOpen]); // Run effect when cameraOpen changes
 
   const handleChange = (e: any) => {
     const { name, value, files, type, checked } = e.target;
@@ -520,6 +562,103 @@ export function EditUser() {
   const isCurrentUser =
     user && user.user_details?.id?.toString() === state?.id?.toString();
 
+
+  // camera
+
+  const handleOpenCamera = () => {
+    setCameraOpen(true); // Simply open the modal; stream is handled in useEffect
+  };
+
+  const handleCapture = async () => {
+    if (canvasRef.current && videoRef.current) {
+      const context = canvasRef.current.getContext('2d');
+      if (context) {
+        const canvasWidth = canvasRef.current.width; // 500
+        const canvasHeight = canvasRef.current.height; // 500
+        const videoWidth = videoRef.current.videoWidth;
+        const videoHeight = videoRef.current.videoHeight;
+  
+        // Calculate the zoomed area to capture (centered)
+        const zoomFactor = zoom;
+        const zoomedWidth = videoWidth / zoomFactor;
+        const zoomedHeight = videoHeight / zoomFactor;
+        const offsetX = (videoWidth - zoomedWidth) / 2; // Center horizontally
+        const offsetY = (videoHeight - zoomedHeight) / 2; // Center vertically
+  
+        // Draw the zoomed portion of the video onto the canvas
+        context.drawImage(
+          videoRef.current,
+          offsetX,
+          offsetY,
+          zoomedWidth,
+          zoomedHeight,
+          0,
+          0,
+          canvasWidth,
+          canvasHeight
+        );
+  
+        const imageData = canvasRef.current.toDataURL('image/png');
+  
+        // Convert base64 to File
+        try {
+          const blob = await (await fetch(imageData)).blob();
+          const file = new File([blob], `captured_image_${Date.now()}.png`, { type: 'image/png' });
+  
+          // Validate file format and size
+          if (!SUPPORTED_FORMATS.includes(file.type)) {
+            setProfileErrors({
+              profile_pic: ['Unsupported file format. Please capture a JPG or PNG image.']
+            });
+            setCameraOpen(false); // Close modal on validation error
+            return;
+          }
+  
+          if (file.size > MAX_FILE_SIZE) {
+            setProfileErrors({
+              profile_pic: ['File size exceeds 5MB limit.']
+            });
+            setCameraOpen(false); // Close modal on validation error
+            return;
+          }
+  
+          setProfileErrors({
+            ...profileErrors,
+            profile_pic: undefined
+          });
+  
+          // Upload to Cloudinary and update profile picture
+          try {
+            const { url } = await uploadImageToCloudinary(file);
+            if (url) {
+              await updateProfilePicture(url);
+              setCameraOpen(false); // Close modal after successful upload
+            } else {
+              throw new Error('No URL returned from Cloudinary');
+            }
+          } catch (uploadErr) {
+            console.error('Error uploading to Cloudinary:', uploadErr);
+            setProfileErrors({
+              profile_pic: ['Failed to upload image to Cloudinary. Please try again.']
+            });
+            setCameraOpen(false); // Close modal on upload error
+          }
+        } catch (err) {
+          console.error('Error processing captured image:', err);
+          setProfileErrors({
+            profile_pic: ['Failed to process captured image']
+          });
+          setCameraOpen(false); // Close modal on processing error
+        }
+      }
+    }
+  };
+
+  const handleCloseCamera = () => {
+    setCameraOpen(false); // Close modal; cleanup is handled in useEffect
+    setImage(null); // Clear captured image
+  };
+
   return (
     <Box sx={{ mt: '60px' }}>
       <CustomAppBar
@@ -590,16 +729,122 @@ export function EditUser() {
                         </AvatarActionButton>
                       </label>
 
-                      <AvatarActionButton
-                        title="Camera"
-                        className="avatar-actions"
-                        sx={{
-                          top: '55px',
-                          right: '-42px',
-                        }}
-                      >
-                        <MdOutlineMonochromePhotos />
-                      </AvatarActionButton>
+                      {isCurrentUser && (
+                        <AvatarActionButton
+                          title="Camera"
+                          className="avatar-actions"
+                          sx={{
+                            top: '55px',
+                            right: '-42px',
+                          }}
+                          onClick={handleOpenCamera}
+                        >
+                          <MdOutlineMonochromePhotos />
+                        </AvatarActionButton>
+                      )}
+
+                    <Modal open={cameraOpen} onClose={handleCloseCamera}>
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            top: '50%',
+                            left: '50%',
+                            transform: 'translate(-50%, -50%)',
+                            width: '80%',
+                            maxWidth: '500px',
+                            backgroundColor: 'white',
+                            borderRadius: '8px',
+                            padding: '16px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            boxSizing: 'border-box',
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              width: '100%',
+                              height: 'auto',
+                              maxHeight: '400px',
+                              overflow: 'hidden', // Ensure zoomed video doesn't overflow
+                              borderRadius: '8px',
+                            }}
+                          >
+                            <video
+                              ref={videoRef}
+                              style={{
+                                width: '100%',
+                                height: 'auto',
+                                borderRadius: '8px',
+                                transform: `scale(${zoom})`, // Apply zoom via CSS transform
+                                transformOrigin: 'center center', // Zoom from center
+                              }}
+                              autoPlay
+                              playsInline
+                              muted
+                            />
+                          </Box>
+                          <canvas ref={canvasRef} style={{ display: 'none' }} width={500} height={500} />
+                          <Box sx={{ width: '80%', marginTop: '16px' }}>
+                            <Typography id="zoom-slider" gutterBottom>
+                              Zoom
+                            </Typography>
+                            <Slider
+                              value={zoom}
+                              onChange={(e, newValue) => setZoom(newValue as number)}
+                              aria-labelledby="zoom-slider"
+                              min={1}
+                              max={3}
+                              step={0.1}
+                              valueLabelDisplay="auto"
+                              sx={{ color: '#1A3353' }}
+                            />
+                          </Box>
+                          <Box sx={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
+                          <Button
+                              className="header-button"
+                              onClick={handleCloseCamera}
+                              size="small"
+                              variant="contained"
+                              startIcon={
+                                <FaTimesCircle
+                                  style={{
+                                    fill: 'white',
+                                    width: '16px',
+                                    marginLeft: '2px',
+                                  }}
+                                />
+                              }
+                              sx={{
+                                backgroundColor: '#2b5075',
+                                ':hover': { backgroundColor: '#1e3750' },
+                              }}
+                            >
+                              Close
+                            </Button>
+                            <Button
+                              className="header-button"
+                              color="primary"
+                              onClick={handleCapture}
+                              size="small"
+                              variant="contained"
+                              startIcon={
+                                <PhotoCamera
+                                  style={{
+                                    fill: 'white',
+                                    width: '16px',
+                                    marginLeft: '2px',
+                                  }}
+                                />
+                              }
+            
+                            >
+                              Make Photo
+                            </Button>
+                            
+                          </Box>
+                        </Box>
+                      </Modal>
 
                       {formData.profile_pic && (
                         <AvatarActionButton
