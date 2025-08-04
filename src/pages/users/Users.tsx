@@ -50,7 +50,7 @@ import {
 } from '../../styles/CssStyled';
 import { FiDownload } from 'react-icons/fi';
 import * as XLSX from 'xlsx';
-
+import { FaDownload,FaFileExport } from 'react-icons/fa';
 //
 
 import { ModuleRegistry, ClientSideRowModelModule } from 'ag-grid-community';
@@ -294,7 +294,7 @@ export default function Users() {
     console.log('getUserDetail called with ID:', id);
     console.log('Current localStorage Token:', localStorage.getItem('Token'));
     console.log('Current localStorage org:', localStorage.getItem('org'));
-    
+
     const Header = {
       Accept: 'application/json',
       'Content-Type': 'application/json',
@@ -303,7 +303,7 @@ export default function Users() {
     }
     console.log('Headers being sent:', Header);
     console.log('API URL being called:', `${UserUrl}/${id}/`);
-    
+
     fetchData(`${UserUrl}/${id}/`, 'GET', null as any, Header)
       .then((res) => {
         console.log(res, 'res');
@@ -627,7 +627,7 @@ export default function Users() {
         <Stack direction="row" spacing={1}>
           <Button
             variant="outlined"
-            startIcon={<FiDownload />}
+            startIcon={<FaFileExport />}
             onClick={exportExcel}
             sx={{
               borderRadius: '999px',

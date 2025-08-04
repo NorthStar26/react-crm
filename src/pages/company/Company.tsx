@@ -21,7 +21,7 @@ import { SuccessAlert, ErrorAlert } from '../../components/Button/SuccessAlert';
 import { Spinner } from '../../components/Spinner';
 import { FiPlus } from '@react-icons/all-files/fi/FiPlus';
 import { FiSearch } from '@react-icons/all-files/fi/FiSearch';
-import { FaDownload } from 'react-icons/fa';
+import { FaDownload, FaFileExport } from 'react-icons/fa';
 import { FiChevronUp } from '@react-icons/all-files/fi/FiChevronUp';
 import { FiChevronDown } from '@react-icons/all-files/fi/FiChevronDown';
 import { FaEdit, FaTrashAlt } from 'react-icons/fa';
@@ -33,6 +33,7 @@ import COUNTRIES from '../../data/countries';
 import INDCHOICES from '../../data/INDCHOICES';
 import * as XLSX from 'xlsx';
 import { CustomButton } from '../../components/Button';
+
 
 // AG Grid imports
 import { ModuleRegistry, ClientSideRowModelModule } from 'ag-grid-community';
@@ -338,7 +339,7 @@ export default function Company() {
       cellRenderer: (params: ICellRendererParams) => (
         <Stack direction="row" spacing={1}>
           {/* Show edit button for ADMIN/MANAGER always, or for USER only if they created the company */}
-          {(user?.role === 'ADMIN' || user?.role === 'MANAGER' || 
+          {(user?.role === 'ADMIN' || user?.role === 'MANAGER' ||
             (user?.role === 'USER' && user?.user_details?.id === params.data.created_by?.id)) && (
             <IconButton
               size="small"
@@ -530,7 +531,7 @@ export default function Company() {
           <CustomButton
             variant="outline"
             shape="rounded"
-            startIcon={<FaDownload />}
+            startIcon={<FaFileExport />}
             onClick={exportExcel}
           >
             Export

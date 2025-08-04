@@ -18,7 +18,7 @@ import { SuccessAlert, ErrorAlert } from '../../components/Button/SuccessAlert';
 import { Spinner } from '../../components/Spinner';
 import { FiPlus } from '@react-icons/all-files/fi/FiPlus';
 import { FiSearch } from '@react-icons/all-files/fi/FiSearch';
-import { FaDownload } from 'react-icons/fa';
+import { FaDownload,FaFileExport } from 'react-icons/fa';
 import { FiChevronUp } from '@react-icons/all-files/fi/FiChevronUp';
 import { FiChevronDown } from '@react-icons/all-files/fi/FiChevronDown';
 import { FaEdit, FaTrashAlt } from 'react-icons/fa';
@@ -27,6 +27,7 @@ import { fetchData } from '../../components/FetchData';
 import { ContactUrl } from '../../services/ApiUrls';
 import { DeleteModal } from '../../components/DeleteModal';
 import * as XLSX from 'xlsx';
+
 
 // AG Grid imports
 import { ModuleRegistry, ClientSideRowModelModule } from 'ag-grid-community';
@@ -145,7 +146,7 @@ const ActionsCellRenderer = (props: ICellRendererParams) => {
   };
 
   // Check if user can edit (ADMIN/MANAGER always, USER only if they created the contact)
-  const canEdit = user?.role === 'ADMIN' || user?.role === 'MANAGER' || 
+  const canEdit = user?.role === 'ADMIN' || user?.role === 'MANAGER' ||
     (user?.role === 'USER' && user?.user_details?.id === props.data.created_by?.id);
 
   // Check if user can delete (only ADMIN and MANAGER)
@@ -649,7 +650,7 @@ export default function Contacts() {
         <Stack direction="row" spacing={2}>
           <Button
             variant="outlined"
-            startIcon={<FaDownload />}
+            startIcon={<FaFileExport />}
             onClick={handleExport}
             sx={{
               background: '#2B5075',
