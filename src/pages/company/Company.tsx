@@ -99,14 +99,22 @@ export default function Company() {
       const data = await fetchData(url, 'GET', null as any, Header);
 
       if (!data.error) {
-        console.log('Companies data:', data);
-        setCompanyList(data.data || []);
-        setTotalCompanies(data.total || data.data?.length || 0);
-        setTotalPages(
-          Math.ceil((data.total || data.data?.length || 0) / recordsPerPage)
-        );
+        setCompanyList(data.results || []);
+        setTotalCompanies(data.count || (data.results?.length ?? 0));
+        setTotalPages(Math.ceil((data.count || 0) / recordsPerPage));
         setLoading(false);
       }
+
+      // if (!data.error) {
+      //   console.log('Companies data:', data);
+      //   setCompanyList(data.data || []);
+      //   setTotalCompanies(data.total || data.data?.length || 0);
+      //   setTotalPages(
+      //     Math.ceil((data.total || data.data?.length || 0) / recordsPerPage)
+      //   );
+      //   setLoading(false);
+      // }
+
     } catch (error) {
       console.error('Error fetching companies:', error);
       setLoading(false);
@@ -244,8 +252,8 @@ export default function Company() {
       console.error('Failed to fetch all companies for export');
       return;
     }
-
-    const rows = (res.data || []).map((company: any) => ({
+    //const rows = (res.data || []).map((company: any) => ({
+    const rows = (res.results || []).map((company: any) => ({
       'Company Name': company.name || '',
       Email: company.email || '',
       Phone: company.phone || '',
@@ -338,7 +346,7 @@ export default function Company() {
       cellRenderer: (params: ICellRendererParams) => (
         <Stack direction="row" spacing={1}>
           {/* Show edit button for ADMIN/MANAGER always, or for USER only if they created the company */}
-          {(user?.role === 'ADMIN' || user?.role === 'MANAGER' || 
+          {(user?.role === 'ADMIN' || user?.role === 'MANAGER' ||
             (user?.role === 'USER' && user?.user_details?.id === params.data.created_by?.id)) && (
             <IconButton
               size="small"
@@ -634,7 +642,7 @@ export default function Company() {
                         }}
                         sx={{ height: 32 }}
                       >
-                        {[10, 20, 30, 40, 50].map((n) => (
+                        {[5,10, 20, 30, 40, 50].map((n) => (
                           <MenuItem key={n} value={n}>
                             {n}
                           </MenuItem>
