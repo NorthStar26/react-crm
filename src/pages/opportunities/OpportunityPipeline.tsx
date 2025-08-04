@@ -365,6 +365,9 @@ function OpportunityPipeline() {
           // Переходим на выбранную финальную стадию
           dataToSend = {
             stage: formData.close_option,
+            ...(formData.close_option === 'CLOSED LOST'
+              ? { reason: formData.reason }
+              : {}),
           };
           break;
 
@@ -1334,10 +1337,10 @@ function OpportunityPipeline() {
                               fontSize: '15px',
                               fontWeight: 400,
                               color: '#1A3353',
-                              
                             }}
                           >
-                            {opportunity.contacts_info?.[0]?.company?.name || 'Company Name'}
+                            {opportunity.contacts_info?.[0]?.company?.name ||
+                              'Company Name'}
                           </Typography>
                         </FieldContainer>
                       </Grid>
@@ -1352,9 +1355,15 @@ function OpportunityPipeline() {
                               color: '#1A3353',
                             }}
                           >
-                            {opportunity.contacts_info?.[0]?.first_name && opportunity.contacts_info?.[0]?.last_name
-                              ? `${opportunity.contacts_info[0].salutation || ''} ${opportunity.contacts_info[0].first_name} ${opportunity.contacts_info[0].last_name}`.trim()
-                              : opportunity.contacts_info?.[0]?.primary_email || 'Contact'}
+                            {opportunity.contacts_info?.[0]?.first_name &&
+                            opportunity.contacts_info?.[0]?.last_name
+                              ? `${
+                                  opportunity.contacts_info[0].salutation || ''
+                                } ${opportunity.contacts_info[0].first_name} ${
+                                  opportunity.contacts_info[0].last_name
+                                }`.trim()
+                              : opportunity.contacts_info?.[0]?.primary_email ||
+                                'Contact'}
                           </Typography>
                         </FieldContainer>
                       </Grid>
@@ -1404,9 +1413,13 @@ function OpportunityPipeline() {
                       <FieldLabel>Assigned To</FieldLabel>
                       <StyledTextField
                         value={
-                          opportunity.assigned_to_info?.[0]?.user_details?.first_name && opportunity.assigned_to_info?.[0]?.user_details?.last_name
+                          opportunity.assigned_to_info?.[0]?.user_details
+                            ?.first_name &&
+                          opportunity.assigned_to_info?.[0]?.user_details
+                            ?.last_name
                             ? `${opportunity.assigned_to_info[0].user_details.first_name} ${opportunity.assigned_to_info[0].user_details.last_name}`
-                            : opportunity.assigned_to_info?.[0]?.user_details?.email || ''
+                            : opportunity.assigned_to_info?.[0]?.user_details
+                                ?.email || ''
                         }
                         InputProps={{ readOnly: true }}
                         size="small"

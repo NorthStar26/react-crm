@@ -672,20 +672,21 @@ export function EditUser() {
 
       <Box sx={{ mt: '120px' }}>
         <form onSubmit={handleSubmit}>
+          {/* from here */}
           <Snackbar
-            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
             autoHideDuration={5000}
             onClose={() => setSuccessMessage(false)}
             open={successMessage}
             message={info_message}
-            key={'top' + 'center'}
-            sx={{
-              '& .MuiSnackbarContent-root': {
+            ContentProps={{
+              sx: {
                 backgroundColor: '#4caf50',
                 color: '#fff',
-              },
+              }
             }}
           />
+          {/* to here */}
           <div style={{ padding: '10px' }}>
             <div className="leadContainer">
               <Accordion defaultExpanded style={{ width: '98%' }}>

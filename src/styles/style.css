@@ -569,3 +569,61 @@ input[type='number'] {
   display: 'flex';
   justify-content: 'space-between';
 }
+
+.value-box {
+    background-color: #F9FAFB;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-weight: 500;
+    color: #1a3353;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: 180px;         /* Fixed width for alignment */
+    min-width: 120px;     /* Prevents from getting too small */
+    max-width: 100%;      /* Prevents overflow */
+    height: 40px;
+    margin-top: 8px;
+    margin-right: 16px;
+    box-sizing: border-box;
+    overflow-x: auto;
+}
+
+/* Responsive: allow shrinking on small screens */
+@media (max-width: 900px) {
+  .value-box {
+    width: 100%;
+    min-width: 0;
+    margin-right: 0;
+  }
+}
+
+.large-value-box {
+    background-color: #F9FAFB;
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-weight: 500;
+    color: #1a3353;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    /* width: 600px; */         /* Remove fixed width */
+    max-width: 100%;            /* Prevent overflow */
+    height: 70px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    margin-right: 16px;         /* Add margin from right */
+}
+
+/* Optional: On small screens, allow height to grow and add more margin */
+@media (max-width: 700px) {
+  .large-value-box {
+    height: auto;
+    min-height: 50px;
+    margin-right: 8px;
+    padding: 10px 8px;
+  }
+}
+
+
