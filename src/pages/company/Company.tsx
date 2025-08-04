@@ -338,8 +338,10 @@ export default function Company() {
       cellRenderer: (params: ICellRendererParams) => (
         <Stack direction="row" spacing={1}>
           {/* Show edit button for ADMIN/MANAGER always, or for USER only if they created the company */}
-          {(user?.role === 'ADMIN' || user?.role === 'MANAGER' || 
-            (user?.role === 'USER' && user?.user_details?.id === params.data.created_by?.id)) && (
+          {(user?.role === 'ADMIN' ||
+            user?.role === 'MANAGER' ||
+            (user?.role === 'USER' &&
+              user?.user_details?.id === params.data.created_by?.id)) && (
             <IconButton
               size="small"
               onClick={(e) => {
@@ -374,7 +376,7 @@ export default function Company() {
   const gridTheme = {
     '--ag-header-background-color': '#2E4258',
     '--ag-header-foreground-color': '#FFFFFF',
-    '--ag-header-border-color': '#0F2A55',
+    '--ag-header-border-color': 'transparent',
     '--ag-odd-row-background-color': '#FFFFFF',
     '--ag-even-row-background-color': '#F3F8FF',
     '--ag-row-border-color': '#E0E0E0',
@@ -570,15 +572,15 @@ export default function Company() {
                       ...gridTheme,
                       '--ag-icon-color': '#FFFFFF',
                       '& .ag-header-cell-label .ag-icon, & .ag-header-cell-label .ag-icon-wrapper svg':
-                      {
-                        fill: '#FFFFFF',
-                        color: '#FFFFFF',
-                      },
+                        {
+                          fill: '#FFFFFF',
+                          color: '#FFFFFF',
+                        },
                       '& .ag-sort-ascending-icon, & .ag-sort-descending-icon, & .ag-sort-none-icon':
-                      {
-                        fill: '#FFFFFF',
-                        color: '#FFFFFF',
-                      },
+                        {
+                          fill: '#FFFFFF',
+                          color: '#FFFFFF',
+                        },
                       '& .ag-row': {
                         display: 'flex',
                         alignItems: 'center',

@@ -60,9 +60,9 @@ function formatDate(dateStr: string) {
   if (!dateStr) return '';
   const date = new Date(dateStr);
   const day = String(date.getDate()).padStart(2, '0');
-  const month = date.toLocaleString('en', { month: 'long' }); // Месяц буквами
+  const month = date.toLocaleString('en', { month: 'long' });
   const year = date.getFullYear();
-  return `${month} ${day} ${year}`;
+  return `${month} ${day}, ${year}`;
 }
 function Dashboard() {
   const [data, setData] = useState<any>(null);
@@ -95,8 +95,9 @@ function Dashboard() {
           null as any,
           headers
         );
+
         setData(res);
-        // Временная отладка для проверки структуры данных
+        // Temporary console logs for debugging
         console.log('Lead statuses:', Object.keys(res.leads_by_status || {}));
         console.log(
           'Opportunity stages:',
@@ -142,7 +143,7 @@ function Dashboard() {
   }
   return (
     <Box sx={{ p: 2, mt: 8, pr: 4 }}>
-      {/* ВЕРХНИЕ КАРТОЧКИ */}
+      {/* upper cards */}
       <Grid container spacing={4} mb={2}>
         {' '}
         {/* Используем mb для большего отступа между карточками вверзу и нижними */}{' '}
@@ -192,9 +193,9 @@ function Dashboard() {
                 sx={{
                   fontFamily: 'Roboto',
                   fontWeight: 700,
-                  fontSize: String(item.value).length > 10 ? 18 : 24,
+                  fontSize: String(item.value).length > 10 ? 24 : 24,
                   color: '#339AF0',
-                  textAlign: String(item.value).length > 3 ? 'center' : 'right',
+                  textAlign: String(item.value).length > 3 ? 'right' : 'right',
                   mt: 'auto',
                   width: '100%',
                 }}
@@ -521,7 +522,7 @@ function Dashboard() {
                             {opp.name}
                           </Typography>
                           <Typography className="dashboard-secondary-text">
-                            {opp.company_name}
+                            {opp.lead?.company_name || opp.company_name}
                           </Typography>
                         </Box>
                       </TableCell>
