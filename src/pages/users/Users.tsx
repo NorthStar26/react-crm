@@ -48,7 +48,7 @@ import {
   FabLeft,
   FabRight,
 } from '../../styles/CssStyled';
-import { FaFileExport } from 'react-icons/fa';
+import { FaDownload, FaFileExport } from 'react-icons/fa';
 //import { FiDownload, } from 'react-icons/fi';
 import * as XLSX from 'xlsx';
 
@@ -628,7 +628,7 @@ export default function Users() {
         <Stack direction="row" spacing={1}>
           <Button
             variant="outlined"
-            startIcon={<FaFileExport />}
+            startIcon={<FaDownload />}
             onClick={exportExcel}
             sx={{
               borderRadius: '999px',

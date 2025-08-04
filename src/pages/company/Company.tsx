@@ -21,7 +21,7 @@ import { SuccessAlert, ErrorAlert } from '../../components/Button/SuccessAlert';
 import { Spinner } from '../../components/Spinner';
 import { FiPlus } from '@react-icons/all-files/fi/FiPlus';
 import { FiSearch } from '@react-icons/all-files/fi/FiSearch';
-import { FaFileExport } from 'react-icons/fa';
+import { FaDownload, FaFileExport } from 'react-icons/fa';
 import { FiChevronUp } from '@react-icons/all-files/fi/FiChevronUp';
 import { FiChevronDown } from '@react-icons/all-files/fi/FiChevronDown';
 import { FaEdit, FaTrashAlt } from 'react-icons/fa';
@@ -530,7 +530,7 @@ export default function Company() {
           <CustomButton
             variant="outline"
             shape="rounded"
-            startIcon={<FaFileExport />}
+            startIcon={<FaDownload />}
             onClick={exportExcel}
           >
             Export
