@@ -72,7 +72,7 @@ import ProfileComponent from '../pages/profile/Profile';
 import { useUser } from '../context/UserContext';
 import { LeadToOpportunity } from '../pages/opportunities/LeadToOpportunity';
 import OpportunityPipeline from '../pages/opportunities/OpportunityPipeline';
-
+import Dashboard from '../pages/dashboard';
 export default function Sidebar(props: any) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -404,6 +404,7 @@ export default function Sidebar(props: any) {
           >
             <Routes>
               <Route index element={<Leads />} />
+              <Route path="/app/dashboard" element={<Dashboard />} />
               <Route path="/app/leads" element={<Leads />} />
               <Route path="/app/leads/add-leads" element={<AddLeads />} />
               <Route path="/app/leads/:leadId/edit" element={<EditLead />} />
@@ -453,13 +454,22 @@ export default function Sidebar(props: any) {
               {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
                 <>
                   <Route path="/app/users" element={<Users />} />
-                  <Route path="/app/users/user-details" element={<UserDetails />} />
-                  
+                  <Route
+                    path="/app/users/user-details"
+                    element={<UserDetails />}
+                  />
+
                   {/* Admin-only routes */}
                   {user?.role === 'ADMIN' && (
                     <>
-                      <Route path="/app/users/add-users" element={<AddUsers />} />
-                      <Route path="/app/users/edit-user" element={<EditUser />} />
+                      <Route
+                        path="/app/users/add-users"
+                        element={<AddUsers />}
+                      />
+                      <Route
+                        path="/app/users/edit-user"
+                        element={<EditUser />}
+                      />
                     </>
                   )}
                 </>
@@ -486,7 +496,10 @@ export default function Sidebar(props: any) {
                 path="/app/opportunities/pipeline/:id"
                 element={<OpportunityPipeline />}
               />
-              <Route path="/app/opportunities/view" element={<ViewOpportunity />} />
+              <Route
+                path="/app/opportunities/view"
+                element={<ViewOpportunity />}
+              />
               <Route
                 path="/app/opportunities/:id/pipeline"
                 element={<OpportunityPipeline />}

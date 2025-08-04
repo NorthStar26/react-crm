@@ -1,0 +1,82 @@
+/* Общие стили для таблиц в приложении */
+.app-table-container {
+  width: 100%;
+}
+
+/* AG Grid базовая тема */
+.app-table-theme {
+  /* Заголовки */
+  --ag-header-background-color: #2e4258;
+  --ag-header-foreground-color: #ffffff;
+  --ag-header-border-color: #d9ebfe;
+
+  /* Строки */
+  --ag-odd-row-background-color: #ffffff;
+  --ag-even-row-background-color: #f9fafb;
+  --ag-row-border-color: #d9ebfe;
+  --ag-row-hover-color: #f3f8ff;
+
+  /* Ячейки */
+  --ag-cell-horizontal-padding: 4px;
+  --ag-header-cell-padding: 8px 20px;
+}
+
+/* Стили ячеек */
+.app-table-theme .ag-header-cell,
+.app-table-mui-table th {
+  padding-left: 20px;
+  padding-right: 20px;
+  background: #2e4258;
+  color: #ffffff;
+  font-weight: bold;
+  font-family: Roboto;
+  font-size: 16px;
+  border-bottom: 1px solid #d9ebfe;
+}
+
+.app-table-theme .ag-cell,
+.app-table-mui-table td {
+  display: flex;
+  align-items: center;
+  padding-left: 20px;
+  padding-right: 20px;
+  border: none;
+}
+
+/* Выравнивание заголовков */
+.app-table-theme .ag-header-cell-label {
+  justify-content: flex-start;
+}
+
+/* Стили для Material UI Table */
+.app-table-mui-table tr {
+  height: 80px;
+  border-bottom: 1px solid #d9ebfe;
+}
+
+.app-table-mui-table tr:nth-of-type(odd) {
+  background-color: #ffffff;
+}
+
+.app-table-mui-table tr:nth-of-type(even) {
+  background-color: #f9fafb;
+}
+
+.app-table-mui-table tr:hover {
+  background-color: #f3f8ff;
+}
+
+/* Стили для статусов */
+.app-table-status-chip {
+  font-weight: 500;
+  font-size: 14px;
+  min-width: 110px;
+  height: 30px;
+  border-radius: 999px;
+  display: flex;
+  justify-content: center;
+  padding: 4px 12px;
+  color: #fff;
+  border: 1px solid transparent;
+  box-shadow: inset 0px 0px 0px 2px rgba(0, 153, 102, 0.2);
+}

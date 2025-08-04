@@ -40,3 +40,4 @@ export const UserUrl = 'user';
 // PROFILE
 export const ProfileUrl = 'profile';
 //
+export const DashboardSummaryUrl = 'dashboard/summary/';
