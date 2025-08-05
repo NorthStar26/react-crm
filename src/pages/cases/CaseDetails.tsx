@@ -408,9 +408,18 @@ export const CaseDetails = (props: any) => {
                                     fontWeight: 500,
                                     fontSize: '15px',
                                     minHeight: '36px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 1.5,
                                 }}
                             >
-                                <span style={{ fontWeight: 600, marginRight: 8 }}>Reason:</span>
+                                <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 19 }}>
+                                    <svg width="22" height="19" viewBox="0 0 22 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <polygon points="11,2 21,17 1,17" fill="#D32F2F" />
+                                        <rect x="10" y="8.5" width="2" height="4.5" fill="white" />
+                                        <rect x="10" y="14.2" width="2" height="2" fill="white" />
+                                    </svg>
+                                </span>
                                 {caseDetails?.reason || caseDetails?.opportunity?.reason || <span style={{ color: '#aaa' }}>No reason provided</span>}
                             </Box>
                         </Box>
