@@ -78,6 +78,7 @@ export default function CompanyDetails() {
   const [jobTitlesData, setJobTitlesData] = useState<any[]>([]);
   const [jobTitlesLoading, setJobTitlesLoading] = useState<boolean>(true);
   const [contactsCount, setContactsCount] = useState<number>(0);
+  const [jobTitlesLimit, setJobTitlesLimit] = useState<number>(5);
 
   // Состояние для данных диаграммы лидов
   const [leadsData, setLeadsData] = useState<any[]>([]);
@@ -92,17 +93,18 @@ export default function CompanyDetails() {
     const id = companyId || state?.companyId?.id;
     if (id) {
       getCompanyDetail(id);
-      fetchJobTitlesAndLeadsData(id, selectedLeadStatus);
+      fetchJobTitlesAndLeadsData(id, selectedLeadStatus, jobTitlesLimit);
     } else {
       setError('Company ID is missing');
       setLoading(false);
     }
-  }, [companyId, state?.companyId?.id, selectedLeadStatus]);
+  }, [companyId, state?.companyId?.id, selectedLeadStatus, jobTitlesLimit]);
 
   // Функция для получения данных о распределении должностей и лидов
   const fetchJobTitlesAndLeadsData = async (
     id: string,
-    status: string = 'all'
+    status: string = 'all',
+    limit: number = 5
   ) => {
     setJobTitlesLoading(true);
     setLeadsLoading(true);
@@ -118,9 +120,10 @@ export default function CompanyDetails() {
     };
 
     try {
-      // Добавляем параметр статуса, если он не 'all'
+      // Добавляем параметры статуса и лимита
       const statusParam = status !== 'all' ? `&status=${status}` : '';
-      const url = `${CompaniesUrl}job-titles/?company=${id}${statusParam}`;
+      const limitParam = `&limit=${limit}`;
+      const url = `${CompaniesUrl}job-titles/?company=${id}${statusParam}${limitParam}`;
       console.log('Requesting data from URL:', url);
 
       const response = await fetchData(url, 'GET', null as any, headers);
@@ -186,6 +189,16 @@ export default function CompanyDetails() {
     const id = companyId || state?.companyId?.id;
     if (id) {
       fetchJobTitlesAndLeadsData(id, status);
+    }
+  };
+
+  const handleJobTitlesLimitChange = (event: SelectChangeEvent<number>) => {
+    const limit = event.target.value as number;
+    setJobTitlesLimit(limit);
+
+    const id = companyId || state?.companyId?.id;
+    if (id) {
+      fetchJobTitlesAndLeadsData(id, selectedLeadStatus, limit);
     }
   };
 
@@ -513,12 +526,25 @@ export default function CompanyDetails() {
                 sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}
               >
                 <Typography sx={{ fontWeight: 500, mr: 1 }}>by</Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <WorkIcon sx={{ fontSize: 18, color: '#666' }} />
-                  <Typography sx={{ fontWeight: 500 }}>
-                    Top 5 Job Titles
-                  </Typography>
-                </Box>
+                <FormControl size="small" sx={{ minWidth: 150 }}>
+                  <InputLabel id="job-title-limit-select-label">
+                    Job Titles
+                  </InputLabel>
+                  <Select
+                    labelId="job-title-limit-select-label"
+                    id="job-title-limit-select"
+                    value={jobTitlesLimit}
+                    label="Job Titles"
+                    onChange={handleJobTitlesLimitChange}
+                    startAdornment={
+                      <WorkIcon sx={{ fontSize: 18, color: '#666', mr: 1 }} />
+                    }
+                  >
+                    <MenuItem value={5}>Top 5</MenuItem>
+                    <MenuItem value={10}>Top 10</MenuItem>
+                    <MenuItem value={15}>Top 15</MenuItem>
+                  </Select>
+                </FormControl>
               </Box>
 
               {jobTitlesLoading ? (
@@ -639,7 +665,7 @@ export default function CompanyDetails() {
                       />
                     }
                   >
-                    <MenuItem value="all">All Statuses</MenuItem>
+                    <MenuItem value="all">Status</MenuItem>
                     {leadStatusChoices.map((status) => (
                       <MenuItem key={status.value} value={status.value}>
                         {status.label}
