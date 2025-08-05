@@ -152,7 +152,7 @@ function Dashboard() {
           { label: 'Contacts', value: data.contacts_count },
           { label: 'Leads', value: data.leads_count },
           { label: 'Opportunities', value: data.opportunities_count },
-          { label: 'Accounts', value: data.accounts_count || 140 },
+          { label: 'Accounts', value: data.accounts_count },
           {
             label: 'Pipeline Value',
             value: `€${Number(data.total_pipeline_value).toLocaleString()}`,
