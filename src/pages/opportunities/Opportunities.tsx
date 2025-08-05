@@ -294,7 +294,7 @@ export default function Opportunities() {
       field: 'name',
       flex: 2,
       sortable: true,
-      filter: true,
+
       cellRenderer: (params: ICellRendererParams) => (
         <span
           style={{
@@ -313,7 +313,7 @@ export default function Opportunities() {
       field: 'contact',
       flex: 2,
       sortable: true,
-      filter: true,
+
       cellRenderer: (params: ICellRendererParams) => {
         const contact = params.value;
         if (!contact) return '—';
@@ -328,7 +328,7 @@ export default function Opportunities() {
       field: 'stage',
       flex: 1.5,
       sortable: true,
-      filter: true,
+
       cellRenderer: (params: ICellRendererParams) => {
         if (!params.value) return '—';
 
@@ -351,7 +351,7 @@ export default function Opportunities() {
       field: 'amount',
       flex: 1.5,
       sortable: true,
-      filter: true,
+
       cellRenderer: (params: ICellRendererParams) => {
         const { data } = params;
         if (!data.amount || !data.probability) return '—';
@@ -373,7 +373,7 @@ export default function Opportunities() {
       field: 'expected_close_date',
       flex: 1.5,
       sortable: true,
-      filter: true,
+
       valueFormatter: (params: any) => params.value || '—',
     },
     {
@@ -381,7 +381,7 @@ export default function Opportunities() {
       field: 'assigned_to',
       flex: 2,
       sortable: true,
-      filter: true,
+
       cellRenderer: (params: ICellRendererParams) => {
         const assignedTo = params.value;
         if (!assignedTo || !assignedTo.length) return '—';
@@ -441,7 +441,7 @@ export default function Opportunities() {
   const defaultColDef = {
     resizable: true,
     sortable: true,
-    filter: true,
+
     wrapText: true,
     autoHeight: true,
     unSortIcon: true,
