@@ -610,29 +610,29 @@ function EditContact() {
                                 onOpen={() => setSalutationSelectOpen(true)}
                                 onClose={() => setSalutationSelectOpen(false)}
                                 open={salutationSelectOpen}
-                                 IconComponent={() => (
-                                                                  <div className="select-icon-background">
-                                                                    {salutationSelectOpen ? (//check if select is open
+                                IconComponent={() => (
+                                <div className="select-icon-background">
+                                  {salutationSelectOpen ? (//check if select is open
 
-                                                                      <FiChevronUp
-                                                                        className="select-icon"
-                                                                        onMouseDown={(e) => {
-                                                                          e.stopPropagation();
-                                                                          setSalutationSelectOpen(false);// Close the select
-                                                                        }}
-                                                                      />
-                                                                    ) : (
-                                                                      <FiChevronDown
-                                                                        className="select-icon"
-                                                                        onMouseDown={(e) => {
-                                                                          e.stopPropagation();
-                                                                          setSalutationSelectOpen(true);// Open the select
-                                                                        }}
-                                                                      />
-                                                                    )}
+                                    <FiChevronUp
+                                      className="select-icon"
+                                      onMouseDown={(e) => {
+                                        e.stopPropagation();
+                                        setSalutationSelectOpen(false);// Close the select
+                                      }}
+                                    />
+                                  ) : (
+                                    <FiChevronDown
+                                      className="select-icon"
+                                      onMouseDown={(e) => {
+                                        e.stopPropagation();
+                                        setSalutationSelectOpen(true);// Open the select
+                                      }}
+                                    />
+                                  )}
 
-                                                                  </div>
-                                                                )}//End IconComponent
+                                </div>
+                              )}//End IconComponent
                                 // IconComponent={() => (
                                 //   <div className="select-icon-background">
                                 //     {salutationSelectOpen ? (
@@ -733,14 +733,35 @@ function EditContact() {
                                 onClose={() => setCompanySelectOpen(false)}
                                 open={companySelectOpen}
                                 IconComponent={() => (
-                                  <div className="select-icon-background">
-                                    {companySelectOpen ? (
-                                      <FiChevronUp className="select-icon" />
-                                    ) : (
-                                      <FiChevronDown className="select-icon" />
-                                    )}
-                                  </div>
-                                )}
+                                <div className="select-icon-background">
+                                  {companySelectOpen ? ( //check if select is open
+                                    <FiChevronUp
+                                      className="select-icon"
+                                      onMouseDown={(e) => {
+                                        e.stopPropagation();
+                                        setCompanySelectOpen(false); // Close the select
+                                      }}
+                                    />
+                                  ) : (
+                                    <FiChevronDown
+                                      className="select-icon"
+                                      onMouseDown={(e) => {
+                                        e.stopPropagation();
+                                        setCompanySelectOpen(true); // Open the select
+                                      }}
+                                    />
+                                  )}
+                                </div>
+                              )} //End IconComponent
+                                // IconComponent={() => (
+                                //   <div className="select-icon-background">
+                                //     {companySelectOpen ? (
+                                //       <FiChevronUp className="select-icon" />
+                                //     ) : (
+                                //       <FiChevronDown className="select-icon" />
+                                //     )}
+                                //   </div>
+                                // )}
                                 className={'select'}
                                 onChange={handleChange}
                                 error={!!errors?.company?.[0]}
