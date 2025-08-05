@@ -411,8 +411,9 @@ export default function Opportunities() {
       headerName: 'Actions',
       field: 'id',
       minWidth: 120,
+      flex: 1,
       sortable: false,
-      filter: false,
+
       cellRenderer: (params: ICellRendererParams) => (
         <Stack direction="row" spacing={1}>
           <IconButton

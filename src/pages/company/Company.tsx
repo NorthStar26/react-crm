@@ -301,7 +301,7 @@ export default function Company() {
       field: 'email',
       flex: 2,
       sortable: true,
-      filter: true,
+      // filter: true,
       cellRenderer: (params: any) => params.value || '—',
     },
     {
@@ -309,7 +309,7 @@ export default function Company() {
       field: 'phone',
       flex: 1.5,
       sortable: true,
-      filter: true,
+      // filter: true,
       cellRenderer: (params: any) => params.value || '—',
     },
     {
@@ -317,7 +317,7 @@ export default function Company() {
       field: 'industry',
       flex: 1.5,
       sortable: true,
-      filter: true,
+      // filter: true,
       cellRenderer: (params: any) => getIndustryName(params.value) || '—',
     },
     {
@@ -325,7 +325,7 @@ export default function Company() {
       field: 'billing_country',
       flex: 1.5,
       sortable: true,
-      filter: true,
+      // filter: true,
       cellRenderer: (params: any) => getCountryName(params.value) || '—',
     },
     {
@@ -333,13 +333,14 @@ export default function Company() {
       field: 'created_at',
       flex: 1.5,
       sortable: true,
-      filter: true,
+      // filter: true,
       cellRenderer: (params: any) => formatDate(params.value) || '—',
     },
     {
       headerName: 'Actions',
       field: 'id',
       minWidth: 120,
+      flex: 1,
       sortable: false,
       suppressClickEventBubbling: true,
       cellRenderer: (params: ICellRendererParams) => (
@@ -392,7 +393,7 @@ export default function Company() {
   const defaultColDef = {
     resizable: true,
     sortable: true,
-    filter: true,
+    // filter: true,
     wrapText: true,
     autoHeight: true,
     unSortIcon: true,
@@ -549,6 +550,14 @@ export default function Company() {
             shape="rounded"
             startIcon={<FiPlus />}
             onClick={addCompany}
+            sx={[
+              {
+                fontFamily: 'Roboto !important',
+                fontWeight: '500 !important',
+                fontSize: '16px !important',
+                lineHeight: '19px !important',
+              },
+            ]}
           >
             Add Company
           </CustomButton>

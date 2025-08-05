@@ -74,7 +74,6 @@ export default function Cases() {
       field: 'name',
       flex: 2,
       sortable: true,
-      filter: true,
       cellRenderer: (params: ICellRendererParams) => {
         const value = params.value ? params.value : '---';
         return (
@@ -92,7 +91,7 @@ export default function Cases() {
       field: 'account.name',
       flex: 2,
       sortable: true,
-      filter: true,
+
       valueGetter: (params: any) =>
         params.data.account ? params.data.account.name : '---',
     },
@@ -101,7 +100,7 @@ export default function Cases() {
       field: 'status',
       flex: 1,
       sortable: true,
-      filter: true,
+
       valueGetter: (params: any) => params.data.status || '---',
     },
     {
@@ -109,7 +108,7 @@ export default function Cases() {
       field: 'priority',
       flex: 1,
       sortable: true,
-      filter: true,
+
       cellRenderer: (params: ICellRendererParams) => {
         return params.value ? <Priority priorityData={params.value} /> : '---';
       },
@@ -119,7 +118,7 @@ export default function Cases() {
       field: 'created_on_arrow',
       flex: 1,
       sortable: true,
-      filter: true,
+
       valueGetter: (params: any) => params.data.created_on_arrow || '---',
     },
     {
@@ -141,7 +140,7 @@ export default function Cases() {
   const defaultColDef = {
     resizable: true,
     sortable: true,
-    filter: true,
+
     wrapText: true,
     autoHeight: true,
     unSortIcon: true,

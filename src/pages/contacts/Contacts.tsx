@@ -685,11 +685,24 @@ export default function Contacts() {
             variant="contained"
             startIcon={<FiPlus />}
             onClick={addContact}
-            sx={{
-              fontFamily: 'Roboto',
-              backgroundColor: '#1976d2',
-              '&:hover': { backgroundColor: '#1565c0' },
-            }}
+            sx={[
+              {
+                fontFamily: 'Roboto !important',
+                fontWeight: '500 !important',
+                fontSize: '16px !important',
+                lineHeight: '19px !important',
+                height: '40px !important', //
+                minWidth: '140px !important',
+                borderRadius: '8px !important',
+                '&:hover': { backgroundColor: '#1565c0 !important' },
+                textTransform: 'none !important',
+                padding: '8px 24px !important',
+                boxSizing: 'border-box !important',
+                display: 'flex !important',
+                alignItems: 'center !important',
+                justifyContent: 'center !important',
+              },
+            ]}
           >
             Add Contact
           </Button>

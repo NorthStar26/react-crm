@@ -441,7 +441,7 @@ export default function Users() {
         field: 'email',
         flex: 2,
         sortable: true,
-        filter: true,
+
         domLayout: 'normal',
         cellStyle: {
           display: 'flex',
@@ -475,7 +475,7 @@ export default function Users() {
         field: 'phone',
         flex: 1,
         sortable: true,
-        filter: true,
+
         cellStyle: {
           display: 'flex',
           alignItems: 'center',
@@ -487,7 +487,7 @@ export default function Users() {
         field: 'role',
         flex: 1,
         sortable: true,
-        filter: true,
+
         cellStyle: {
           display: 'flex',
           alignItems: 'center',
@@ -619,7 +619,7 @@ export default function Users() {
   const defaultColDef = {
     resizable: true,
     sortable: true,
-    filter: true,
+
     wrapText: true,
     autoHeight: true,
     unSortIcon: true,
