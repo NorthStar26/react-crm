@@ -762,13 +762,34 @@ function AddContact() {
                                 open={languageSelectOpen}
                                 IconComponent={() => (
                                   <div className="select-icon-background">
-                                    {languageSelectOpen ? (
-                                      <FiChevronUp className="select-icon" />
+                                    {salutationSelectOpen ? (
+                                      <FiChevronUp
+                                        className="select-icon"
+                                        onMouseDown={(e) => {
+                                          e.stopPropagation();
+                                          setLanguageSelectOpen(false);
+                                        }}
+                                      />
                                     ) : (
-                                      <FiChevronDown className="select-icon" />
+                                      <FiChevronDown
+                                        className="select-icon"
+                                        onMouseDown={(e) => {
+                                          e.stopPropagation();
+                                          setLanguageSelectOpen(true);
+                                        }}
+                                      />
                                     )}
                                   </div>
                                 )}
+                                // IconComponent={() => (
+                                //   <div className="select-icon-background">
+                                //     {languageSelectOpen ? (
+                                //       <FiChevronUp className="select-icon" />
+                                //     ) : (
+                                //       <FiChevronDown className="select-icon" />
+                                //     )}
+                                //   </div>
+                                // )}
                                 className={'select'}
                                 onChange={handleChange}
                                 error={!!errors?.language?.[0]}
