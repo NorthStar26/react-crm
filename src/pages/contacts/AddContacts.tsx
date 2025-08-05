@@ -553,7 +553,6 @@ function AddContact() {
                                 IconComponent={() => (
                                   <div className="select-icon-background">
                                     {salutationSelectOpen ? (
-
                                       <FiChevronUp
                                         className="select-icon"
                                         onMouseDown={(e) => {
@@ -570,7 +569,6 @@ function AddContact() {
                                         }}
                                       />
                                     )}
-
                                   </div>
                                 )}
                                 // IconComponent={() => (
@@ -680,13 +678,35 @@ function AddContact() {
                                 open={companySelectOpen}
                                 IconComponent={() => (
                                   <div className="select-icon-background">
-                                    {companySelectOpen ? (
-                                      <FiChevronUp className="select-icon" />
+                                    {salutationSelectOpen ? (
+                                      <FiChevronUp
+                                        className="select-icon"
+                                        onMouseDown={(e) => {
+                                          e.stopPropagation();
+                                          setCompanySelectOpen(false);
+                                        }}
+                                      />
                                     ) : (
-                                      <FiChevronDown className="select-icon" />
+                                      <FiChevronDown
+                                        className="select-icon"
+                                        onMouseDown={(e) => {
+                                          e.stopPropagation();
+                                          setCompanySelectOpen(true);
+                                        }}
+                                      />
                                     )}
                                   </div>
                                 )}
+                                // IconComponent={() => (
+                                //   <div className="select-icon-background">
+                                //     {companySelectOpen ? (
+                                //       <FiChevronUp className="select-icon" />
+                                //     ) : (
+                                //       <FiChevronDown className="select-icon" />
+                                //     )}
+                                //   </div>
+                                // )}
+
                                 className={'select'}
                                 onChange={handleChange}
                                 error={!!errors?.company?.[0]}
