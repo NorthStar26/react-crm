@@ -149,6 +149,7 @@ export default function Sidebar(props: any) {
   // Filter navigation items based on user role
   const getFilteredNavList = () => {
     const baseNavList = [
+      'dashboard',
       'leads',
       'contacts',
       'opportunities',
@@ -168,6 +169,12 @@ export default function Sidebar(props: any) {
   const navList = getFilteredNavList();
   const navIcons = (text: any, screen: any): React.ReactNode => {
     switch (text) {
+      case 'dashboard':
+        return screen === 'dashboard' ? (
+          <FaTachometerAlt fill="#3e79f7" />
+        ) : (
+          <FaTachometerAlt />
+        );
       case 'leads':
         return screen === 'leads' ? <FaUsers fill="#3e79f7" /> : <FaUsers />;
       case 'contacts':
