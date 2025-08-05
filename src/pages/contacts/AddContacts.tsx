@@ -581,7 +581,9 @@ function AddContact() {
                       </div>
                       <div style={fieldStyles.fieldSubContainer}>
                         <div style={fieldStyles.fieldRow}>
-                          <div style={fieldStyles.fieldTitle}>First Name</div>
+                          <div style={fieldStyles.fieldTitle}>
+                            First Name <span style={{ color: 'red' }}>*</span>
+                          </div>
                           <div style={fieldStyles.fieldInput}>
                             <RequiredTextField
                               name="first_name"
@@ -602,7 +604,9 @@ function AddContact() {
                     <div style={fieldStyles.fieldContainer}>
                       <div style={fieldStyles.fieldSubContainer}>
                         <div style={fieldStyles.fieldRow}>
-                          <div style={fieldStyles.fieldTitle}>Last Name</div>
+                          <div style={fieldStyles.fieldTitle}>
+                            Last Name <span style={{ color: 'red' }}>*</span>
+                          </div>
                           <div style={fieldStyles.fieldInput}>
                             <RequiredTextField
                               name="last_name"
@@ -619,7 +623,9 @@ function AddContact() {
                       </div>
                       <div style={fieldStyles.fieldSubContainer}>
                         <div style={fieldStyles.fieldRow}>
-                          <div style={fieldStyles.fieldTitle}>Email</div>
+                          <div style={fieldStyles.fieldTitle}>
+                            Email <span style={{ color: 'red' }}>*</span>
+                          </div>
                           <div style={fieldStyles.fieldInput}>
                             <TextField
                               name="primary_email"
@@ -680,7 +686,9 @@ function AddContact() {
                       </div>
                       <div style={fieldStyles.fieldSubContainer}>
                         <div style={fieldStyles.fieldRow}>
-                          <div style={fieldStyles.fieldTitle}>Job Title</div>
+                          <div style={fieldStyles.fieldTitle}>
+                            Job Title <span style={{ color: 'red' }}>*</span>
+                          </div>
                           <div style={fieldStyles.fieldInput}>
                             <TextField
                               name="title"
