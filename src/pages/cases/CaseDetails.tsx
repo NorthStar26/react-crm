@@ -9,7 +9,8 @@ import {
     Snackbar,
     Alert,
     Typography,
-    IconButton
+    IconButton,
+    CircularProgress
 } from '@mui/material'
 import BusinessIcon from '@mui/icons-material/Business'
 import PersonIcon from '@mui/icons-material/Person'
@@ -183,7 +184,7 @@ export const CaseDetails = (props: any) => {
 
     const module = 'Cases'
     const crntPage = 'Case Details'
-    const backBtn = 'Back to Cases'
+    const backBtn = 'Back To List'
 
     useEffect(() => {
         if (caseDetails?.leads) {
@@ -248,6 +249,19 @@ export const CaseDetails = (props: any) => {
                     module={module}
                     backBtn={backBtn}
                     crntPage={crntPage}
+                    backBtnSx={{
+                        fontFamily: 'Font 1, sans-serif',
+                        fontWeight: 500,
+                        fontStyle: 'normal', // 'Medium' is not a valid CSS value
+                        fontSize: 16,
+                        lineHeight: '28px',
+                        letterSpacing: '0.46px',
+                        color: '#1A3353',
+                        textAlign: 'center',
+                        verticalAlign: 'middle',
+                        textTransform: 'capitalize',
+                        backgroundColor: 'white',
+                    }}
                 />
 
                 {/* --- Main Content --- */}
@@ -264,9 +278,16 @@ export const CaseDetails = (props: any) => {
                         gap: 3, 
                     }}
                 >
-                    {/* Left Side: 3 separate cards */}
-                    <Box sx={{ width: '65%', display: 'flex', flexDirection: 'column', gap: 3 }}>
-                        {/* Opportunity Name Card */}
+                    {/* Show spinner while loading */}
+                    {!caseDetails ? (
+                        <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 300 }}>
+                            <CircularProgress />
+                        </Box>
+                    ) : (
+                        <>
+                        {/* Left Side: 3 separate cards */}
+                        <Box sx={{ width: '65%', display: 'flex', flexDirection: 'column', gap: 3 }}>
+                            {/* Opportunity Name Card */}
                         <Box
                             sx={{
                                 borderRadius: '5px',
@@ -287,13 +308,41 @@ export const CaseDetails = (props: any) => {
                                     flexWrap: 'wrap',
                                 }}
                             >
-                                <Typography variant="h5" fontWeight={700} color="#101828">
+                                <Typography
+                                    sx={{
+                                        fontFamily: 'Font 1, sans-serif',
+                                        fontWeight: 700,
+                                        fontStyle: 'normal',
+                                        fontSize: 30,
+                                        lineHeight: '36px',
+                                        letterSpacing: 0,
+                                        verticalAlign: 'middle',
+                                        color: '#101828',
+                                    }}
+                                >
                                     {caseDetails?.opportunity?.name || 'Opportunity Name'}
                                 </Typography>
                                 {caseDetails?.opportunity?.stage && (
                                     <Chip
-                                        label="OPEN"
-                                        color="error"
+                                        label="Open"
+                                        sx={{
+                                            width: 121,
+                                            height: 30,
+                                            minWidth: 0,
+                                            minHeight: 0,
+                                            backgroundColor: '#D32F2F',
+                                            color: '#fff',
+                                            fontWeight: 600,
+                                            fontSize: 14,
+                                            letterSpacing: '0.5px',
+                                            textTransform: 'capitalize',
+                                            borderRadius: '16777200px',
+                                            borderWidth: 1,
+                                            borderStyle: 'solid',
+                                            borderColor: '#D32F2F',
+                                            boxShadow: '0px 0px 0px 2px #00996633 inset',
+                                            opacity: 1,
+                                        }}
                                     />
                                 )}
                             </Box>
@@ -377,9 +426,24 @@ export const CaseDetails = (props: any) => {
                                 gap: 2,
                             }}
                         >
-                            <Typography variant="h6" fontWeight={600} color="#1A3353" mb={2}>
+                            <Typography
+                                sx={{
+                                    fontFamily: 'Font 1, sans-serif',
+                                    fontWeight: 600,
+                                    fontStyle: 'normal',
+                                    fontSize: 18,
+                                    lineHeight: '27px',
+                                    letterSpacing: '0.17px',
+                                    verticalAlign: 'middle',
+                                    color: '#1A3353',
+                                    mb: 0
+                                }}
+                            >
                                 Financial Details
                             </Typography>
+                            <Box sx={{ width: '100%', mt: '-6px', mb: 1 }}>
+                                <div style={{ borderBottom: '2px solid #e0e0e0', width: '100%' }} />
+                            </Box>
                             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                                 <Box>
                                     <div className="title2">Amount</div>
@@ -458,9 +522,24 @@ export const CaseDetails = (props: any) => {
                                 gap: 2,
                             }}
                         >
-                            <Typography variant="h6" fontWeight={600} color="#1A3353" mb={2}>
+                            <Typography
+                                sx={{
+                                    fontFamily: 'Font 1, sans-serif',
+                                    fontWeight: 600,
+                                    fontStyle: 'normal',
+                                    fontSize: 18,
+                                    lineHeight: '27px',
+                                    letterSpacing: '0.17px',
+                                    verticalAlign: 'middle',
+                                    color: '#1A3353',
+                                    mb: 0
+                                }}
+                            >
                                 Opportunity Information
                             </Typography>
+                            <Box sx={{ width: '100%', mt: '-6px', mb: 1 }}>
+                                <div style={{ borderBottom: '2px solid #e0e0e0', width: '100%' }} />
+                            </Box>
                             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                                 <Box>
                                     <div className="title2">Lead Source</div>
@@ -578,28 +657,18 @@ export const CaseDetails = (props: any) => {
                                 </div>
                             </Box>
                         </Box>
-                    </Box> 
+                        </Box> 
 
-                    {/* Right Side: Attachments */}
-                    <Box
-                        sx={{
-                            width: '34%',
-                            borderRadius: '5px',
-                            border: '1px solid #80808038',
-                            backgroundColor: 'white',
-                            p: 3,
-                            boxShadow: '0px 1px 3px 0px #0000001F, 0px 1px 1px 0px #00000024, 0px 2px 1px -1px #00000033',
-                            minHeight: '100px',
-                        }}
-                    >
-                        <div
-                            style={{
-                                padding: '20px 0 10px 0',
-                                borderBottom: '1px solid lightgray',
-                                display: 'flex',
-                                flexDirection: 'row',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
+                        {/* Right Side: Attachments */}
+                        <Box
+                            sx={{
+                                width: '34%',
+                                borderRadius: '5px',
+                                border: '1px solid #80808038',
+                                backgroundColor: 'white',
+                                p: 3,
+                                boxShadow: '0px 1px 3px 0px #0000001F, 0px 1px 1px 0px #00000024, 0px 2px 1px -1px #00000033',
+                                minHeight: '100px',
                             }}
                         >
                             <div
@@ -607,71 +676,78 @@ export const CaseDetails = (props: any) => {
                                     fontWeight: 600,
                                     fontSize: '18px',
                                     color: '#1a3353f0',
+                                    padding: '20px 0 10px 0',
+                                    borderBottom: '1px solid lightgray',
+                                    display: 'flex',
+                                    flexDirection: 'row',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
                                 }}
                             >
                                 Activities & Notes
                             </div>
-                        </div>
-                        {/* Single bordered note box below */}
-                        <Box
-                            sx={{
-                                border: '1px solid var(--_components-input-outlined-enabledBorder, #0000003B)',
-                                borderRadius: '5px',
-                                mt: 2,
-                                p: 1, 
-                                backgroundColor: 'transparent',
-                                minHeight: '40px', 
-                                display: 'flex',
-                                flexDirection: 'column',
-                            }}
-                        >
-                            <textarea
-                                style={{
-                                    width: '100%',
-                                    minHeight: '24px', 
-                                    resize: 'vertical',
-                                    border: 'none',
-                                    outline: 'none',
-                                    fontSize: '16px',
-                                    background: 'transparent',
-                                    color: '#1a3353',
-                                    fontFamily: 'inherit',
-                                }}
-                                placeholder="Type your note here..."
-                                rows={1} 
-                                onInput={e => {
-                                    const target = e.target as HTMLTextAreaElement;
-                                    target.style.height = 'auto';
-                                    target.style.height = target.scrollHeight + 'px';
-                                }}
-                            />
-                        </Box>
-                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-                            <Button
-                                variant="contained"
+                            {/* Single bordered note box below */}
+                            <Box
                                 sx={{
-                                    width: 145,
-                                    height: 40,
+                                    border: '1px solid var(--_components-input-outlined-enabledBorder, #0000003B)',
                                     borderRadius: '5px',
-                                    background: '#1976D2',
-                                    color: '#fff',
-                                    textTransform: 'none',
-                                    fontWeight: 600,
-                                    boxShadow: `
-                                        0px 2px 2px 0px #00000024,
-                                        0px 3px 1px -2px #00000033,
-                                        0px 1px 5px 0px #0000001F
-                                    `,
-                                    '&:hover': {
-                                        background: '#1565c0',
-                                    },
+                                    mt: 2,
+                                    p: 1, 
+                                    backgroundColor: 'transparent',
+                                    minHeight: '40px', 
+                                    display: 'flex',
+                                    flexDirection: 'column',
                                 }}
-                                startIcon={<ThinPlus />}
                             >
-                                Add Note
-                            </Button>
+                                <textarea
+                                    style={{
+                                        width: '100%',
+                                        minHeight: '24px', 
+                                        resize: 'vertical',
+                                        border: 'none',
+                                        outline: 'none',
+                                        fontSize: '16px',
+                                        background: 'transparent',
+                                        color: '#1a3353',
+                                        fontFamily: 'inherit',
+                                    }}
+                                    placeholder="Type your note here..."
+                                    rows={1} 
+                                    onInput={e => {
+                                        const target = e.target as HTMLTextAreaElement;
+                                        target.style.height = 'auto';
+                                        target.style.height = target.scrollHeight + 'px';
+                                    }}
+                                />
+                            </Box>
+                            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                                <Button
+                                    variant="contained"
+                                    sx={{
+                                        width: 145,
+                                        height: 40,
+                                        borderRadius: '5px',
+                                        background: '#1976D2',
+                                        color: '#fff',
+                                        textTransform: 'none',
+                                        fontWeight: 600,
+                                        boxShadow: `
+                                            0px 2px 2px 0px #00000024,
+                                            0px 3px 1px -2px #00000033,
+                                            0px 1px 5px 0px #0000001F
+                                        `,
+                                        '&:hover': {
+                                            background: '#1565c0',
+                                        },
+                                    }}
+                                    startIcon={<ThinPlus />}
+                                >
+                                    Add Note
+                                </Button>
+                            </Box>
                         </Box>
-                    </Box>
+                        </>
+                    )}
                 </Box>
             </div>
         </Box>
