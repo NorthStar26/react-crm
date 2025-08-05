@@ -19,6 +19,7 @@ import { fetchData } from '../components/FetchData';
 import { PieChart, Pie, Cell, Legend, ResponsiveContainer } from 'recharts';
 import { DashboardSummaryUrl } from '../services/ApiUrls';
 import '../styles/table-styles.css';
+import { getStageColor, stageChipStyles } from '../constants/stageColors';
 
 // Цвета для лидов
 const leadStatusColors: Record<string, string> = {
@@ -59,9 +60,9 @@ function formatDate(dateStr: string) {
   if (!dateStr) return '';
   const date = new Date(dateStr);
   const day = String(date.getDate()).padStart(2, '0');
-  const month = date.toLocaleString('en', { month: 'long' }); // Месяц буквами
+  const month = date.toLocaleString('en', { month: 'long' });
   const year = date.getFullYear();
-  return `${month} ${day} ${year}`;
+  return `${month} ${day}, ${year}`;
 }
 function Dashboard() {
   const [data, setData] = useState<any>(null);
@@ -94,8 +95,9 @@ function Dashboard() {
           null as any,
           headers
         );
+
         setData(res);
-        // Временная отладка для проверки структуры данных
+        // Temporary console logs for debugging
         console.log('Lead statuses:', Object.keys(res.leads_by_status || {}));
         console.log(
           'Opportunity stages:',
@@ -141,7 +143,7 @@ function Dashboard() {
   }
   return (
     <Box sx={{ p: 2, mt: 8, pr: 4 }}>
-      {/* ВЕРХНИЕ КАРТОЧКИ */}
+      {/* upper cards */}
       <Grid container spacing={4} mb={2}>
         {' '}
         {/* Используем mb для большего отступа между карточками вверзу и нижними */}{' '}
@@ -191,9 +193,9 @@ function Dashboard() {
                 sx={{
                   fontFamily: 'Roboto',
                   fontWeight: 700,
-                  fontSize: String(item.value).length > 10 ? 18 : 24,
+                  fontSize: String(item.value).length > 10 ? 24 : 24,
                   color: '#339AF0',
-                  textAlign: String(item.value).length > 3 ? 'center' : 'right',
+                  textAlign: String(item.value).length > 3 ? 'right' : 'right',
                   mt: 'auto',
                   width: '100%',
                 }}
@@ -414,93 +416,30 @@ function Dashboard() {
               Recent Leads
             </Typography>
             <Box
-              className="ag-theme-alpine leads-ag-theme"
-              sx={{
-                width: '100%',
-                // Стили темы AG Grid
-                '--ag-header-background-color': '#2E4258',
-                '--ag-header-foreground-color': '#FFFFFF',
-                '--ag-header-border-color': '#D9EBFE',
-                '--ag-odd-row-background-color': '#FFFFFF',
-                '--ag-even-row-background-color': '#F9FAFB',
-                '--ag-row-border-color': '#D9EBFE',
-                '--ag-cell-horizontal-padding': '4px',
-                '--ag-header-cell-padding': '8px 20px',
-                '& .ag-header-cell': {
-                  paddingLeft: '20px',
-                  paddingRight: '20px',
-                },
-                '& .ag-cell': {
-                  display: 'flex',
-                  alignItems: 'center',
-                  paddingLeft: '20px',
-                  paddingRight: '20px',
-                },
-                '& .ag-header-cell-label': {
-                  justifyContent: 'flex-start', // Выравнивание заголовков по левому краю
-                },
-              }}
+              className="ag-theme-alpine app-table-theme"
+              sx={{ width: '100%' }}
             >
               <Table size="small">
-                <TableHead
-                  sx={{
-                    borderRadius: '8px 8px 0 0',
-                    overflow: 'hidden',
-                    '& .MuiTableRow-root': {
-                      borderRadius: '8px 8px 0 0',
-                    },
-                  }}
-                >
+                <TableHead className="dashboard-table-header">
                   <TableRow>
                     <TableCell
                       width="40%"
-                      sx={{
-                        background: '#2E4258',
-                        color: '#FFFFFF',
-                        fontWeight: 'bold',
-                        fontFamily: 'Roboto',
-                        fontSize: 16,
-                        borderBottom: '1px solid #D9EBFE',
-                        padding: '12px 20px',
-                        paddingLeft: '20px',
-                        '&:first-of-type': {
-                          borderRadius: '8px 0 0 0',
-                        },
-                      }}
+                      align="left"
+                      className="dashboard-table-header-cell"
                     >
                       Lead Name
                     </TableCell>
                     <TableCell
                       width="30%"
                       align="left"
-                      sx={{
-                        background: '#2E4258',
-                        color: '#FFFFFF',
-                        fontWeight: 'bold',
-                        fontFamily: 'Roboto',
-                        fontSize: 16,
-                        borderBottom: '1px solid #D9EBFE',
-                        padding: '12px 20px',
-                      }}
+                      className="dashboard-table-header-cell"
                     >
                       Last Update Date
                     </TableCell>
                     <TableCell
                       width="30%"
-                      align="center"
-                      sx={{
-                        background: '#2E4258',
-                        color: '#FFFFFF',
-                        fontWeight: 'bold',
-                        fontFamily: 'Roboto',
-                        fontSize: 16,
-                        borderBottom: '1px solid #D9EBFE',
-                        padding: '12px 20px',
-                        paddingLeft: '20px',
-                        '&:last-of-type': {
-                          borderRadius: '0 8px 0 0',
-                        },
-                      }}
+                      align="left"
+                      className="dashboard-table-header-cell"
                     >
                       Status
                     </TableCell>
@@ -508,68 +447,28 @@ function Dashboard() {
                 </TableHead>
                 <TableBody>
                   {data.recent_leads?.map((lead: any, index: number) => (
-                    <TableRow
-                      key={lead.id}
-                      sx={{
-                        backgroundColor:
-                          index % 2 === 0 ? '#FFFFFF' : '#F9FAFB',
-                        '&:hover': { backgroundColor: '#F3F8FF' },
-                        borderBottom: '1px solid #D9EBFE',
-                        height: '80px',
-                      }}
-                    >
-                      <TableCell sx={{ border: 'none' }}>
-                        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                          <Typography
-                            fontWeight={500}
-                            fontSize={16}
-                            color="#1A3353"
-                            sx={{
-                              cursor: 'pointer',
-                              '&:hover': { color: '#1976d2' },
-                            }}
-                          >
-                            {lead.company_name}
-                          </Typography>
-                          <Typography
-                            variant="body2"
-                            fontSize={14}
-                            color="#1A3353"
-                            sx={{ mt: 0.5 }}
-                          >
+                    <TableRow key={lead.id} className="dashboard-table-row">
+                      <TableCell className="dashboard-table-cell">
+                        <Box className="dashboard-name-cell">
+                          <Typography className="dashboard-primary-text">
                             {lead.contact_name}
+                          </Typography>
+                          <Typography className="dashboard-secondary-text">
+                            {lead.company_name}
                           </Typography>
                         </Box>
                       </TableCell>
-                      <TableCell
-                        sx={{ border: 'none', color: '#1A3353', fontSize: 16 }}
-                      >
+                      <TableCell className="dashboard-table-cell dashboard-date-cell">
                         {formatDate(lead.updated_at)}
                       </TableCell>
-                      <TableCell
-                        sx={{
-                          border: 'none',
-                          textAlign: 'right',
-                          paddingRight: '20px',
-                        }}
-                      >
+                      <TableCell className="dashboard-table-cell dashboard-status-cell">
                         <Chip
-                          label={lead.status}
+                          label={capitalize(lead.status)}
                           sx={{
                             background:
                               leadStatusColors[lead.status?.toLowerCase()] ||
                               '#eee',
-                            color: '#fff',
-                            fontWeight: 500,
-                            fontSize: 14,
-                            minWidth: 110,
-                            height: 30,
-                            borderRadius: '1.67772e+07px',
-                            justifyContent: 'center',
-                            boxShadow:
-                              'inset 0px 0px 0px 2px rgba(0, 153, 102, 0.2)',
-                            padding: '4px 12px',
-                            border: '1px solid transparent',
+                            ...stageChipStyles,
                           }}
                         />
                       </TableCell>
@@ -585,44 +484,69 @@ function Dashboard() {
             <Typography fontWeight={600} mb={2}>
               Recent Opportunities
             </Typography>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Opportunity Name</TableCell>
-                  <TableCell>Last Update Date</TableCell>
-                  <TableCell>Stage</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {data.recent_opportunities?.map((opp: any) => (
-                  <TableRow key={opp.id}>
-                    <TableCell>
-                      <Typography fontWeight={600}>{opp.name}</Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {opp.company_name}
-                      </Typography>
+            <Box
+              className="ag-theme-alpine app-table-theme"
+              sx={{ width: '100%' }}
+            >
+              <Table size="small">
+                <TableHead className="dashboard-table-header">
+                  <TableRow>
+                    <TableCell
+                      width="40%"
+                      className="dashboard-table-header-cell"
+                    >
+                      Opportunity Name
                     </TableCell>
-                    <TableCell>{formatDate(opp.updated_at)}</TableCell>
-                    <TableCell>
-                      <Chip
-                        label={
-                          opportunityStageShortNames[
-                            (opp.stage_display || opp.stage)?.toLowerCase()
-                          ] || capitalize(opp.stage_display || opp.stage)
-                        }
-                        sx={{
-                          background:
-                            opportunityStatusColors[opp.stage] || '#eee',
-                          color: '#fff',
-                          fontWeight: 600,
-                          minWidth: 110,
-                        }}
-                      />
+                    <TableCell
+                      width="30%"
+                      align="left"
+                      className="dashboard-table-header-cell"
+                    >
+                      Last Update Date
+                    </TableCell>
+                    <TableCell
+                      width="30%"
+                      align="right"
+                      className="dashboard-table-header-cell"
+                    >
+                      Stage
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHead>
+                <TableBody>
+                  {data.recent_opportunities?.map((opp: any, index: number) => (
+                    <TableRow key={opp.id} className="dashboard-table-row">
+                      <TableCell className="dashboard-table-cell">
+                        <Box className="dashboard-name-cell">
+                          <Typography className="dashboard-primary-text">
+                            {opp.name}
+                          </Typography>
+                          <Typography className="dashboard-secondary-text">
+                            {opp.lead?.company_name || opp.company_name}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell className="dashboard-table-cell dashboard-date-cell">
+                        {formatDate(opp.updated_at)}
+                      </TableCell>
+                      <TableCell className="dashboard-table-cell dashboard-status-cell">
+                        <Chip
+                          label={
+                            opportunityStageShortNames[
+                              (opp.stage_display || opp.stage)?.toLowerCase()
+                            ] || capitalize(opp.stage_display || opp.stage)
+                          }
+                          sx={{
+                            backgroundColor: getStageColor(opp.stage),
+                            ...stageChipStyles,
+                          }}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Box>
           </Paper>
         </Grid>
       </Grid>

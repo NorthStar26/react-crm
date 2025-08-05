@@ -54,6 +54,7 @@ import { FiChevronDown } from '@react-icons/all-files/fi/FiChevronDown';
 import { EnhancedTableHead } from '../../components/EnchancedTableHead';
 import { useUser } from '../../context/UserContext';
 import { opportunityStageShortNames } from '../../constants/stageNames';
+import { getStageColor, stageChipStyles } from '../../constants/stageColors';
 interface HeadCell {
   disablePadding: boolean;
   id: any;
@@ -120,20 +121,6 @@ export default function Opportunities(props: any) {
   const { user } = useUser();
   const [tab, setTab] = useState('open');
   const [loading, setLoading] = useState(true);
-
-  // Function to get stage color based on stage name
-  const getStageColor = (stage: string) => {
-    const stageColors: { [key: string]: string } = {
-      NEGOTIATION: '#9C27B0', // Purple
-      QUALIFICATION: '#51CF66', // Green
-      IDENTIFY_DECISION_MAKERS: '#FF9800', // Orange
-      'CLOSED WON': '#4CAF50', // Green
-      'CLOSED LOST': '#F44336', // Red
-      PROPOSAL: '#339Af0', // Blue Grey
-      CLOSE: '#3F51B5', // Indigo
-    };
-    return stageColors[stage] || '#757575'; // Default grey color
-  };
 
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [page, setPage] = useState(0);
@@ -793,15 +780,7 @@ export default function Opportunities(props: any) {
                                 }
                                 sx={{
                                   backgroundColor: getStageColor(item.stage),
-                                  color: 'white',
-                                  fontWeight: 'bold',
-                                  fontSize: '0.75rem',
-                                  height: '24px',
-                                  borderRadius: '12px',
-                                  minWidth: '120px',
-
-                                  boxShadow:
-                                    '0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px rgba(0,0,0,0.14),0px 1px 3px rgba(0,0,0,0.12)',
+                                  ...stageChipStyles,
                                 }}
                               />
                             ) : (

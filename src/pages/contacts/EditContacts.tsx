@@ -641,7 +641,7 @@ function EditContact() {
                       </div>
                       <div style={fieldStyles.fieldSubContainer}>
                         <div style={fieldStyles.fieldRow}>
-                          <div style={fieldStyles.fieldTitle}>First Name</div>
+                          <div style={fieldStyles.fieldTitle}>First Name </div>
                           <div style={fieldStyles.fieldInput}>
                             <RequiredTextField
                               name="first_name"

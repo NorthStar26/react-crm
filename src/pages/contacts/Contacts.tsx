@@ -18,7 +18,7 @@ import { SuccessAlert, ErrorAlert } from '../../components/Button/SuccessAlert';
 import { Spinner } from '../../components/Spinner';
 import { FiPlus } from '@react-icons/all-files/fi/FiPlus';
 import { FiSearch } from '@react-icons/all-files/fi/FiSearch';
-import { FaDownload,FaFileExport } from 'react-icons/fa';
+import { FaDownload, FaFileExport } from 'react-icons/fa';
 import { FiChevronUp } from '@react-icons/all-files/fi/FiChevronUp';
 import { FiChevronDown } from '@react-icons/all-files/fi/FiChevronDown';
 import { FaEdit, FaTrashAlt } from 'react-icons/fa';
@@ -146,8 +146,11 @@ const ActionsCellRenderer = (props: ICellRendererParams) => {
   };
 
   // Check if user can edit (ADMIN/MANAGER always, USER only if they created the contact)
-  const canEdit = user?.role === 'ADMIN' || user?.role === 'MANAGER' ||
-    (user?.role === 'USER' && user?.user_details?.id === props.data.created_by?.id);
+  const canEdit =
+    user?.role === 'ADMIN' ||
+    user?.role === 'MANAGER' ||
+    (user?.role === 'USER' &&
+      user?.user_details?.id === props.data.created_by?.id);
 
   // Check if user can delete (only ADMIN and MANAGER)
   const canDelete = user?.role === 'ADMIN' || user?.role === 'MANAGER';
@@ -311,7 +314,7 @@ export default function Contacts() {
   const gridTheme = {
     '--ag-header-background-color': '#582e39ff',
     '--ag-header-foreground-color': '#FFFFFF',
-    '--ag-header-border-color': '#0F2A55',
+    '--ag-header-border-color': 'transparent',
     '--ag-odd-row-background-color': '#FFFFFF',
     '--ag-even-row-background-color': '#F3F8FF',
     '--ag-row-border-color': '#E0E0E0',
@@ -465,7 +468,7 @@ export default function Contacts() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          p: '2px 5px',
+          p: '6px 24px',
           borderBottom: '1px solid #e0e0e0',
           flexWrap: 'wrap',
           gap: 2,
@@ -683,13 +686,13 @@ export default function Contacts() {
       </Box>
 
       {/* Grid + Pagination */}
-      <Container maxWidth={false} disableGutters sx={{ px: 0.5, mt: 2 }}>
-        <Paper
-          sx={{ width: '100%', mb: 2, p: 0 }}
-          elevation={0}
-          square
-          variant="outlined"
-        >
+      {/* <Container maxWidth={false} disableGutters sx={{ px: 0.5, mt: 2 }}> */}
+      <Container
+        maxWidth={false}
+        disableGutters
+        sx={{ pl: 1, pr: 1, mt: 2, px: 1 }}
+      >
+        <Paper sx={{ width: '100%', mb: 2, p: 0 }} elevation={0} square>
           {loading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
               <Spinner />
@@ -703,6 +706,24 @@ export default function Contacts() {
                   width: '100%',
                   ...gridTheme,
                   '--ag-icon-color': '#FFFFFF',
+                  '& .ag-root-wrapper': {
+                    border: 'none',
+                  },
+                  // Добавленные стили для закругления углов заголовка
+                  '& .ag-header': {
+                    borderRadius: '8px 8px 0 0', // Закругление верхних углов
+                    overflow: 'hidden', // Обязательно для работы border-radius
+                  },
+                  '& .ag-header-cell:first-of-type': {
+                    borderTopLeftRadius: '8px', // Закругление левого верхнего угла
+                  },
+                  '& .ag-header-cell:last-of-type': {
+                    borderTopRightRadius: '8px', // Закругление правого верхнего угла
+                  },
+                  '& .ag-header-row': {
+                    borderBottom: 'none', // Убрать нижнюю границу у строки заголовка
+                  },
+
                   '& .ag-header-cell-label .ag-icon, & .ag-header-cell-label .ag-icon-wrapper svg':
                     {
                       fill: '#FFFFFF',

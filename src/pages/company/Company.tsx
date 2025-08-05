@@ -339,8 +339,10 @@ export default function Company() {
       cellRenderer: (params: ICellRendererParams) => (
         <Stack direction="row" spacing={1}>
           {/* Show edit button for ADMIN/MANAGER always, or for USER only if they created the company */}
-          {(user?.role === 'ADMIN' || user?.role === 'MANAGER' ||
-            (user?.role === 'USER' && user?.user_details?.id === params.data.created_by?.id)) && (
+          {(user?.role === 'ADMIN' ||
+            user?.role === 'MANAGER' ||
+            (user?.role === 'USER' &&
+              user?.user_details?.id === params.data.created_by?.id)) && (
             <IconButton
               size="small"
               onClick={(e) => {
@@ -375,7 +377,7 @@ export default function Company() {
   const gridTheme = {
     '--ag-header-background-color': '#2E4258',
     '--ag-header-foreground-color': '#FFFFFF',
-    '--ag-header-border-color': '#0F2A55',
+    '--ag-header-border-color': 'transparent',
     '--ag-odd-row-background-color': '#FFFFFF',
     '--ag-even-row-background-color': '#F3F8FF',
     '--ag-row-border-color': '#E0E0E0',
@@ -548,15 +550,15 @@ export default function Company() {
       </CustomToolbar>
 
       {/* Grid + Pagination */}
-      <Container maxWidth={false} disableGutters sx={{ px: 2, mt: 2 }}>
+      {/* <Container maxWidth={false} disableGutters sx={{ px: 2, mt: 2 }}> */}
+      <Container
+        maxWidth={false}
+        disableGutters
+        sx={{ pl: 1, pr: 1, mt: 2, px: 1 }}
+      >
         <Grid container spacing={0}>
           <Grid item xs={12}>
-            <Paper
-              sx={{ width: '100%', mb: 2, p: 0 }}
-              elevation={0}
-              square
-              variant="outlined"
-            >
+            <Paper sx={{ width: '100%', mb: 2, p: 0 }} elevation={0} square>
               {loading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
                   <Spinner />
@@ -565,30 +567,53 @@ export default function Company() {
                 <>
                   {/* AG Grid */}
                   <Box
-                    className="ag-theme-alpine"
+                    className="ag-theme-alpine contacts-ag-theme"
                     sx={{
                       width: '100%',
                       ...gridTheme,
                       '--ag-icon-color': '#FFFFFF',
+                      '& .ag-root-wrapper': {
+                        border: 'none',
+                      },
+                      // Добавленные стили для закругления углов заголовка
+                      '& .ag-header': {
+                        borderRadius: '8px 8px 0 0', // Закругление верхних углов
+                        overflow: 'hidden', // Обязательно для работы border-radius
+                      },
+                      '& .ag-header-cell:first-of-type': {
+                        borderTopLeftRadius: '8px', // Закругление левого верхнего угла
+                      },
+                      '& .ag-header-cell:last-of-type': {
+                        borderTopRightRadius: '8px', // Закругление правого верхнего угла
+                      },
+                      '& .ag-header-row': {
+                        borderBottom: 'none', // Убрать нижнюю границу у строки заголовка
+                      },
+
                       '& .ag-header-cell-label .ag-icon, & .ag-header-cell-label .ag-icon-wrapper svg':
-                      {
-                        fill: '#FFFFFF',
-                        color: '#FFFFFF',
-                      },
+                        {
+                          fill: '#FFFFFF',
+                          color: '#FFFFFF',
+                        },
                       '& .ag-sort-ascending-icon, & .ag-sort-descending-icon, & .ag-sort-none-icon':
-                      {
-                        fill: '#FFFFFF',
-                        color: '#FFFFFF',
-                      },
-                      '& .ag-row': {
-                        display: 'flex',
-                        alignItems: 'center',
-                      },
+                        {
+                          fill: '#FFFFFF',
+                          color: '#FFFFFF',
+                        },
+                      '& .ag-row': { display: 'flex', alignItems: 'center' },
                       '& .ag-cell': {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'flex-start',
-                        paddingLeft: '8px',
+                        paddingLeft: '4px',
+                        paddingRight: '4px',
+                      },
+                      '& .ag-header-cell': {
+                        paddingLeft: '4px',
+                        paddingRight: '4px',
+                      },
+                      '& .ag-pinned-right-cols-viewport .ag-cell': {
+                        paddingRight: '8px',
                       },
                     }}
                   >
