@@ -114,7 +114,6 @@ export default function Company() {
       //   );
       //   setLoading(false);
       // }
-
     } catch (error) {
       console.error('Error fetching companies:', error);
       setLoading(false);
@@ -278,7 +277,7 @@ export default function Company() {
       field: 'name',
       flex: 2,
       sortable: true,
-      filter: true,
+      // filter: true,
       cellRenderer: (params: any) => (
         <Stack direction="row" alignItems="center" spacing={1}>
           <Avatar
@@ -667,7 +666,7 @@ export default function Company() {
                         }}
                         sx={{ height: 32 }}
                       >
-                        {[5,10, 20, 30, 40, 50].map((n) => (
+                        {[5, 10, 20, 30, 40, 50].map((n) => (
                           <MenuItem key={n} value={n}>
                             {n}
                           </MenuItem>

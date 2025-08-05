@@ -222,8 +222,8 @@ export default function Contacts() {
       checkboxSelection: true,
       headerCheckboxSelectionFilteredOnly: true,
       suppressSizeToFit: true,
-      width: 40,
-      maxWidth: 40,
+      width: 20,
+      maxWidth: 20,
       sortable: false,
       filter: false,
     },
@@ -234,13 +234,15 @@ export default function Contacts() {
       valueGetter: (params) =>
         `${params.data.first_name} ${params.data.last_name}`,
       minWidth: 150,
+      width: 150,
       flex: 1,
       sortable: true,
     },
     {
       field: 'primary_email',
       headerName: 'Email',
-      minWidth: 250,
+      minWidth: 300,
+      width: 260,
       flex: 1,
       sortable: true,
     },
@@ -261,7 +263,9 @@ export default function Contacts() {
     {
       field: 'language',
       headerName: 'Language',
-      minWidth: 40,
+      minWidth: 80, // Увеличьте с 20 до 80
+      width: 130, // Добавьте фиксированную ширину
+      maxWidth: 130, // Ограничьте максимальную ширину
       valueGetter: (params) => {
         const code = params.data.language;
         const found = LANGUAGE_CHOICES.find(([c]) => c === code);
@@ -272,7 +276,9 @@ export default function Contacts() {
     {
       field: 'created_at',
       headerName: 'Creation Date',
-      minWidth: 20,
+      minWidth: 80, // Увеличьте с 20 до 80
+      width: 140, // Увеличьте с 100 до 120
+      maxWidth: 140, // Добавьте максимальную ширину
       valueFormatter: (params) => {
         if (params.value) {
           const date = new Date(params.value);
@@ -301,7 +307,7 @@ export default function Contacts() {
   const defaultColDef = {
     resizable: true,
     sortable: true,
-    filter: true,
+    // filter: true,
     wrapText: true,
     autoHeight: true,
     unSortIcon: true,
@@ -310,8 +316,8 @@ export default function Contacts() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'flex-start',
-      paddingRight: '4px',
-      paddingLeft: '4px',
+      paddingRight: '1px',
+      paddingLeft: '1px',
     },
   };
 
