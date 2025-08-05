@@ -48,7 +48,8 @@ import {
   FabLeft,
   FabRight,
 } from '../../styles/CssStyled';
-import { FiDownload } from 'react-icons/fi';
+import { FaDownload, FaFileExport } from 'react-icons/fa';
+//import { FiDownload, } from 'react-icons/fi';
 import * as XLSX from 'xlsx';
 
 //
@@ -176,26 +177,44 @@ export default function Users() {
     try {
       const activeOffset = (activeCurrentPage - 1) * activeRecordsPerPage;
       const inactiveOffset = (inactiveCurrentPage - 1) * inactiveRecordsPerPage;
-      console.log("activeOffset, activeRecordsPerPage", activeOffset, activeRecordsPerPage)
-      await fetchData(`${UsersUrl}/?offset=${tab === "active" ? activeOffset : inactiveOffset}&limit=${tab === "active" ? activeRecordsPerPage : inactiveRecordsPerPage}`, 'GET', null as any, Header)
-        .then((res: any) => {
-          if (!res.error) {
-            console.log("res", res)
-            setActiveUsersCount(res.active_users.active_users_count)
-            //console.log("res?.active_users?.active_users", res?.active_users?.active_users)
-            setActiveUsers(res?.active_users?.active_users)
-            setInactiveUsersCount(res.inactive_users.inactive_users_count)
-            setActiveTotalPages(Math.ceil(res?.active_users?.active_users_count / activeRecordsPerPage));
-            setActiveUsersOffset(res?.active_users?.offset)
-            setInactiveUsers(res?.inactive_users?.inactive_users)
-            setInactiveTotalPages(Math.ceil(res?.inactive_users?.inactive_users_count / inactiveRecordsPerPage));
-            setInactiveUsersOffset(res?.inactive_users?.offset)
-            setLoading(false)
-          }
-
-        })
-    }
-    catch (error) {
+      console.log(
+        'activeOffset, activeRecordsPerPage',
+        activeOffset,
+        activeRecordsPerPage
+      );
+      await fetchData(
+        `${UsersUrl}/?offset=${
+          tab === 'active' ? activeOffset : inactiveOffset
+        }&limit=${
+          tab === 'active' ? activeRecordsPerPage : inactiveRecordsPerPage
+        }`,
+        'GET',
+        null as any,
+        Header
+      ).then((res: any) => {
+        if (!res.error) {
+          console.log('res', res);
+          setActiveUsersCount(res.active_users.active_users_count);
+          //console.log("res?.active_users?.active_users", res?.active_users?.active_users)
+          setActiveUsers(res?.active_users?.active_users);
+          setInactiveUsersCount(res.inactive_users.inactive_users_count);
+          setActiveTotalPages(
+            Math.ceil(
+              res?.active_users?.active_users_count / activeRecordsPerPage
+            )
+          );
+          setActiveUsersOffset(res?.active_users?.offset);
+          setInactiveUsers(res?.inactive_users?.inactive_users);
+          setInactiveTotalPages(
+            Math.ceil(
+              res?.inactive_users?.inactive_users_count / inactiveRecordsPerPage
+            )
+          );
+          setInactiveUsersOffset(res?.inactive_users?.offset);
+          setLoading(false);
+        }
+      });
+    } catch (error) {
       console.error('Error fetching data:', error);
     }
   };
@@ -294,21 +313,21 @@ export default function Users() {
     console.log('getUserDetail called with ID:', id);
     console.log('Current localStorage Token:', localStorage.getItem('Token'));
     console.log('Current localStorage org:', localStorage.getItem('org'));
-    
+
     const Header = {
       Accept: 'application/json',
       'Content-Type': 'application/json',
       Authorization: localStorage.getItem('Token'),
-      org: localStorage.getItem('org')
-    }
+      org: localStorage.getItem('org'),
+    };
     console.log('Headers being sent:', Header);
     console.log('API URL being called:', `${UserUrl}/${id}/`);
-    
+
     fetchData(`${UserUrl}/${id}/`, 'GET', null as any, Header)
       .then((res) => {
         console.log(res, 'res');
         if (!res.error) {
-          const data = res?.data?.profile_obj
+          const data = res?.data?.profile_obj;
           navigate('/app/users/edit-user', {
             state: {
               value: {
@@ -328,9 +347,11 @@ export default function Users() {
                 has_sales_access: data?.has_sales_access,
                 has_marketing_access: data?.has_marketing_access,
                 is_organization_admin: data?.is_organization_admin,
-              }, id: id, edit: true
-            }
-          })
+              },
+              id: id,
+              edit: true,
+            },
+          });
         } else {
           console.error('Error response from getUserDetail API:', res);
         }
@@ -338,7 +359,7 @@ export default function Users() {
       .catch((error) => {
         console.error('Network/fetch error in getUserDetail:', error);
       });
-  }
+  };
 
   const EditItem = (userId: any) => {
     getUserDetail(userId);
@@ -437,7 +458,11 @@ export default function Users() {
               {params.value?.charAt(0).toUpperCase() || 'U'}
             </Avatar>
             <Typography
-              sx={{ color: '#1a73e8', cursor: 'pointer', textTransform: 'none' }}
+              sx={{
+                color: '#1a73e8',
+                cursor: 'pointer',
+                textTransform: 'none',
+              }}
               onClick={() => userDetail(params.data.id)}
             >
               {params.value}
@@ -454,7 +479,7 @@ export default function Users() {
         cellStyle: {
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'flex-start'
+          justifyContent: 'flex-start',
         },
       },
       {
@@ -466,7 +491,7 @@ export default function Users() {
         cellStyle: {
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'flex-start'
+          justifyContent: 'flex-start',
         },
       },
     ];
@@ -482,7 +507,7 @@ export default function Users() {
         cellStyle: {
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'flex-end'
+          justifyContent: 'flex-end',
         },
         cellRenderer: (params: ICellRendererParams) => {
           return (
@@ -627,7 +652,7 @@ export default function Users() {
         <Stack direction="row" spacing={1}>
           <Button
             variant="outlined"
-            startIcon={<FiDownload />}
+            startIcon={<FaDownload />}
             onClick={exportExcel}
             sx={{
               borderRadius: '999px',
@@ -665,22 +690,46 @@ export default function Users() {
       </CustomToolbar>
 
       {/* ---------- grid + pagination ---------- */}
-      <Container maxWidth={false} disableGutters sx={{ px: 2 }}>
+      {/* <Container maxWidth={false} disableGutters sx={{ px: 2 }}> */}
+      <Container
+        maxWidth={false}
+        disableGutters
+        sx={{ pl: 1, pr: 1, mt: 2, px: 1 }}
+      >
         <Grid container spacing={0}>
           <Grid item xs={12}>
             <Paper
               sx={{ width: '100%', mb: 2, p: 0 }}
               elevation={0}
               square
-              variant="outlined"
+              variant="none"
             >
               {/* 1) ag-Grid wrapper (unchanged) */}
               <Box
-                className="ag-theme-alpine"
+                className="ag-theme-alpine users-ag-theme"
                 sx={{
                   width: '100%',
                   ...gridTheme,
                   '--ag-icon-color': '#FFFFFF',
+
+                  '& .ag-root-wrapper': {
+                    border: 'none',
+                  },
+
+                  '& .ag-header': {
+                    borderRadius: '8px 8px 0 0',
+                    overflow: 'hidden',
+                  },
+                  '& .ag-header-cell:first-of-type': {
+                    borderTopLeftRadius: '8px',
+                  },
+                  '& .ag-header-cell:last-of-type': {
+                    borderTopRightRadius: '8px',
+                  },
+                  '& .ag-header-row': {
+                    borderBottom: 'none',
+                  },
+
                   '& .ag-header-cell-label .ag-icon, & .ag-header-cell-label .ag-icon-wrapper svg':
                     {
                       fill: '#FFFFFF',
@@ -713,6 +762,7 @@ export default function Users() {
                   suppressCellSelection
                   suppressCellFocus
                   rowHeight={56}
+                  headerHeight={40}
                   // onFirstDataRendered={params => params.api.sizeColumnsToFit()}
                   // onGridSizeChanged={params => params.api.sizeColumnsToFit()}
                   onGridReady={(params) => {
