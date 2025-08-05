@@ -96,6 +96,7 @@ type response = {
     case_attachment: string;
     leads: string;
     opportunity?: any;
+    reason?: string;
 };
 
 export const CaseDetails = (props: any) => {
@@ -124,6 +125,7 @@ export const CaseDetails = (props: any) => {
         fetchData(`${CasesUrl}/${id}/`, 'GET', null as any, Header)
             .then((res) => {
                 if (!res.error) {
+                    console.log('Case Details Response:', res?.cases_obj);
                     setCaseDetails(res?.cases_obj)
                     setContacts(res?.contacts)
                     setAttachments(res?.attachments)
@@ -358,7 +360,7 @@ export const CaseDetails = (props: any) => {
                                 }}
                             >
                                 <span style={{ fontWeight: 600, marginRight: 8 }}>Reason:</span>
-                                {caseDetails?.opportunity?.reason || <span style={{ color: '#aaa' }}>No reason provided</span>}
+                                {caseDetails?.reason || caseDetails?.opportunity?.reason || <span style={{ color: '#aaa' }}>No reason provided</span>}
                             </Box>
                         </Box>
 
