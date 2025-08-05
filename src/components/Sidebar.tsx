@@ -443,7 +443,7 @@ export default function Sidebar(props: any) {
                 element={<AddAccount />}
               />
               <Route
-                path="/app/accounts/account-details"
+                path="/app/accounts/account-details/:accountId"
                 element={<AccountDetails />}
               />
               <Route
