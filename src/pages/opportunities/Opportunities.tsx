@@ -664,14 +664,14 @@ export default function Opportunities(props: any) {
               <FiChevronRight style={{ height: '15px' }} />
             </FabRight>
           </Box>
-          <Button
+          {/* <Button
             variant="contained"
             startIcon={<FiPlus className="plus-icon" />}
             onClick={onAddOpportunity}
             className={'add-button'}
           >
             Add Opportunity
-          </Button>
+          </Button> */}
         </Stack>
       </CustomToolbar>
       <Container sx={{ width: '100%', maxWidth: '100%', minWidth: '100%' }}>
