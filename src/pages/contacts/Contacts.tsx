@@ -91,7 +91,6 @@ const NameCellRenderer = (props: ICellRendererParams) => {
     </span>
   );
 };
-
 const PhoneNumberCellRenderer = (props: ICellRendererParams) => {
   const phoneNumber = props.value;
   const doNotCall = props.data.do_not_call;
@@ -105,7 +104,14 @@ const PhoneNumberCellRenderer = (props: ICellRendererParams) => {
         position: 'relative',
       }}
     >
-      {phoneNumber || '---'}
+      <span
+        style={{
+          color: doNotCall ? '#D32F2F' : 'inherit',
+          fontWeight: doNotCall ? 500 : 'normal',
+        }}
+      >
+        {phoneNumber || '---'}
+      </span>
       {doNotCall && (
         <span style={{ display: 'flex', alignItems: 'center' }}>
           {/* SVG "Do Not Call" icon */}
