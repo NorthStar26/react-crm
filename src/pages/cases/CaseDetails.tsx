@@ -367,6 +367,7 @@ export const CaseDetails = (props: any) => {
                                         color: '#1A3353',
                                         fontWeight: 600,
                                         minWidth: 180,
+                                        textTransform: 'capitalize',
                                     }}
                                 >
                                     {caseDetails?.opportunity?.company?.name
@@ -386,6 +387,7 @@ export const CaseDetails = (props: any) => {
                                         color: '#1A3353',
                                         fontWeight: 600,
                                         minWidth: 180,
+                                        textTransform: 'capitalize',
                                     }}
                                 >
                                     {caseDetails?.opportunity?.contact
