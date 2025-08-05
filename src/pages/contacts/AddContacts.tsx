@@ -552,13 +552,36 @@ function AddContact() {
                                 open={salutationSelectOpen}
                                 IconComponent={() => (
                                   <div className="select-icon-background">
-                                    {salutationSelectOpen ? (
-                                      <FiChevronUp className="select-icon" />
+                                    {salutationSelectOpen ? (//check if select is open
+
+                                      <FiChevronUp
+                                        className="select-icon"
+                                        onMouseDown={(e) => {
+                                          e.stopPropagation();
+                                          setSalutationSelectOpen(false);// Close the select
+                                        }}
+                                      />
                                     ) : (
-                                      <FiChevronDown className="select-icon" />
+                                      <FiChevronDown
+                                        className="select-icon"
+                                        onMouseDown={(e) => {
+                                          e.stopPropagation();
+                                          setSalutationSelectOpen(true);// Open the select
+                                        }}
+                                      />
                                     )}
+
                                   </div>
-                                )}
+                                )}//End IconComponent
+                                // IconComponent={() => (
+                                //   <div className="select-icon-background">
+                                //     {salutationSelectOpen ? (
+                                //       <FiChevronUp className="select-icon" />
+                                //     ) : (
+                                //       <FiChevronDown className="select-icon" />
+                                //     )}
+                                //   </div>
+                                // )}
                                 className={'select'}
                                 onChange={handleChange}
                                 error={!!errors?.salutation?.[0]}
