@@ -35,7 +35,7 @@ export const fetchCompanyOptions = async (searchTerm = '', limit = 10, offset = 
     
     if (!response.error) {
       // Map API response to CompanyOption format
-      const companyOptions: CompanyOption[] = (response.data || []).map((company: any) => ({
+      const companyOptions: CompanyOption[] = (response.results || []).map((company: any) => ({
         id: company.id,
         name: company.name || 'Unnamed Company',
         email: company.email,
