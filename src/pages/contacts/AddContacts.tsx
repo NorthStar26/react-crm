@@ -553,12 +553,33 @@ function AddContact() {
                                 IconComponent={() => (
                                   <div className="select-icon-background">
                                     {salutationSelectOpen ? (
-                                      <FiChevronUp className="select-icon" />
+                                      <FiChevronUp
+                                        className="select-icon"
+                                        onMouseDown={(e) => {
+                                          e.stopPropagation();
+                                          setSalutationSelectOpen(false);
+                                        }}
+                                      />
                                     ) : (
-                                      <FiChevronDown className="select-icon" />
+                                      <FiChevronDown
+                                        className="select-icon"
+                                        onMouseDown={(e) => {
+                                          e.stopPropagation();
+                                          setSalutationSelectOpen(true);
+                                        }}
+                                      />
                                     )}
                                   </div>
                                 )}
+                                // IconComponent={() => (
+                                //   <div className="select-icon-background">
+                                //     {salutationSelectOpen ? (
+                                //       <FiChevronUp className="select-icon" />
+                                //     ) : (
+                                //       <FiChevronDown className="select-icon" />
+                                //     )}
+                                //   </div>
+                                // )}
                                 className={'select'}
                                 onChange={handleChange}
                                 error={!!errors?.salutation?.[0]}
@@ -657,13 +678,35 @@ function AddContact() {
                                 open={companySelectOpen}
                                 IconComponent={() => (
                                   <div className="select-icon-background">
-                                    {companySelectOpen ? (
-                                      <FiChevronUp className="select-icon" />
+                                    {salutationSelectOpen ? (
+                                      <FiChevronUp
+                                        className="select-icon"
+                                        onMouseDown={(e) => {
+                                          e.stopPropagation();
+                                          setCompanySelectOpen(false);
+                                        }}
+                                      />
                                     ) : (
-                                      <FiChevronDown className="select-icon" />
+                                      <FiChevronDown
+                                        className="select-icon"
+                                        onMouseDown={(e) => {
+                                          e.stopPropagation();
+                                          setCompanySelectOpen(true);
+                                        }}
+                                      />
                                     )}
                                   </div>
                                 )}
+                                // IconComponent={() => (
+                                //   <div className="select-icon-background">
+                                //     {companySelectOpen ? (
+                                //       <FiChevronUp className="select-icon" />
+                                //     ) : (
+                                //       <FiChevronDown className="select-icon" />
+                                //     )}
+                                //   </div>
+                                // )}
+
                                 className={'select'}
                                 onChange={handleChange}
                                 error={!!errors?.company?.[0]}
@@ -719,13 +762,34 @@ function AddContact() {
                                 open={languageSelectOpen}
                                 IconComponent={() => (
                                   <div className="select-icon-background">
-                                    {languageSelectOpen ? (
-                                      <FiChevronUp className="select-icon" />
+                                    {salutationSelectOpen ? (
+                                      <FiChevronUp
+                                        className="select-icon"
+                                        onMouseDown={(e) => {
+                                          e.stopPropagation();
+                                          setLanguageSelectOpen(false);
+                                        }}
+                                      />
                                     ) : (
-                                      <FiChevronDown className="select-icon" />
+                                      <FiChevronDown
+                                        className="select-icon"
+                                        onMouseDown={(e) => {
+                                          e.stopPropagation();
+                                          setLanguageSelectOpen(true);
+                                        }}
+                                      />
                                     )}
                                   </div>
                                 )}
+                                // IconComponent={() => (
+                                //   <div className="select-icon-background">
+                                //     {languageSelectOpen ? (
+                                //       <FiChevronUp className="select-icon" />
+                                //     ) : (
+                                //       <FiChevronDown className="select-icon" />
+                                //     )}
+                                //   </div>
+                                // )}
                                 className={'select'}
                                 onChange={handleChange}
                                 error={!!errors?.language?.[0]}
