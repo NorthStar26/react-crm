@@ -74,11 +74,13 @@ import { useUser } from '../context/UserContext';
 import { LeadToOpportunity } from '../pages/opportunities/LeadToOpportunity';
 import OpportunityPipeline from '../pages/opportunities/OpportunityPipeline';
 import Dashboard from '../pages/dashboard';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import { Navigate } from 'react-router-dom';
 export default function Sidebar(props: any) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout: contextLogout } = useUser();
-  const [screen, setScreen] = useState('contacts');
+  const [screen, setScreen] = useState('dashboard');
   const [drawerWidth, setDrawerWidth] = useState(200);
   const [headerWidth, setHeaderWidth] = useState(drawerWidth);
   const [userDetail, setUserDetail] = useState('');
@@ -150,6 +152,7 @@ export default function Sidebar(props: any) {
   // Filter navigation items based on user role
   const getFilteredNavList = () => {
     const baseNavList = [
+      'dashboard',
       'leads',
       'contacts',
       'opportunities',
@@ -169,6 +172,15 @@ export default function Sidebar(props: any) {
   const navList = getFilteredNavList();
   const navIcons = (text: any, screen: any): React.ReactNode => {
     switch (text) {
+      case 'dashboard':
+        return (
+          <DashboardIcon
+            sx={{
+              color: screen === 'dashboard' ? '#3e79f7' : 'inherit',
+              fontSize: 18,
+            }}
+          />
+        );
       case 'leads':
         return screen === 'leads' ? <FaUsers fill="#3e79f7" /> : <FaUsers />;
       case 'contacts':
@@ -404,7 +416,7 @@ export default function Sidebar(props: any) {
             }}
           >
             <Routes>
-              <Route index element={<Leads />} />
+              <Route index element={<Navigate to="/app/dashboard" replace />} />
               <Route path="/app/dashboard" element={<Dashboard />} />
               <Route path="/app/leads" element={<Leads />} />
               <Route path="/app/leads/add-leads" element={<AddLeads />} />
@@ -444,7 +456,7 @@ export default function Sidebar(props: any) {
                 element={<AddAccount />}
               />
               <Route
-                path="/app/accounts/account-details"
+                path="/app/accounts/account-details/:accountId"
                 element={<AccountDetails />}
               />
               <Route

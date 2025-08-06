@@ -48,7 +48,8 @@ import {
   FabLeft,
   FabRight,
 } from '../../styles/CssStyled';
-import { FiDownload } from 'react-icons/fi';
+import { FaDownload, FaFileExport } from 'react-icons/fa';
+//import { FiDownload, } from 'react-icons/fi';
 import * as XLSX from 'xlsx';
 
 //
@@ -440,7 +441,7 @@ export default function Users() {
         field: 'email',
         flex: 2,
         sortable: true,
-        filter: true,
+
         domLayout: 'normal',
         cellStyle: {
           display: 'flex',
@@ -474,7 +475,7 @@ export default function Users() {
         field: 'phone',
         flex: 1,
         sortable: true,
-        filter: true,
+
         cellStyle: {
           display: 'flex',
           alignItems: 'center',
@@ -486,7 +487,7 @@ export default function Users() {
         field: 'role',
         flex: 1,
         sortable: true,
-        filter: true,
+
         cellStyle: {
           display: 'flex',
           alignItems: 'center',
@@ -618,7 +619,7 @@ export default function Users() {
   const defaultColDef = {
     resizable: true,
     sortable: true,
-    filter: true,
+
     wrapText: true,
     autoHeight: true,
     unSortIcon: true,
@@ -651,17 +652,21 @@ export default function Users() {
         <Stack direction="row" spacing={1}>
           <Button
             variant="outlined"
-            startIcon={<FiDownload />}
+            startIcon={<FaFileExport />}
             onClick={exportExcel}
-            sx={{
-              borderRadius: '999px',
+           sx={{
+              background: '#2B5075',
+              boxShadow:
+                '0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px rgba(0,0,0,0.14), 0px 1px 5px rgba(0,0,0,0.12)',
+              borderRadius: '4px',
               textTransform: 'none',
-              color: '#0F2A55',
-              borderColor: '#0F2A55',
-              fontWeight: 600,
-              bgcolor: 'white',
-              px: 2,
-              '&:hover': { bgcolor: '#f0f4ff', borderColor: '#0F2A55' },
+              border: 'none',
+              color: '#FFFFFF',
+              '&:hover': {
+                backgroundColor: '#fff !important',
+                color: '#284871 !important',
+                border: '1px solid #284871 !important',
+              },
             }}
           >
             Export
@@ -672,15 +677,24 @@ export default function Users() {
               variant="contained"
               startIcon={<FiPlus />}
               onClick={onAddUser}
-              sx={{
-                borderRadius: '999px',
-                textTransform: 'none',
-                bgcolor: '#1E3A5F',
-                color: 'white',
-                fontWeight: 600,
-                px: 2,
-                '&:hover': { bgcolor: '#1E3A5F' },
-              }}
+              sx={[
+              {
+                fontFamily: 'Roboto !important',
+                fontWeight: '500 !important',
+                fontSize: '16px !important',
+                lineHeight: '19px !important',
+                height: '40px !important', //
+                minWidth: '140px !important',
+                
+                '&:hover': { backgroundColor: '#1565c0 !important' },
+                textTransform: 'none !important',
+                padding: '8px 24px !important',
+                boxSizing: 'border-box !important',
+                display: 'flex !important',
+                alignItems: 'center !important',
+                justifyContent: 'center !important',
+              },
+            ]}
             >
               Add User
             </Button>
@@ -693,12 +707,12 @@ export default function Users() {
       <Container
         maxWidth={false}
         disableGutters
-        sx={{ pl: 1, pr: 1, mt: 2, px: 1 }}
+        sx={{ pl: 1, pr: 1, mt: 2, px: 1, ml: 1.5 }}
       >
         <Grid container spacing={0}>
           <Grid item xs={12}>
             <Paper
-              sx={{ width: '100%', mb: 2, p: 0 }}
+              sx={{ width: '98%', mb: 2, p: 0 }}
               elevation={0}
               square
               variant="none"

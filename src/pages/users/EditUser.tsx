@@ -4,9 +4,9 @@ import { FaTrashAlt } from 'react-icons/fa';
 import { ValidationModule } from 'ag-grid-community';
 import { ModuleRegistry } from 'ag-grid-community';
 import { PhotoCamera, Delete, Upload } from '@mui/icons-material';
-import { 
+import {
   ColumnAutoSizeModule,
-  TextFilterModule, 
+  TextFilterModule,
   NumberFilterModule,
   DateFilterModule,
   RowAutoHeightModule,
@@ -180,7 +180,7 @@ export function EditUser() {
     setFormData(state?.value);
     getEditDetail(state?.id);
   }, [state?.id]);
-  
+
   useEffect(() => {
     if (reset) {
       setFormData(state?.value);
@@ -189,7 +189,7 @@ export function EditUser() {
       setReset(false);
     };
   }, [reset]);
-  
+
   // Initialize and clean up camera stream
   useEffect(() => {
     if (cameraOpen) {
@@ -258,7 +258,7 @@ export function EditUser() {
       Authorization: localStorage.getItem('Token') || '',
       org: localStorage.getItem('org') || '',
     };
-    
+
     fetchData(`${UserUrl}/${id}/`, 'GET', null as any, headers)
       .then((res: any) => {
         if (!res.error) {
@@ -326,34 +326,68 @@ export function EditUser() {
 
     fetchData(`${UserUrl}/${state?.id}/`, 'PUT', JSON.stringify(data), headers)
       .then(async (res: any) => {
+
         if (!res.error) {
+          setInfoMessage('User updated successfully');
+          setSuccessMessage(true);
+
+          setTimeout(() => {
+            setSuccessMessage(false);
+
+            const currentUserId = user?.user_details?.id?.toString();
+            const editedUserId = state?.id?.toString();
+            // if the user being edited is the current logged-in user, refresh the context
+            if (
+              user &&
+              currentUserId &&
+              editedUserId &&
+              currentUserId === editedUserId
+            ) {
+              window.location.href = '/app/users';
+            } else {
+              navigate('/app/users');
+            }
+          }, 2000); // 2 seconds delay before redirecting
+
           resetForm();
-
-          // If the user being edited is the current logged-in user, refresh the context
-          // Convert both IDs to strings for comparison to avoid type mismatch
-          const currentUserId = user?.user_details?.id?.toString();
-          const editedUserId = state?.id?.toString();
-
-          console.log('Current user ID:', currentUserId);
-          console.log('Edited user ID:', editedUserId);
-          console.log('IDs match:', currentUserId === editedUserId);
-
-          if (
-            user &&
-            currentUserId &&
-            editedUserId &&
-            currentUserId === editedUserId
-          ) {
-            console.log(
-              'User edited their own profile - refreshing page to update all components...'
-            );
-            // When user edits their own profile, refresh the page to ensure all components update
-            window.location.href = '/app/users';
-            return;
-          }
-
-          navigate('/app/users');
+          return;
         }
+
+
+
+
+        // if (!res.error) {
+        //   resetForm();
+
+        //   // If the user being edited is the current logged-in user, refresh the context
+        //   // Convert both IDs to strings for comparison to avoid type mismatch
+        //   const currentUserId = user?.user_details?.id?.toString();
+        //   const editedUserId = state?.id?.toString();
+
+        //   console.log('Current user ID:', currentUserId);
+        //   console.log('Edited user ID:', editedUserId);
+        //   console.log('IDs match:', currentUserId === editedUserId);
+
+        //   if (
+        //     user &&
+        //     currentUserId &&
+        //     editedUserId &&
+        //     currentUserId === editedUserId
+        //   ) {
+        //     console.log(
+        //       'User edited their own profile - refreshing page to update all components...'
+        //     );
+        //     // When user edits their own profile, refresh the page to ensure all components update
+        //     window.location.href = '/app/users';
+        //     return;
+        //   }
+
+        //   navigate('/app/users');
+        // }
+
+
+
+
         if (res.error) {
           setError(true);
           setProfileErrors(
@@ -391,7 +425,7 @@ export function EditUser() {
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    
+
     if (!file) return;
 
     if (!SUPPORTED_FORMATS.includes(file.type)) {
@@ -577,14 +611,14 @@ export function EditUser() {
         const canvasHeight = canvasRef.current.height; // 500
         const videoWidth = videoRef.current.videoWidth;
         const videoHeight = videoRef.current.videoHeight;
-  
+
         // Calculate the zoomed area to capture (centered)
         const zoomFactor = zoom;
         const zoomedWidth = videoWidth / zoomFactor;
         const zoomedHeight = videoHeight / zoomFactor;
         const offsetX = (videoWidth - zoomedWidth) / 2; // Center horizontally
         const offsetY = (videoHeight - zoomedHeight) / 2; // Center vertically
-  
+
         // Draw the zoomed portion of the video onto the canvas
         context.drawImage(
           videoRef.current,
@@ -597,14 +631,14 @@ export function EditUser() {
           canvasWidth,
           canvasHeight
         );
-  
+
         const imageData = canvasRef.current.toDataURL('image/png');
-  
+
         // Convert base64 to File
         try {
           const blob = await (await fetch(imageData)).blob();
           const file = new File([blob], `captured_image_${Date.now()}.png`, { type: 'image/png' });
-  
+
           // Validate file format and size
           if (!SUPPORTED_FORMATS.includes(file.type)) {
             setProfileErrors({
@@ -613,7 +647,7 @@ export function EditUser() {
             setCameraOpen(false); // Close modal on validation error
             return;
           }
-  
+
           if (file.size > MAX_FILE_SIZE) {
             setProfileErrors({
               profile_pic: ['File size exceeds 5MB limit.']
@@ -621,12 +655,12 @@ export function EditUser() {
             setCameraOpen(false); // Close modal on validation error
             return;
           }
-  
+
           setProfileErrors({
             ...profileErrors,
             profile_pic: undefined
           });
-  
+
           // Upload to Cloudinary and update profile picture
           try {
             const { url } = await uploadImageToCloudinary(file);
@@ -837,11 +871,11 @@ export function EditUser() {
                                   }}
                                 />
                               }
-            
+
                             >
                               Make Photo
                             </Button>
-                            
+
                           </Box>
                         </Box>
                       </Modal>
@@ -860,15 +894,15 @@ export function EditUser() {
                         </AvatarActionButton>
                       )}
                     </AvatarContainer>
-                    
+
                     {profileErrors?.profile_pic?.[0] && (
-                      <Typography 
-                        color="error" 
-                        variant="caption" 
-                        sx={{ 
-                          display: 'block', 
-                          textAlign: 'center', 
-                          mt: 1 
+                      <Typography
+                        color="error"
+                        variant="caption"
+                        sx={{
+                          display: 'block',
+                          textAlign: 'center',
+                          mt: 1
                         }}
                       >
                         {profileErrors.profile_pic[0]}
@@ -964,7 +998,7 @@ export function EditUser() {
                             Change Password
                           </Button>
                         )}
-                        
+
                         {/* Role management for other users */}
                         {!isCurrentUser && (
                           <>
