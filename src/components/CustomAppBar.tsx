@@ -27,6 +27,7 @@ interface CustomAppBarProps {
   variant?: 'form' | 'detail' | 'view' | 'pipeline' | 'edit'; // Added 'edit' variant
   customButtons?: React.ReactNode; // New prop to add custom buttons
   isEditing?: boolean; // New prop to track editing state
+  backBtnSx?: React.CSSProperties; // Custom style for back button (optional)
 }
 
 export function CustomAppBar({
@@ -43,6 +44,7 @@ export function CustomAppBar({
   variant,
   customButtons,
   isEditing = false, // New prop with default value
+  backBtnSx,
 }: CustomAppBarProps) {
   const location = useLocation();
   const sharedData = useMyContext();
@@ -75,7 +77,7 @@ export function CustomAppBar({
                     style={{ fontSize: '20px', marginRight: '-2px' }}
                   />
                 }
-                style={{ backgroundColor: 'white', color: '#5B5C63' }}
+                style={backBtnSx ? backBtnSx : { backgroundColor: 'white', color: '#5B5C63' }}
               >
                 {backBtn || 'Back'}
               </Button>
@@ -154,7 +156,7 @@ export function CustomAppBar({
                     style={{ fontSize: '20px', marginRight: '-2px' }}
                   />
                 }
-                style={{ backgroundColor: 'white', color: '#5B5C63' }}
+                style={backBtnSx ? backBtnSx : { backgroundColor: 'white', color: '#5B5C63' }}
               >
                 {backBtn || 'Back'}
               </Button>
