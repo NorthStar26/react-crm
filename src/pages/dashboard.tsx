@@ -451,7 +451,7 @@ function Dashboard() {
                       <TableCell className="dashboard-table-cell">
                         <Box className="dashboard-name-cell">
                           <Typography className="dashboard-primary-text">
-                            {lead.contact_name}
+                            {lead.lead_title}
                           </Typography>
                           <Typography className="dashboard-secondary-text">
                             {lead.company_name}
