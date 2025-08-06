@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { PieLabelRenderProps } from 'recharts';
 import {
   Box,
   Grid,
@@ -257,29 +256,36 @@ function Dashboard() {
                   outerRadius={100}
                   innerRadius={50}
                   labelLine={false}
-                  label={(props: PieLabelRenderProps) => {
-                  const { cx, cy, midAngle, innerRadius, outerRadius, percent } = props;
-                  const RADIAN = Math.PI / 180;
-                  const safeMidAngle = midAngle ?? 0;
-                  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-                  const x = cx + radius * Math.cos(-safeMidAngle * RADIAN);
-                  const y = cy + radius * Math.sin(-safeMidAngle * RADIAN);
+                  label={({
+                    cx,
+                    cy,
+                    midAngle,
+                    innerRadius,
+                    outerRadius,
+                    percent,
+                  }) => {
+                    const RADIAN = Math.PI / 180;
+                    // вычисляем координаты для текста
+                    const safeMidAngle = midAngle ?? 0;
+                    const radius =
+                      innerRadius + (outerRadius - innerRadius) * 0.5;
+                    const x = cx + radius * Math.cos(-safeMidAngle * RADIAN);
+                    const y = cy + radius * Math.sin(-safeMidAngle * RADIAN);
 
-                  return (
-                    <text
-                      x={x}
-                      y={y}
-                      fill="#fff"
-                      textAnchor="middle"
-                      dominantBaseline="central"
-                      fontSize={14}
-                      fontWeight={600}
-                    >
-                      {`${((percent ?? 0) * 100).toFixed(0)}%`}
-                    </text>
-                  );
-                }}
-
+                    return (
+                      <text
+                        x={x}
+                        y={y}
+                        fill="#fff"
+                        textAnchor="middle"
+                        dominantBaseline="central"
+                        fontSize={14}
+                        fontWeight={600}
+                      >
+                        {`${((percent ?? 0) * 100).toFixed(0)}%`}
+                      </text>
+                    );
+                  }}
                 >
                   {leadsPie.map((entry) => (
                     <Cell key={entry.name} fill={entry.color} />
@@ -349,11 +355,18 @@ function Dashboard() {
                   outerRadius={100}
                   innerRadius={50}
                   labelLine={false}
-                  label={(props: PieLabelRenderProps) => {
-                    const { cx, cy, midAngle, innerRadius, outerRadius, percent } = props;
+                  label={({
+                    cx,
+                    cy,
+                    midAngle,
+                    innerRadius,
+                    outerRadius,
+                    percent,
+                  }) => {
                     const RADIAN = Math.PI / 180;
+                    const radius =
+                      innerRadius + (outerRadius - innerRadius) * 0.5;
                     const safeMidAngle = midAngle ?? 0;
-                    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
                     const x = cx + radius * Math.cos(-safeMidAngle * RADIAN);
                     const y = cy + radius * Math.sin(-safeMidAngle * RADIAN);
 
@@ -371,7 +384,6 @@ function Dashboard() {
                       </text>
                     );
                   }}
-
                 >
                   {oppsPie.map((entry) => (
                     <Cell key={entry.name} fill={entry.color} />

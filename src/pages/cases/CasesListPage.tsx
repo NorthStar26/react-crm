@@ -148,7 +148,7 @@ export default function CasesListPage() {
   const columnDefs = [
     {
       headerName: 'Case Name',
-      field: 'name',
+      field: 'name' as keyof Case,
       flex: 2,
       sortable: true,
       filter: false,
@@ -156,7 +156,7 @@ export default function CasesListPage() {
     },
     {
       headerName: 'Industry',
-      field: 'opportunity_data.lead.company.industry',
+      field: undefined,
       flex: 1.5,
       sortable: true,
       filter: false,
@@ -165,7 +165,7 @@ export default function CasesListPage() {
     },
     {
       headerName: 'Contact',
-      field: 'opportunity_data.lead.contact.name',
+      field: undefined,
       flex: 1.5,
       sortable: true,
       filter: false,
@@ -174,7 +174,7 @@ export default function CasesListPage() {
     },
     {
       headerName: 'Result',
-      field: 'expected_revenue',
+      field: 'expected_revenue' as keyof Case,
       flex: 1.5,
       sortable: true,
       filter: false,
@@ -185,14 +185,14 @@ export default function CasesListPage() {
     },
     {
       headerName: 'Close Date',
-      field: 'closed_on',
+      field: 'closed_on' as keyof Case,
       flex: 1.5,
       sortable: true,
       filter: false,
     },
     {
       headerName: 'Assigned To',
-      field: 'created_by',
+      field: undefined,
       flex: 2,
       sortable: true,
       filter: false,
@@ -649,7 +649,7 @@ const handleExport = async () => {
                       key={page}
                       size="small"
                       variant={page === currentPage ? 'contained' : 'outlined'}
-                      onClick={() => setCurrentPage(page)}
+                      onClick={() => setCurrentPage(typeof page === 'number' ? page : currentPage)}
                       sx={{
                         minWidth: '32px',
                         height: '32px',
