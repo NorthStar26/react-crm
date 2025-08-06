@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
-  Stack,
+  Stack,Button,
   Typography,
   Paper,
   Select,
@@ -564,14 +564,27 @@ export default function Leads() {
 
         {/* RIGHT: Export + Add Lead */}
         <Stack direction="row" spacing={2}>
-          <CustomButton
-            variant="outline"
-            shape="rounded"
+          <Button
+            variant="outlined"
             startIcon={<FaFileExport />}
             onClick={() => {}}
+            sx={{
+              background: '#2B5075',
+              boxShadow:
+                '0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px rgba(0,0,0,0.14), 0px 1px 5px rgba(0,0,0,0.12)',
+              borderRadius: '4px',
+              textTransform: 'none',
+              border: 'none',
+              color: '#FFFFFF',
+              '&:hover': {
+                backgroundColor: '#fff !important',
+                color: '#284871 !important',
+                border: '1px solid #284871 !important',
+              },
+            }}
           >
             Export
-          </CustomButton>
+          </Button>
           <CustomButton
             variant="primary"
             shape="rounded"
