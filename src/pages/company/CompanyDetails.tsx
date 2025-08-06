@@ -740,7 +740,7 @@ export default function CompanyDetails() {
                       align="right"
                       verticalAlign="middle"
                       iconType="square"
-                      wrapperStyle={{ width: 130 }}
+                      wrapperStyle={{ width: 220, marginLeft: -40 }}
                       formatter={(value: string) => capitalize(value)}
                     />
                   </PieChart>
