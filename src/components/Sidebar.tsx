@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import CasesListPage from '../pages/cases/CasesListPage';
 import {
   AppBar,
   Avatar,
@@ -517,7 +518,7 @@ export default function Sidebar(props: any) {
                 element={<OpportunityPipeline />}
               />
 
-              <Route path="/app/cases" element={<Cases />} />
+              <Route path="/app/cases" element={<CasesListPage />} />
               <Route path="/app/cases/add-case" element={<AddCase />} />
               <Route path="/app/cases/edit-case" element={<EditCase />} />
               <Route path="/app/cases/case-details" element={<CaseDetails />} />
