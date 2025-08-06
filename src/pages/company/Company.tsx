@@ -542,6 +542,16 @@ export default function Company() {
             shape="rounded"
             startIcon={<FaDownload />}
             onClick={exportExcel}
+            sx={{
+              backgroundColor: '#2B5075 !important',
+              color: '#f3f8ff !important', // или другой нужный цвет текста
+              border: '1px solid #284871 !important',
+              '&:hover': {
+                backgroundColor: '#f3f8ff !important',
+                color: '#284871 !important',
+                border: '1px solid #284871 !important',
+              },
+            }}
           >
             Export
           </CustomButton>
