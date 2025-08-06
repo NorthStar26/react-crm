@@ -1,6 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import ApartmentIcon from '@mui/icons-material/Apartment';  
 import PersonIcon from '@mui/icons-material/Person';        
+import { AgGridReact } from 'ag-grid-react';
+import { ModuleRegistry, ClientSideRowModelModule } from 'ag-grid-community';
+import 'ag-grid-community/styles/ag-grid.css';
+import 'ag-grid-community/styles/ag-theme-alpine.css';
+import { API_URL } from '../../services/ApiUrls';
+
+
+ModuleRegistry.registerModules([ClientSideRowModelModule]);
 
 import {
   FiSearch,
@@ -124,6 +132,105 @@ export default function CasesListPage() {
   const [selectedCaseIds, setSelectedCaseIds] = useState<string[]>([]);
   const [deleteRowModal, setDeleteRowModal] = useState(false);
 
+ 
+  const [sortField, setSortField] = useState('');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const columnDefs = [
+    {
+      headerName: 'Case Name',
+      field: 'name',
+      flex: 2,
+      sortable: true,
+      filter: true,
+      cellClass: 'first-column-cell',
+    },
+    {
+      headerName: 'Industry',
+      field: 'opportunity_data.lead.company.industry',
+      flex: 1.5,
+      sortable: true,
+      filter: true,
+      valueGetter: (params: any) =>
+        params.data?.opportunity_data?.lead?.company?.industry || '—',
+    },
+    {
+      headerName: 'Contact',
+      field: 'opportunity_data.lead.contact.name',
+      flex: 1.5,
+      sortable: true,
+      filter: true,
+      valueGetter: (params: any) =>
+        params.data?.opportunity_data?.lead?.contact?.name || '—',
+    },
+    {
+      headerName: 'Result',
+      field: 'expected_revenue',
+      flex: 1.5,
+      sortable: true,
+      filter: true,
+      valueGetter: (params: any) =>
+        params.data?.expected_revenue
+          ? `$${Number(params.data.expected_revenue).toLocaleString()}`
+          : '—',
+    },
+    {
+      headerName: 'Close Date',
+      field: 'closed_on',
+      flex: 1.5,
+      sortable: true,
+      filter: true,
+    },
+    {
+      headerName: 'Assigned To',
+      field: 'created_by',
+      flex: 2,
+      sortable: true,
+      filter: true,
+      valueGetter: (params: any) =>
+        `${params.data?.created_by?.first_name || ''} ${
+          params.data?.created_by?.last_name || ''
+        }`,
+    },
+  ];
+
+  const defaultColDef = {
+    resizable: true,
+    sortable: true,
+    filter: true,
+    wrapText: true,
+    autoHeight: true,
+    unSortIcon: true,
+    cellStyle: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+      paddingLeft: '8px',
+    },
+  };
+
+  const gridTheme = {
+    '--ag-header-background-color': '#2E4258',
+    '--ag-header-foreground-color': '#FFFFFF',
+    '--ag-header-border-color': 'transparent',
+    '--ag-odd-row-background-color': '#FFFFFF',
+    '--ag-even-row-background-color': '#F3F8FF',
+    '--ag-row-border-color': '#E0E0E0',
+  } as React.CSSProperties;
+
+
+
+
+
   useEffect(() => {
     getCases();
   }, [currentPage, recordsPerPage, searchTerm, industryFilter, contactNameFilter, order, orderBy]);
@@ -205,35 +312,51 @@ export default function CasesListPage() {
     deleteRowModalClose();
   };
 
-  const handleExport = async () => {
-    const Header = {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      Authorization: localStorage.getItem('Token'),
-      org: localStorage.getItem('org'),
-    };
-    
-    try {
-      const res = await fetchData(
-        `${CasesUrl}/?export=true`,
-        'GET',
-        undefined,
-        Header
-      );
-      
-      if (res.data) {
-        const url = window.URL.createObjectURL(new Blob([res.data]));
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', 'cases_export.csv');
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
-    } catch (error) {
-      console.error('Error exporting cases:', error);
+const handleExport = async () => {
+  try {
+    const exportUrl = `${API_URL}/${CasesUrl}/?export=true`;
+    console.log('Exporting from:', exportUrl);
+
+    const response = await fetch(exportUrl, {
+      method: 'GET',
+      headers: {
+        'Accept': 'text/csv',
+        'Authorization': `Bearer ${localStorage.getItem('Token')}`,
+        'org': localStorage.getItem('org') || '',
+      },
+      credentials: 'include' // Important for cookies/session
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Export failed: ${response.status} - ${error}`);
     }
-  };
+
+    // Create download link
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `cases_export_${new Date().toISOString()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+
+  } catch (error) {
+    let errorMessage = 'Failed to export cases';
+    
+    // Type checking the error
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (typeof error === 'string') {
+      errorMessage = error;
+    }
+
+    console.error('Export error:', error);
+    alert(errorMessage);
+  }
+};
 
   const responsiveHeadCells = isSmallScreen 
     ? headCells.filter(cell => ['name', 'opportunity_data.lead.contact', 'closed_on'].includes(cell.id))
@@ -253,376 +376,321 @@ export default function CasesListPage() {
 
 
   return (
-    <Box sx={{ 
-      mt: '65px',
-      width: '100%',
-      maxWidth: '100%',
-      overflowX: 'hidden'
-    }}>
-      <Container maxWidth={false} sx={{ 
-        px: 0,
-        maxWidth: '100%',
-        backgroundColor: '#1a3353',
-      }}>
-        <Toolbar
+    <Box sx={{ width: '100%', maxWidth: '100%', overflowX: 'hidden', mt: '34px' }}>
+      <Container maxWidth={false} disableGutters sx={{ mt: 3, width: '100%' }}>
+        {/* Dark Toolbar background (full width) */}
+        <Box
           sx={{
-            display: 'flex',
-            flexDirection: isExtraSmallScreen ? 'column' : 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            px: 2,
-            minHeight: '30px',
-            gap: isExtraSmallScreen ? 2 : 0,
-            maxWidth: '100%',
-            margin: '0 auto',
             width: '100%',
+            backgroundColor: '#1a3353',
+            borderRadius: '8px 8px 0 0',
+            py: 0,
           }}
         >
-          <Stack 
-            direction={isExtraSmallScreen ? 'column' : 'row'} 
-            spacing={isExtraSmallScreen ? 2 : 6} 
-            alignItems="center" 
-            flexWrap="wrap"
-            width={isExtraSmallScreen ? '100%' : 'auto'}
-          >
-            <TextField
-              size="small"
-              placeholder="Search"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <FiSearch style={{ color: '#757575' }} />
-                  </InputAdornment>
-                ),
-              }}
+          {/* Inner toolbar content aligned with table */}
+          <Box sx={{ px: 2 }}>
+            <Toolbar
+              disableGutters
               sx={{
-                backgroundColor: 'white',
-                borderRadius: '6px',
-                minWidth: isSmallScreen ? '100%' : '300px',
-                '& .MuiInputBase-root': { height: '48px' },
+                display: 'flex',
+                flexDirection: isExtraSmallScreen ? 'column' : 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: isExtraSmallScreen ? 2 : 0,
+                width: '100%',
               }}
-            />
-
-            <Select
-              value={industryFilter}
-              onChange={(e) => setIndustryFilter(e.target.value)}
-              displayEmpty
-              size="small"
-              sx={{
-                backgroundColor: 'white',
-                minWidth: isSmallScreen ? '100%' : '150px',
-                height: '48px',
-                borderRadius: '6px',
-                '& .MuiSelect-select': { padding: '6px 12px' },
-                '& fieldset': { borderColor: '#c4c4c4' },
-              }}
-              startAdornment={
-                <InputAdornment position="start">
-                  <ApartmentIcon fontSize="small" sx={{ color: '#757575', mr: 1 }} />
-                </InputAdornment>
-              }
             >
-              <MenuItem value="">
-                <Typography sx={{ color: '#757575' }}>Industry</Typography>
-              </MenuItem>
-              {industries.map((industry) => (
-                <MenuItem key={industry} value={industry}>
-                  {industry}
-                </MenuItem>
-              ))}
-            </Select>
-
-            {!isSmallScreen && (
-              <Select
-                value={contactNameFilter}
-                onChange={(e) => setContactNameFilter(e.target.value)}
-                displayEmpty
-                size="small"
-                sx={{
-                  backgroundColor: 'white',
-                  minWidth: '150px',
-                  height: '48px',
-                  borderRadius: '6px',
-                  '& .MuiSelect-select': { padding: '6px 12px' },
-                  '& fieldset': { borderColor: '#c4c4c4' },
-                }}
-                startAdornment={
-                  <InputAdornment position="start">
-                    <PersonIcon fontSize="small" sx={{ color: '#757575', mr: 1 }} />
-                  </InputAdornment>
-                }
+              {/* Filters */}
+              <Stack
+                direction={isExtraSmallScreen ? 'column' : 'row'}
+                spacing={isExtraSmallScreen ? 2 : 6}
+                alignItems="center"
+                flexWrap="wrap"
+                width={isExtraSmallScreen ? '100%' : 'auto'}
               >
-                <MenuItem value="">
-                  <Typography sx={{ color: '#757575' }}>Contact</Typography>
-                </MenuItem>
-                {contacts.map((contact) => (
-                  <MenuItem key={contact.id} value={contact.id}>
-                    {contact.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            )}
-          </Stack>
+                <TextField
+                  size="small"
+                  placeholder="Search"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <FiSearch style={{ color: '#757575' }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{
+                    backgroundColor: 'white',
+                    borderRadius: '6px',
+                    minWidth: isSmallScreen ? '100%' : '300px',
+                    '& .MuiInputBase-root': { height: '48px' },
+                  }}
+                />
 
-          <Button
-            variant="contained"
-            startIcon={<FiUpload size={18} />}
-            onClick={handleExport}
+                <Select
+                  value={industryFilter}
+                  onChange={(e) => setIndustryFilter(e.target.value)}
+                  displayEmpty
+                  size="small"
+                  sx={{
+                    backgroundColor: 'white',
+                    minWidth: isSmallScreen ? '100%' : '150px',
+                    height: '48px',
+                    borderRadius: '6px',
+                    '& .MuiSelect-select': { padding: '6px 12px' },
+                    '& fieldset': { borderColor: '#c4c4c4' },
+                  }}
+                  startAdornment={
+                    <InputAdornment position="start">
+                      <ApartmentIcon fontSize="small" sx={{ color: '#757575', mr: 1 }} />
+                    </InputAdornment>
+                  }
+                >
+                  <MenuItem value="">
+                    <Typography sx={{ color: '#757575' }}>Industry</Typography>
+                  </MenuItem>
+                  {industries.map((industry) => (
+                    <MenuItem key={industry} value={industry}>
+                      {industry}
+                    </MenuItem>
+                  ))}
+                </Select>
+
+                {!isSmallScreen && (
+                  <Select
+                    value={contactNameFilter}
+                    onChange={(e) => setContactNameFilter(e.target.value)}
+                    displayEmpty
+                    size="small"
+                    sx={{
+                      backgroundColor: 'white',
+                      minWidth: '150px',
+                      height: '48px',
+                      borderRadius: '6px',
+                      '& .MuiSelect-select': { padding: '6px 12px' },
+                      '& fieldset': { borderColor: '#c4c4c4' },
+                    }}
+                    startAdornment={
+                      <InputAdornment position="start">
+                        <PersonIcon fontSize="small" sx={{ color: '#757575', mr: 1 }} />
+                      </InputAdornment>
+                    }
+                  >
+                    <MenuItem value="">
+                      <Typography sx={{ color: '#757575' }}>Contact</Typography>
+                    </MenuItem>
+                    {contacts.map((contact) => (
+                      <MenuItem key={contact.id} value={contact.id}>
+                        {contact.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                )}
+              </Stack>
+
+              <Button
+                variant="contained"
+                startIcon={<FiUpload size={18} />}
+                onClick={handleExport}
+                sx={{
+                  backgroundColor: '#3a4c71ff',
+                  color: 'white',
+                  fontSize: '0.85rem',
+                  padding: '6px 16px',
+                  minHeight: '48px',
+                  borderRadius: '6px',
+                  textTransform: 'none',
+                  '&:hover': { backgroundColor: '#3366ff' },
+                  width: isExtraSmallScreen ? '100%' : 'auto',
+                }}
+              >
+                Export
+              </Button>
+            </Toolbar>
+          </Box>
+        </Box>
+
+        {/* Table */}
+        <Box sx={{ px: 2 }}>
+          <Paper
             sx={{
-              backgroundColor: '#3a4c71ff',
-              color: 'white',
-              fontSize: '0.85rem',
-              padding: '6px 16px',
-              minHeight: '48px',
-              borderRadius: '6px',
-              textTransform: 'none',
-              '&:hover': { backgroundColor: '#3366ff' },
-              width: isExtraSmallScreen ? '100%' : 'auto',
-              mt: isExtraSmallScreen ? 1 : 0,
+              mb: 2,
+              mt: 2,
+              overflowX: 'auto',
+              boxShadow: isSmallScreen ? 'none' : theme.shadows[1],
+              width: '100%',
             }}
           >
-            Export
-          </Button>
-        </Toolbar>
-      </Container>
-
-      <Container 
-        maxWidth={false} 
-        sx={{ 
-          width: '100%', 
-          mt: 3, 
-          px: isSmallScreen ? 0 : 2,
-          maxWidth: '100%',
-        }}
-      >
-        <Paper sx={{ 
-          mb: 2, 
-          overflowX: 'auto',
-          boxShadow: isSmallScreen ? 'none' : theme.shadows[1],
-          width: '100%',
-          maxWidth: '100%',
-        }}>
-          <TableContainer sx={{ 
-            width: '100%',
-            maxWidth: '100%',
-            overflowX: 'auto',
-          }}>
-            <Table
+            <Box
+              className="ag-theme-alpine"
               sx={{
                 width: '100%',
-                minWidth: isSmallScreen ? '600px' : '100%',
-                borderCollapse: 'separate',
-                borderSpacing: 0,
-                '& thead th': {
-                  backgroundColor: '#1a3353',
-                  color: '#fff',
-                  fontWeight: 600,
-                  fontSize: '14px',
-                  letterSpacing: '0.5px',
-                  height: '36px',
-                  padding: '6px 12px',
-                  verticalAlign: 'middle',
-                  whiteSpace: 'nowrap',
+                ...gridTheme,
+                '--ag-icon-color': '#FFFFFF',
+                '& .ag-root-wrapper': { border: 'none' },
+                '& .ag-header': {
+                  borderRadius: '8px 8px 0 0',
+                  overflow: 'hidden',
                 },
-                '& thead th svg': {
-                  fill: '#ffffff',
+                '& .ag-header-cell:first-of-type': {
+                  borderTopLeftRadius: '8px',
+                  paddingLeft: '16px',
                 },
-                '& tbody td': {
-                  borderBottom: '1px solid #e0e0e0',
-                  padding: isSmallScreen ? '8px' : '12px',
-                  fontSize: '14px',
-                  whiteSpace: 'nowrap',
+                '& .ag-header-cell:last-of-type': {
+                  borderTopRightRadius: '8px',
                 },
-                '& tbody tr:nth-of-type(even) td': {
-                  backgroundColor: '#f9fafb',
+                '& .ag-header-row': {
+                  borderBottom: 'none',
                 },
-                '& tbody tr:hover td': {
-                  backgroundColor: '#f1f5f9',
+                '& .ag-header-cell-label .ag-icon, & .ag-header-cell-label .ag-icon-wrapper svg': {
+                  fill: '#FFFFFF',
+                  color: '#FFFFFF',
                 },
+                '& .ag-sort-ascending-icon, & .ag-sort-descending-icon, & .ag-sort-none-icon': {
+                  fill: '#FFFFFF',
+                  color: '#FFFFFF',
+                },
+                '& .ag-row': { display: 'flex', alignItems: 'center' },
+                '& .ag-cell': {
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-start',
+                  paddingLeft: '4px',
+                  paddingRight: '4px',
+                },
+                // '& .ag-header-cell': {
+                //   paddingLeft: '4px',
+                //   paddingRight: '4px',
+                // },
+
+                '& .first-column-cell': {
+                  paddingLeft: '16px !important', // ← force it to override AG Grid inline styles
+                },
+                '& .first-column-cell .ag-cell-wrapper': {
+                  paddingLeft: '0px !important', // ← remove AG Grid internal wrapper padding
+                },
+
               }}
-              size={isSmallScreen ? 'small' : 'medium'}
             >
-              <TableHead>
-                <TableRow>
-                  {responsiveHeadCells.map((headCell) => (
-                    <TableCell
-                      key={headCell.id}
-                      sx={{ color: 'white' }} // Force white text color
-                    >
-                      <TableSortLabel
-                        active={orderBy === headCell.id}
-                        direction={orderBy === headCell.id ? order : 'asc'}
-                        onClick={(e) => handleRequestSort(e, headCell.id)}
-                        sx={{
-                          color: 'white',                // Label color
-                          '&.Mui-active': {
-                            color: 'white',              // Keep active label white
-                          },
-                          '& .MuiTableSortLabel-icon': {
-                            color: 'white !important',   // Force white arrow (sort icon)
-                            fill: 'white !important',
-                          },
-                          '&:hover': {
-                            color: 'white',              // Prevent hover color change
-                          },
-                        }}
-                      >
-                        {headCell.label}
-                      </TableSortLabel>
-                    </TableCell>
-                  ))}
-                </TableRow>
-              </TableHead>
-
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={responsiveHeadCells.length}>
-                      <Spinner />
-                    </TableCell>
-                  </TableRow>
-                ) : cases.length > 0 ? (
-                  cases.map((item) => (
-                    <TableRow key={item.id} hover>
-                      <TableCell>{item.name}</TableCell>
-                      {!isSmallScreen && (
-                        <TableCell>
-                          {item.opportunity_data?.lead?.company?.industry || '---'}
-                        </TableCell>
-                      )}
-                      <TableCell>
-                        {item.opportunity_data?.lead?.contact?.name || '---'}
-                      </TableCell>
-                      {!isSmallScreen && (
-                        <TableCell>
-                          {item.expected_revenue
-                            ? `$${Number(item.expected_revenue).toLocaleString()}`
-                            : '---'}
-                        </TableCell>
-                      )}
-                      <TableCell>{item.closed_on}</TableCell>
-                      {!isSmallScreen && (
-                        <TableCell>
-                          {item.created_by?.first_name} {item.created_by?.last_name || ''}
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={responsiveHeadCells.length} sx={{ textAlign: 'center', py: 4 }}>
-                      <Typography variant="h6" color="text.secondary">
-                        No cases found
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <Box
-            display="flex"
-            justifyContent="space-between"
-            alignItems="center"
-            flexWrap="wrap"
-            sx={{
-              px: 2,
-              py: 1.5,
-              borderTop: '1px solid #e0e0e0',
-              backgroundColor: '#f8fafc',
-            }}
-          >
-            {/* Left Side: Rows per page */}
-            <Box display="flex" alignItems="center" gap={1}>
-              <Typography variant="body2">Rows per page</Typography>
-              <Select
-                size="small"
-                value={recordsPerPage}
-                onChange={(e) => {
-                  setRecordsPerPage(Number(e.target.value));
-                  setCurrentPage(1);
+              <AgGridReact
+                rowData={cases}
+                columnDefs={columnDefs}
+                defaultColDef={defaultColDef}
+                domLayout="autoHeight"
+                suppressRowClickSelection
+                suppressCellFocus
+                rowHeight={56}
+                headerHeight={40}
+                onGridReady={(params) => {
+                  params.api.sizeColumnsToFit();
                 }}
-                sx={{ fontSize: '0.85rem' }}
-              >
-                {[10, 20, 50, 100].map((option) => (
-                  <MenuItem key={option} value={option}>
-                    {option}
-                  </MenuItem>
-                ))}
-              </Select>
-              <Typography variant="body2">
-                of {totalCount} rows
-              </Typography>
+              />
+            </Box>
+            <Box
+              display="flex"
+              justifyContent="space-between"
+              alignItems="center"
+              flexWrap="wrap"
+              sx={{
+                px: 2,
+                py: 1.5,
+                borderTop: '1px solid #e0e0e0',
+                backgroundColor: '#f8fafc',
+              }}
+            >
+              {/* Left Side: Rows per page */}
+              <Box display="flex" alignItems="center" gap={1}>
+                <Typography variant="body2">Rows per page</Typography>
+                <Select
+                  size="small"
+                  value={recordsPerPage}
+                  onChange={(e) => {
+                    setRecordsPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  sx={{ fontSize: '0.85rem' }}
+                >
+                  {[10, 20, 50, 100].map((option) => (
+                    <MenuItem key={option} value={option}>
+                      {option}
+                    </MenuItem>
+                  ))}
+                </Select>
+                <Typography variant="body2">of {totalCount} rows</Typography>
+              </Box>
+
+              {/* Right Side: Pagination controls */}
+              <Box display="flex" alignItems="center" gap={1}>
+                <Button
+                  size="small"
+                  onClick={() => setCurrentPage(1)}
+                  disabled={currentPage === 1}
+                  sx={paginationBtnStyle}
+                >
+                  &laquo;
+                </Button>
+                <Button
+                  size="small"
+                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  sx={paginationBtnStyle}
+                >
+                  &lsaquo;
+                </Button>
+
+                {getDisplayedPages(currentPage, totalPages).map((page, idx) =>
+                  page === '...' ? (
+                    <Box key={`ellipsis-${idx}`} sx={{ px: 1, fontSize: '0.875rem' }}>
+                      ...
+                    </Box>
+                  ) : (
+                    <Button
+                      key={page}
+                      size="small"
+                      variant={page === currentPage ? 'contained' : 'outlined'}
+                      onClick={() => setCurrentPage(page)}
+                      sx={{
+                        minWidth: '32px',
+                        height: '32px',
+                        borderRadius: '50%',
+                        backgroundColor: page === currentPage ? '#1a3353' : '#fff',
+                        color: page === currentPage ? '#fff' : '#1a3353',
+                        border: '1px solid #cbd5e1',
+                        boxShadow: page === currentPage ? theme.shadows[1] : 'none',
+                        '&:hover': {
+                          backgroundColor: page === currentPage ? '#1a3353' : '#f1f5f9',
+                        },
+                      }}
+                    >
+                      {page}
+                    </Button>
+                  )
+                )}
+
+                <Button
+                  size="small"
+                  onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                  sx={paginationBtnStyle}
+                >
+                  &rsaquo;
+                </Button>
+                <Button
+                  size="small"
+                  onClick={() => setCurrentPage(totalPages)}
+                  disabled={currentPage === totalPages}
+                  sx={paginationBtnStyle}
+                >
+                  &raquo;
+                </Button>
+              </Box>
             </Box>
 
-            {/* Right Side: Pagination */}
-            <Box display="flex" alignItems="center" gap={1}>
-              <Button
-                size="small"
-                onClick={() => setCurrentPage(1)}
-                disabled={currentPage === 1}
-                sx={paginationBtnStyle}
-              >
-                &laquo;
-              </Button>
-              <Button
-                size="small"
-                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                disabled={currentPage === 1}
-                sx={paginationBtnStyle}
-              >
-                &lsaquo;
-              </Button>
 
-              {getDisplayedPages(currentPage, totalPages).map((page, idx) =>
-                page === '...' ? (
-                  <Box key={`ellipsis-${idx}`} sx={{ px: 1, fontSize: '0.875rem' }}>...</Box>
-                ) : (
-                  <Button
-                    key={page}
-                    size="small"
-                    variant={page === currentPage ? 'contained' : 'outlined'}
-                    onClick={() => setCurrentPage(page)}
-                    sx={{
-                      minWidth: '32px',
-                      height: '32px',
-                      borderRadius: '50%',
-                      backgroundColor: page === currentPage ? '#1a3353' : '#fff',
-                      color: page === currentPage ? '#fff' : '#1a3353',
-                      border: '1px solid #cbd5e1',
-                      boxShadow: page === currentPage ? theme.shadows[1] : 'none',
-                      '&:hover': {
-                        backgroundColor: page === currentPage ? '#1a3353' : '#f1f5f9',
-                      },
-                    }}
-                  >
-                    {page}
-                  </Button>
-                )
-              )}
-
-              <Button
-                size="small"
-                onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-                disabled={currentPage === totalPages}
-                sx={paginationBtnStyle}
-              >
-                &rsaquo;
-              </Button>
-              <Button
-                size="small"
-                onClick={() => setCurrentPage(totalPages)}
-                disabled={currentPage === totalPages}
-                sx={paginationBtnStyle}
-              >
-                &raquo;
-              </Button>
-            </Box>
-          </Box>
-
-        </Paper>
+            
+          </Paper>
+        </Box>
       </Container>
 
       <DeleteModal
@@ -635,4 +703,7 @@ export default function CasesListPage() {
       />
     </Box>
   );
+
+    
+
 }
