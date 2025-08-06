@@ -22,7 +22,7 @@ import {
 import { Spinner } from '../../components/Spinner';
 import { FiPlus } from '@react-icons/all-files/fi/FiPlus';
 import { FiSearch } from '@react-icons/all-files/fi/FiSearch';
-import { FaDownload, FaTrashAlt, FaEdit } from 'react-icons/fa';
+import { FaDownload, FaTrashAlt, FaEdit,FaFileExport } from 'react-icons/fa';
 import { FiChevronUp } from '@react-icons/all-files/fi/FiChevronUp';
 import { FiChevronDown } from '@react-icons/all-files/fi/FiChevronDown';
 import { CustomToolbar } from '../../styles/CssStyled';
@@ -598,19 +598,12 @@ export default function Opportunities() {
           <CustomButton
             variant="outline"
             shape="rounded"
-            startIcon={<FaDownload />}
+            startIcon={<FaFileExport />}
             onClick={() => {}}
           >
             Export
           </CustomButton>
-          <CustomButton
-            variant="primary"
-            shape="rounded"
-            startIcon={<FiPlus />}
-            onClick={onAddOpportunity}
-          >
-            Add Opportunity
-          </CustomButton>
+          
         </Stack>
       </CustomToolbar>
 
