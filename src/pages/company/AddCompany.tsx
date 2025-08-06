@@ -180,7 +180,7 @@ function AddCompany() {
     email: '',
     phone: '',
     website: '',
-    industry: 'TECHNOLOGY',
+    industry: '',
     billing_street: '',
     billing_address_number: '',
     billing_city: '',
@@ -425,7 +425,7 @@ function AddCompany() {
       email: '',
       phone: '',
       website: '',
-      industry: 'TECHNOLOGY',
+      industry: '',
       billing_street: '',
       billing_address_number: '',
       billing_city: '',
@@ -542,10 +542,16 @@ function AddCompany() {
                   {/* Company Logo */}
                   <CompanyLogo
                     logo={formData.logo}
-                    setLogo={(logo) => setFormData((prev) => ({ ...prev, logo }))}
+                    setLogo={(logo) =>
+                      setFormData((prev) => ({ ...prev, logo }))
+                    }
                     error={errors.logo}
-                    clearError={() => setErrors((prev) => ({ ...prev, logo: undefined }))}
-                    setError={(err) => setErrors((prev) => ({ ...prev, logo: err }))}
+                    clearError={() =>
+                      setErrors((prev) => ({ ...prev, logo: undefined }))
+                    }
+                    setError={(err) =>
+                      setErrors((prev) => ({ ...prev, logo: err }))
+                    }
                   />
 
                   {/* Row 1 */}
@@ -641,15 +647,37 @@ function AddCompany() {
                               onOpen={() => setIndustrySelectOpen(true)}
                               onClose={() => setIndustrySelectOpen(false)}
                               open={industrySelectOpen}
+
                               IconComponent={() => (
                                 <div className="select-icon-background">
                                   {industrySelectOpen ? (
-                                    <FiChevronUp className="select-icon" />
+                                    <FiChevronUp
+                                      className="select-icon"
+                                      onMouseDown={(e) => {
+                                        e.stopPropagation();
+                                        setIndustrySelectOpen(false);
+                                      }}
+                                    />
                                   ) : (
-                                    <FiChevronDown className="select-icon" />
+                                    <FiChevronDown
+                                      className="select-icon"
+                                      onMouseDown={(e) => {
+                                        e.stopPropagation();
+                                        setIndustrySelectOpen(true);
+                                      }}
+                                    />
                                   )}
-                                </div>
+                                 </div>
                               )}
+                              // IconComponent={() => (
+                              //   <div className="select-icon-background">
+                              //     {industrySelectOpen ? (
+                              //       <FiChevronUp className="select-icon" />
+                              //     ) : (
+                              //       <FiChevronDown className="select-icon" />
+                              //     )}
+                              //   </div>
+                              // )}
                               className={'select'}
                               onChange={handleChange}
                               error={!!errors?.industry?.[0]}

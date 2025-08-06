@@ -133,7 +133,7 @@ export function EditAccount() {
         if (state?.edit) {
             navigate('/app/accounts')
         } else {
-            navigate('/app/accounts/account-details', { state: { accountId: state?.id, detail: true } })
+            navigate(`/app/accounts/account-details/${state?.id}`)
         }
     }
     const handleChange2 = (title: any, val: any) => {
