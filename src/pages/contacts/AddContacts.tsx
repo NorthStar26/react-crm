@@ -552,12 +552,12 @@ function AddContact() {
                                 open={salutationSelectOpen}
                                 IconComponent={() => (
                                   <div className="select-icon-background">
-                                    {salutationSelectOpen ? (
+                                    {salutationSelectOpen ? ( //check if select is open
                                       <FiChevronUp
                                         className="select-icon"
                                         onMouseDown={(e) => {
                                           e.stopPropagation();
-                                          setSalutationSelectOpen(false);
+                                          setSalutationSelectOpen(false); // Close the select
                                         }}
                                       />
                                     ) : (
@@ -565,12 +565,12 @@ function AddContact() {
                                         className="select-icon"
                                         onMouseDown={(e) => {
                                           e.stopPropagation();
-                                          setSalutationSelectOpen(true);
+                                          setSalutationSelectOpen(true); // Open the select
                                         }}
                                       />
                                     )}
                                   </div>
-                                )}
+                                )} //End IconComponent
                                 // IconComponent={() => (
                                 //   <div className="select-icon-background">
                                 //     {salutationSelectOpen ? (
@@ -678,12 +678,12 @@ function AddContact() {
                                 open={companySelectOpen}
                                 IconComponent={() => (
                                   <div className="select-icon-background">
-                                    {salutationSelectOpen ? (
+                                    {companySelectOpen ? ( //check if select is open
                                       <FiChevronUp
                                         className="select-icon"
                                         onMouseDown={(e) => {
                                           e.stopPropagation();
-                                          setCompanySelectOpen(false);
+                                          setCompanySelectOpen(false); // Close the select
                                         }}
                                       />
                                     ) : (
@@ -691,12 +691,12 @@ function AddContact() {
                                         className="select-icon"
                                         onMouseDown={(e) => {
                                           e.stopPropagation();
-                                          setCompanySelectOpen(true);
+                                          setCompanySelectOpen(true); // Open the select
                                         }}
                                       />
                                     )}
                                   </div>
-                                )}
+                                )} //End IconComponent
                                 // IconComponent={() => (
                                 //   <div className="select-icon-background">
                                 //     {companySelectOpen ? (
@@ -706,7 +706,6 @@ function AddContact() {
                                 //     )}
                                 //   </div>
                                 // )}
-
                                 className={'select'}
                                 onChange={handleChange}
                                 error={!!errors?.company?.[0]}
@@ -762,12 +761,12 @@ function AddContact() {
                                 open={languageSelectOpen}
                                 IconComponent={() => (
                                   <div className="select-icon-background">
-                                    {salutationSelectOpen ? (
+                                    {languageSelectOpen ? ( //check if select is open
                                       <FiChevronUp
                                         className="select-icon"
                                         onMouseDown={(e) => {
                                           e.stopPropagation();
-                                          setLanguageSelectOpen(false);
+                                          setLanguageSelectOpen(false); // Close the select
                                         }}
                                       />
                                     ) : (
@@ -775,12 +774,12 @@ function AddContact() {
                                         className="select-icon"
                                         onMouseDown={(e) => {
                                           e.stopPropagation();
-                                          setLanguageSelectOpen(true);
+                                          setLanguageSelectOpen(true); // Open the select
                                         }}
                                       />
                                     )}
                                   </div>
-                                )}
+                                )} //End IconComponent
                                 // IconComponent={() => (
                                 //   <div className="select-icon-background">
                                 //     {languageSelectOpen ? (
