@@ -151,7 +151,7 @@ export default function CasesListPage() {
       field: 'name',
       flex: 2,
       sortable: true,
-      filter: true,
+      filter: false,
       cellClass: 'first-column-cell',
     },
     {
@@ -159,7 +159,7 @@ export default function CasesListPage() {
       field: 'opportunity_data.lead.company.industry',
       flex: 1.5,
       sortable: true,
-      filter: true,
+      filter: false,
       valueGetter: (params: any) =>
         params.data?.opportunity_data?.lead?.company?.industry || '—',
     },
@@ -168,7 +168,7 @@ export default function CasesListPage() {
       field: 'opportunity_data.lead.contact.name',
       flex: 1.5,
       sortable: true,
-      filter: true,
+      filter: false,
       valueGetter: (params: any) =>
         params.data?.opportunity_data?.lead?.contact?.name || '—',
     },
@@ -177,7 +177,7 @@ export default function CasesListPage() {
       field: 'expected_revenue',
       flex: 1.5,
       sortable: true,
-      filter: true,
+      filter: false,
       valueGetter: (params: any) =>
         params.data?.expected_revenue
           ? `$${Number(params.data.expected_revenue).toLocaleString()}`
@@ -188,14 +188,14 @@ export default function CasesListPage() {
       field: 'closed_on',
       flex: 1.5,
       sortable: true,
-      filter: true,
+      filter: false,
     },
     {
       headerName: 'Assigned To',
       field: 'created_by',
       flex: 2,
       sortable: true,
-      filter: true,
+      filter: false,
       valueGetter: (params: any) =>
         `${params.data?.created_by?.first_name || ''} ${
           params.data?.created_by?.last_name || ''
