@@ -619,12 +619,12 @@ export default function Opportunities() {
       <Container
         maxWidth={false}
         disableGutters
-        sx={{ pl: 1, pr: 1, mt: 2, px: 1 }}
+        sx={{ pl: 1, pr: 1, mt: 2, px: 1, ml: 1.5 }}
       >
         <Grid container spacing={0}>
           <Grid item xs={12}>
             <Paper
-              sx={{ width: '100%', mb: 2, p: 0, border: 'none' }}
+              sx={{ width: '98%', mb: 2, p: 0, border: 'none' }}
               elevation={0}
               square
             >

@@ -27,7 +27,7 @@ import { fetchData } from '../../components/FetchData';
 import { ContactUrl } from '../../services/ApiUrls';
 import { DeleteModal } from '../../components/DeleteModal';
 import * as XLSX from 'xlsx';
-
+import { CustomButton } from '../../components/Button/CustomButton';
 // AG Grid imports
 import { ModuleRegistry, ClientSideRowModelModule } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
@@ -671,11 +671,13 @@ export default function Contacts() {
               boxShadow:
                 '0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px rgba(0,0,0,0.14), 0px 1px 5px rgba(0,0,0,0.12)',
               borderRadius: '4px',
+              textTransform: 'none',
               border: 'none',
               color: '#FFFFFF',
               '&:hover': {
-                borderColor: '#1565c0',
-                backgroundColor: '#2B5075',
+                backgroundColor: '#fff !important',
+                color: '#284871 !important',
+                border: '1px solid #284871 !important',
               },
             }}
           >
@@ -714,9 +716,9 @@ export default function Contacts() {
       <Container
         maxWidth={false}
         disableGutters
-        sx={{ pl: 1, pr: 1, mt: 2, px: 1 }}
+        sx={{ pl: 1, pr: 1, mt: 2, px: 1, ml: 1.5 }}
       >
-        <Paper sx={{ width: '100%', mb: 2, p: 0 }} elevation={0} square>
+        <Paper sx={{ width: '98%', mb: 2, p: 0 }} elevation={0} square>
           {loading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
               <Spinner />

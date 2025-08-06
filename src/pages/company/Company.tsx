@@ -544,8 +544,15 @@ export default function Company() {
             onClick={exportExcel}
             sx={{
               backgroundColor: '#2B5075 !important',
-              color: '#f3f8ff !important', // или другой нужный цвет текста
+              color: '#f3f8ff !important',
               border: '1px solid #284871 !important',
+              fontFamily: 'Roboto, Arial, sans-serif !important',
+              fontWeight: '500 !important',
+              fontSize: '15px !important',
+              lineHeight: '19px !important',
+              minWidth: '96px',
+              width: '96px',
+              textTransform: 'none !important',
               '&:hover': {
                 backgroundColor: '#f3f8ff !important',
                 color: '#284871 !important',
@@ -579,11 +586,11 @@ export default function Company() {
       <Container
         maxWidth={false}
         disableGutters
-        sx={{ pl: 1, pr: 1, mt: 2, px: 1 }}
+        sx={{ pl: 1, pr: 1, mt: 2, px: 1, ml: 1.5 }}
       >
         <Grid container spacing={0}>
           <Grid item xs={12}>
-            <Paper sx={{ width: '100%', mb: 2, p: 0 }} elevation={0} square>
+            <Paper sx={{ width: '98%', mb: 3, p: 0 }} elevation={0} square>
               {loading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
                   <Spinner />
