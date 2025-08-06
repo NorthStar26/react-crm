@@ -34,6 +34,7 @@ import INDCHOICES from '../../data/INDCHOICES';
 import * as XLSX from 'xlsx';
 import { CustomButton } from '../../components/Button';
 
+
 // AG Grid imports
 import { ModuleRegistry, ClientSideRowModelModule } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
@@ -540,7 +541,7 @@ export default function Company() {
           <CustomButton
             variant="outline"
             shape="rounded"
-            startIcon={<FaDownload />}
+            startIcon={<FaFileExport />}
             onClick={exportExcel}
             sx={{
               backgroundColor: '#2B5075 !important',

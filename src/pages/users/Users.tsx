@@ -652,7 +652,7 @@ export default function Users() {
         <Stack direction="row" spacing={1}>
           <Button
             variant="outlined"
-            startIcon={<FaDownload />}
+            startIcon={<FaFileExport />}
             onClick={exportExcel}
             sx={{
               borderRadius: '999px',

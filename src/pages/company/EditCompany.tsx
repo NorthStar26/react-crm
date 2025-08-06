@@ -716,15 +716,39 @@ function EditCompany() {
                                 onOpen={() => setIndustrySelectOpen(true)}
                                 onClose={() => setIndustrySelectOpen(false)}
                                 open={industrySelectOpen}
-                                IconComponent={() => (
-                                  <div className="select-icon-background">
-                                    {industrySelectOpen ? (
-                                      <FiChevronUp className="select-icon" />
-                                    ) : (
-                                      <FiChevronDown className="select-icon" />
-                                    )}
-                                  </div>
-                                )}
+
+                       IconComponent={() => (
+                                                       <div className="select-icon-background">
+                                                         {industrySelectOpen ? (
+                                                           <FiChevronUp
+                                                             className="select-icon"
+                                                             onMouseDown={(e) => {
+                                                               e.stopPropagation();
+                                                               setIndustrySelectOpen(false);
+                                                             }}
+                                                           />
+                                                         ) : (
+                                                           <FiChevronDown
+                                                             className="select-icon"
+                                                             onMouseDown={(e) => {
+                                                               e.stopPropagation();
+                                                               setIndustrySelectOpen(true);
+                                                             }}
+                                                           />
+                                                         )}
+                                                        </div>
+                                                     )}
+
+
+                                // IconComponent={() => (
+                                //   <div className="select-icon-background">
+                                //     {industrySelectOpen ? (
+                                //       <FiChevronUp className="select-icon" />
+                                //     ) : (
+                                //       <FiChevronDown className="select-icon" />
+                                //     )}
+                                //   </div>
+                                // )}
                                 className={'select'}
                                 onChange={handleChange}
                                 error={!!errors?.industry?.[0]}

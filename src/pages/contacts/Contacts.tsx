@@ -664,7 +664,7 @@ export default function Contacts() {
         <Stack direction="row" spacing={2}>
           <Button
             variant="outlined"
-            startIcon={<FaDownload />}
+            startIcon={<FaFileExport />}
             onClick={handleExport}
             sx={{
               background: '#2B5075',
