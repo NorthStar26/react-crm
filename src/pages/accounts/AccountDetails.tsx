@@ -960,7 +960,10 @@ export const AccountDetails = (props: any) => {
                                             style={{
                                                 ...gridTheme,
                                                 width: '100%',
-                                                height: '400px', // Fixed height instead of minHeight
+                                                // Dynamic height based on row count + header
+                                                height: `${40 + (Math.max(1, opportunities.length > 0 ? opportunities.length : 10) * 56)}px`,
+                                                minHeight: '200px',
+                                                maxHeight: '600px',
                                             }}
                                             sx={{
                                                 '& .ag-root-wrapper': {
@@ -1045,7 +1048,7 @@ export const AccountDetails = (props: any) => {
                                         <Box
                                             sx={{
                                                 mt: 2,
-                                                px: 3,
+                                                p: 3,
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 justifyContent: 'space-between',
