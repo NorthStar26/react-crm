@@ -28,6 +28,7 @@ import { ContactUrl } from '../../services/ApiUrls';
 import { DeleteModal } from '../../components/DeleteModal';
 import * as XLSX from 'xlsx';
 
+
 // AG Grid imports
 import { ModuleRegistry, ClientSideRowModelModule } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
@@ -91,7 +92,6 @@ const NameCellRenderer = (props: ICellRendererParams) => {
     </span>
   );
 };
-
 const PhoneNumberCellRenderer = (props: ICellRendererParams) => {
   const phoneNumber = props.value;
   const doNotCall = props.data.do_not_call;
@@ -105,7 +105,14 @@ const PhoneNumberCellRenderer = (props: ICellRendererParams) => {
         position: 'relative',
       }}
     >
-      {phoneNumber || '---'}
+      <span
+        style={{
+          color: doNotCall ? '#D32F2F' : 'inherit',
+          fontWeight: doNotCall ? 500 : 'normal',
+        }}
+      >
+        {phoneNumber || '---'}
+      </span>
       {doNotCall && (
         <span style={{ display: 'flex', alignItems: 'center' }}>
           {/* SVG "Do Not Call" icon */}
@@ -652,7 +659,7 @@ export default function Contacts() {
         <Stack direction="row" spacing={2}>
           <Button
             variant="outlined"
-            startIcon={<FaDownload />}
+            startIcon={<FaFileExport />}
             onClick={handleExport}
             sx={{
               background: '#2B5075',

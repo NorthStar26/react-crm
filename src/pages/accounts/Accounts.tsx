@@ -231,7 +231,7 @@ export default function Accounts() {
     }
 
     const accountDetail = (accountId: any) => {
-        navigate(`/app/accounts/account-details`, { state: { accountId, detail: true, contacts: contacts || [], status: status || [], tags: tags || [], users: users || [], countries: countries || [], teams: teams || [], leads: leads || [] } })
+        navigate(`/app/accounts/account-details/${accountId}`)
     }
     const handleRecordsPerPage = (event: React.ChangeEvent<HTMLSelectElement>) => {
         if (tab == 'open') {
