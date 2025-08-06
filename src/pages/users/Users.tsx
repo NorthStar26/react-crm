@@ -441,7 +441,7 @@ export default function Users() {
         field: 'email',
         flex: 2,
         sortable: true,
-        filter: true,
+
         domLayout: 'normal',
         cellStyle: {
           display: 'flex',
@@ -475,7 +475,7 @@ export default function Users() {
         field: 'phone',
         flex: 1,
         sortable: true,
-        filter: true,
+
         cellStyle: {
           display: 'flex',
           alignItems: 'center',
@@ -487,7 +487,7 @@ export default function Users() {
         field: 'role',
         flex: 1,
         sortable: true,
-        filter: true,
+
         cellStyle: {
           display: 'flex',
           alignItems: 'center',
@@ -619,7 +619,7 @@ export default function Users() {
   const defaultColDef = {
     resizable: true,
     sortable: true,
-    filter: true,
+
     wrapText: true,
     autoHeight: true,
     unSortIcon: true,
@@ -694,12 +694,12 @@ export default function Users() {
       <Container
         maxWidth={false}
         disableGutters
-        sx={{ pl: 1, pr: 1, mt: 2, px: 1 }}
+        sx={{ pl: 1, pr: 1, mt: 2, px: 1, ml: 1.5 }}
       >
         <Grid container spacing={0}>
           <Grid item xs={12}>
             <Paper
-              sx={{ width: '100%', mb: 2, p: 0 }}
+              sx={{ width: '98%', mb: 2, p: 0 }}
               elevation={0}
               square
               variant="none"
