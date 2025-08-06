@@ -654,15 +654,19 @@ export default function Users() {
             variant="outlined"
             startIcon={<FaFileExport />}
             onClick={exportExcel}
-            sx={{
-              borderRadius: '999px',
+           sx={{
+              background: '#2B5075',
+              boxShadow:
+                '0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px rgba(0,0,0,0.14), 0px 1px 5px rgba(0,0,0,0.12)',
+              borderRadius: '4px',
               textTransform: 'none',
-              color: '#0F2A55',
-              borderColor: '#0F2A55',
-              fontWeight: 600,
-              bgcolor: 'white',
-              px: 2,
-              '&:hover': { bgcolor: '#f0f4ff', borderColor: '#0F2A55' },
+              border: 'none',
+              color: '#FFFFFF',
+              '&:hover': {
+                backgroundColor: '#fff !important',
+                color: '#284871 !important',
+                border: '1px solid #284871 !important',
+              },
             }}
           >
             Export
@@ -673,15 +677,24 @@ export default function Users() {
               variant="contained"
               startIcon={<FiPlus />}
               onClick={onAddUser}
-              sx={{
-                borderRadius: '999px',
-                textTransform: 'none',
-                bgcolor: '#1E3A5F',
-                color: 'white',
-                fontWeight: 600,
-                px: 2,
-                '&:hover': { bgcolor: '#1E3A5F' },
-              }}
+              sx={[
+              {
+                fontFamily: 'Roboto !important',
+                fontWeight: '500 !important',
+                fontSize: '16px !important',
+                lineHeight: '19px !important',
+                height: '40px !important', //
+                minWidth: '140px !important',
+                
+                '&:hover': { backgroundColor: '#1565c0 !important' },
+                textTransform: 'none !important',
+                padding: '8px 24px !important',
+                boxSizing: 'border-box !important',
+                display: 'flex !important',
+                alignItems: 'center !important',
+                justifyContent: 'center !important',
+              },
+            ]}
             >
               Add User
             </Button>

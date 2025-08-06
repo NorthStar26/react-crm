@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import {
     Card,
@@ -20,8 +20,17 @@ import {
     TableHead,
     TableRow,
     Paper,
-    Pagination
+    Pagination,
+    Select,
+    MenuItem
 } from '@mui/material'
+// AG Grid imports
+import { ModuleRegistry, ClientSideRowModelModule } from 'ag-grid-community';
+import { AgGridReact } from 'ag-grid-react';
+import 'ag-grid-community/styles/ag-grid.css';
+import 'ag-grid-community/styles/ag-theme-alpine.css';
+import { ICellRendererParams, ColDef } from 'ag-grid-community';
+import { SelectChangeEvent } from '@mui/material/Select';
 import {
     FaPlus,
     FaStar,
@@ -45,6 +54,71 @@ import { Label } from '../../components/Label'
 import { ContactDetailCard } from '../../styles/CssStyled'
 import { EditButton } from '../../components/Button'
 import { useUser } from '../../context/UserContext'
+
+// Register AG Grid modules
+ModuleRegistry.registerModules([ClientSideRowModelModule]);
+
+// Custom cell renderers for opportunities
+const OpportunityNameCellRenderer = (props: ICellRendererParams) => {
+    const navigate = useNavigate();
+    
+    const handleClick = () => {
+        // Navigate to opportunity details page if available
+        // navigate(`/app/opportunities/${props.data.id}`);
+        console.log('Navigate to opportunity details:', props.data.id);
+    };
+
+    return (
+        <span
+            onClick={handleClick}
+            style={{
+                cursor: 'pointer',
+                color: '#1976d2',
+                textDecoration: 'none',
+                fontWeight: 500,
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
+            onMouseLeave={(e) => (e.currentTarget.style.textDecoration = 'none')}
+        >
+            {props.data.name || 'Unnamed Opportunity'}
+        </span>
+    );
+};
+
+const RevenueCellRenderer = (props: ICellRendererParams) => {
+    const amount = props.data.amount || '0';
+    return (
+        <span style={{ color: '#6B7280' }}>
+            $ {parseFloat(amount).toLocaleString()}
+        </span>
+    );
+};
+
+const ContactCellRenderer = (props: ICellRendererParams) => {
+    const contact = props.data.contact;
+    const displayName = contact?.first_name ? 
+        `${contact.first_name} ${contact.last_name}` : 
+        'John Doe';
+    
+    return (
+        <span style={{ color: '#6B7280' }}>
+            {displayName}
+        </span>
+    );
+};
+
+const AssignedToCellRenderer = (props: ICellRendererParams) => {
+    const assignedTo = props.data.assigned_to;
+    const displayText = assignedTo?.length > 0 ? 
+        assignedTo.map((user: any) => user.user_details?.email).join(', ') : 
+        'John Doe User';
+    
+    return (
+        <span style={{ color: '#6B7280' }}>
+            {displayText}
+        </span>
+    );
+};
 
 export const formatDate = (dateString: any) => {
     const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' }
@@ -148,6 +222,98 @@ export const AccountDetails = (props: any) => {
     const [error, setError] = useState<string | null>(null)
     const [currentPage, setCurrentPage] = useState(1)
     const [rowsPerPage, setRowsPerPage] = useState(10)
+
+    // AG Grid references and setup
+    const gridRef = useRef<AgGridReact>(null);
+    const [gridApi, setGridApi] = useState<any>(null);
+
+    // AG Grid column definitions for opportunities
+    const columnDefs: ColDef[] = [
+        {
+            headerCheckboxSelection: true,
+            checkboxSelection: true,
+            headerCheckboxSelectionFilteredOnly: true,
+            suppressSizeToFit: true,
+            width: 50,
+            maxWidth: 50,
+            sortable: false,
+            filter: false,
+        },
+        {
+            field: 'name',
+            headerName: 'Opportunity',
+            cellRenderer: OpportunityNameCellRenderer,
+            minWidth: 180,
+            flex: 2, // Give more space to opportunity name
+            sortable: true,
+        },
+        {
+            field: 'contact',
+            headerName: 'Contact',
+            cellRenderer: ContactCellRenderer,
+            minWidth: 140,
+            flex: 1,
+            sortable: true,
+        },
+        {
+            field: 'amount',
+            headerName: 'Revenue',
+            cellRenderer: RevenueCellRenderer,
+            minWidth: 100,
+            flex: 1,
+            sortable: true,
+        },
+        {
+            field: 'expected_close_date',
+            headerName: 'Close Date',
+            minWidth: 120,
+            flex: 1,
+            valueFormatter: (params) => {
+                if (params.value) {
+                    return formatDate(params.value);
+                }
+                return params.data.created_on_arrow || 'March 12, 2023';
+            },
+            sortable: true,
+        },
+        {
+            field: 'assigned_to',
+            headerName: 'Assigned To',
+            cellRenderer: AssignedToCellRenderer,
+            minWidth: 140,
+            flex: 1,
+            sortable: true,
+        },
+    ];
+
+    const defaultColDef = {
+        resizable: true,
+        sortable: true,
+        wrapText: true,
+        autoHeight: true,
+        unSortIcon: true,
+        suppressSizeToFit: false, // Allow columns to fit container
+        flex: 1, // Default flex for equal distribution
+        cellStyle: {
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'flex-start',
+            paddingRight: '8px',
+            paddingLeft: '8px',
+        },
+    };
+
+    // AG Grid theme variables
+    const gridTheme = {
+        '--ag-header-background-color': '#582e39ff',
+        '--ag-header-foreground-color': '#FFFFFF',
+        '--ag-header-border-color': 'transparent',
+        '--ag-odd-row-background-color': '#FFFFFF',
+        '--ag-even-row-background-color': '#F3F8FF',
+        '--ag-row-border-color': '#E0E0E0',
+        '--ag-cell-horizontal-padding': '4px',
+        '--ag-header-cell-padding': '4px',
+    } as React.CSSProperties;
 
     useEffect(() => {
         // Use accountId from URL params, fallback to state if needed
@@ -319,7 +485,7 @@ export const AccountDetails = (props: any) => {
                 variant="view" 
             />
 
-            <Container maxWidth="xl" sx={{ mt: '120px', py: 3 }}>
+            <Box  sx={{ mt: '120px', py: 3 ,px:2}}>
                 <Grid container spacing={2}>
                     {/* Company Header Card */}
                     <Grid item xs={12}>
@@ -366,7 +532,13 @@ export const AccountDetails = (props: any) => {
                                         
                                         {/* Website Link */}
                                         {(accountDetails?.website || companyInfo?.website) && (
-                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                            <Box sx={{ display: 'flex',maxWidth: '40%',
+                                                    alignItems: 'center',
+                                                    gap: 2,
+                                                    height: '40px',
+                                                    borderRadius: '4px',
+                                                    bgcolor: '#F9FAFB',
+                                                    px: 2, }}>
                                                 <FaGlobe style={{ fontSize: '14px', color: '#6B7280', marginRight: '8px' }} />
                                                 <Typography
                                                     component="a"
@@ -394,7 +566,13 @@ export const AccountDetails = (props: any) => {
                                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center' }}>
                                     {/* Email */}
                                     {(accountDetails?.email || companyInfo?.email) && (
-                                        <Box sx={{ display: 'flex', alignItems: 'center', minWidth: '200px' }}>
+                                        <Box sx={{display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: 2,
+                                                    height: '40px',
+                                                    borderRadius: '4px',
+                                                    bgcolor: '#F9FAFB',
+                                                      px: 2, }}>
                                             <FaEnvelope style={{ fontSize: '16px', color: '#6B7280', marginRight: '8px', flexShrink: 0 }} />
                                             <Typography
                                                 component="a"
@@ -415,7 +593,13 @@ export const AccountDetails = (props: any) => {
 
                                     {/* Phone */}
                                     {(accountDetails?.phone || companyInfo?.phone) && (
-                                        <Box sx={{ display: 'flex', alignItems: 'center', minWidth: '150px' }}>
+                                        <Box sx={{ display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: 2,
+                                                    height: '40px',
+                                                    borderRadius: '4px',
+                                                    bgcolor: '#F9FAFB',
+                                                      px: 2, }}>
                                             <FaPhone style={{ fontSize: '16px', color: '#6B7280', marginRight: '8px', flexShrink: 0 }} />
                                             <Typography sx={{ 
                                                 fontSize: '14px', 
@@ -431,7 +615,13 @@ export const AccountDetails = (props: any) => {
 
                                     {/* Industry */}
                                     {(accountDetails?.industry || companyInfo?.industry) && (
-                                        <Box sx={{ display: 'flex', alignItems: 'center', minWidth: '150px' }}>
+                                        <Box sx={{ display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: 2,
+                                                    height: '40px',
+                                                    borderRadius: '4px',
+                                                    bgcolor: '#F9FAFB',
+                                                      px: 2, }}>
                                             <FaIndustry style={{ fontSize: '16px', color: '#6B7280', marginRight: '8px', flexShrink: 0 }} />
                                             <Typography sx={{ 
                                                 fontSize: '14px', 
@@ -755,134 +945,173 @@ export const AccountDetails = (props: any) => {
                                 boxShadow: '0px 2px 1px -1px rgba(0, 0, 0, 0.2), 0px 1px 1px rgba(0, 0, 0, 0.14), 0px 1px 3px rgba(0, 0, 0, 0.12)',
                             }}
                         >
-                            <Box sx={{ p: 3 }}>
+                            <Box sx={{  }}>
                                 
-                                
-                                <TableContainer component={Paper} sx={{ boxShadow: 'none', border: '1px solid #E5E7EB' }}>
-                                    <Table>
-                                        <TableHead>
-                                            <TableRow sx={{ backgroundColor: "#2e4258" }}>
-                                                <TableCell sx={{ fontWeight: 600, color: '#F9FAFB' }}>
-                                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                        <input type="checkbox" style={{ marginRight: '8px' }} />
-                                                        Opportunity
-                                                    </Box>
-                                                </TableCell>
-                                                <TableCell sx={{ fontWeight: 600, color: '#F9FAFB' }}>Contact</TableCell>
-                                                <TableCell sx={{ fontWeight: 600, color: '#F9FAFB' }}>Revenue</TableCell>
-                                                <TableCell sx={{ fontWeight: 600, color: '#F9FAFB' }}>Close Date</TableCell>
-                                                <TableCell sx={{ fontWeight: 600, color: '#F9FAFB' }}>Assigned To</TableCell>
-                                            </TableRow>
-                                        </TableHead>
-                                        <TableBody>
-                                            {opportunities.length > 0 ? (
-                                                opportunities.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage).map((opportunity: any, index: number) => (
-                                                    <TableRow key={index} sx={{ '&:hover': { backgroundColor: '#F9FAFB' } }}>
-                                                        <TableCell>
-                                                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                                <input type="checkbox" style={{ marginRight: '8px' }} />
-                                                                {opportunity.name}
-                                                            </Box>
-                                                        </TableCell>
-                                                        <TableCell sx={{ color: '#6B7280' }}>
-                                                            {opportunity.contact?.first_name ? 
-                                                                `${opportunity.contact.first_name} ${opportunity.contact.last_name}` : 
-                                                                'John Doe'}
-                                                        </TableCell>
-                                                        <TableCell sx={{ color: '#6B7280' }}>
-                                                            $ {parseFloat(opportunity.amount || '0').toLocaleString()}
-                                                        </TableCell>
-                                                        <TableCell sx={{ color: '#6B7280' }}>
-                                                            {opportunity.expected_close_date ? 
-                                                                formatDate(opportunity.expected_close_date) : 
-                                                                opportunity.created_on_arrow || 'March 12, 2023'}
-                                                        </TableCell>
-                                                        <TableCell sx={{ color: '#6B7280' }}>
-                                                            {opportunity.assigned_to?.length > 0 ? 
-                                                                opportunity.assigned_to.map((user: any) => user.user_details?.email).join(', ') : 
-                                                                'John Doe User'}
-                                                        </TableCell>
-                                                    </TableRow>
-                                                ))
-                                            ) : (
-                                                <>
-                                                    <TableRow sx={{ '&:hover': { backgroundColor: '#F9FAFB' } }}>
-                                                        <TableCell>
-                                                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                                <input type="checkbox" style={{ marginRight: '8px' }} />
-                                                                Opportunity Name
-                                                            </Box>
-                                                        </TableCell>
-                                                        <TableCell sx={{ color: '#6B7280' }}>John Doe</TableCell>
-                                                        <TableCell sx={{ color: '#6B7280' }}>$ 1,000</TableCell>
-                                                        <TableCell sx={{ color: '#6B7280' }}>March 12, 2023</TableCell>
-                                                        <TableCell sx={{ color: '#6B7280' }}>John Doe User</TableCell>
-                                                    </TableRow>
-                                                    {Array.from({ length: 9 }).map((_, index) => (
-                                                        <TableRow key={index} sx={{ '&:hover': { backgroundColor: '#F9FAFB' } }}>
-                                                            <TableCell>
-                                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                                    <input type="checkbox" style={{ marginRight: '8px' }} />
-                                                                    Crm Test
-                                                                </Box>
-                                                            </TableCell>
-                                                            <TableCell sx={{ color: '#6B7280' }}>John Doe</TableCell>
-                                                            <TableCell sx={{ color: '#6B7280' }}>$ 10,000</TableCell>
-                                                            <TableCell sx={{ color: '#6B7280' }}>
-                                                                {index % 3 === 0 ? 'June 27, 2022' : 
-                                                                 index % 3 === 1 ? 'January 8, 2024' : 
-                                                                 index % 3 === 2 ? 'October 5, 2021' : 'February 19, 2023'}
-                                                            </TableCell>
-                                                            <TableCell sx={{ color: '#6B7280' }}>
-                                                                {index < 5 ? 'John Doe User' : 'John Doe'}
-                                                            </TableCell>
-                                                        </TableRow>
-                                                    ))}
-                                                </>
-                                            )}
-                                        </TableBody>
-                                    </Table>
-                                </TableContainer>
 
-                                {/* Pagination */}
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                        <Typography sx={{ fontSize: '14px', color: '#6B7280' }}>
-                                            Rows per page
-                                        </Typography>
-                                        <select 
-                                            value={rowsPerPage} 
-                                            onChange={(e) => setRowsPerPage(Number(e.target.value))}
-                                            style={{ 
-                                                padding: '4px 8px', 
-                                                border: '1px solid #D1D5DB', 
-                                                borderRadius: '4px',
-                                                fontSize: '14px'
+                                {loading ? (
+                                    <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                                        <Typography>Loading opportunities...</Typography>
+                                    </Box>
+                                ) : (
+                                    <>
+                                        {/* AG Grid */}
+                                        <Box
+                                            className="ag-theme-alpine"
+                                            style={{
+                                                ...gridTheme,
+                                                width: '100%',
+                                                // Dynamic height based on row count + header
+                                                height: `${40 + (Math.max(1, opportunities.length > 0 ? opportunities.length : 10) * 56)}px`,
+                                                minHeight: '200px',
+                                                maxHeight: '600px',
+                                            }}
+                                            sx={{
+                                                '& .ag-root-wrapper': {
+                                                    border: '1px solid #E5E7EB',
+                                                    borderRadius: '8px',
+                                                    overflow: 'hidden',
+                                                    width: '100%',
+                                                },
+                                                '& .ag-header': {
+                                                    backgroundColor: '#582e39ff',
+                                                    borderTopLeftRadius: '8px',
+                                                    borderTopRightRadius: '8px',
+                                                },
+                                                '& .ag-cell': {
+                                                    paddingLeft: '8px',
+                                                    paddingRight: '8px',
+                                                },
+                                                '& .ag-header-cell': {
+                                                    paddingLeft: '8px',
+                                                    paddingRight: '8px',
+                                                },
+                                                '& .ag-pinned-right-cols-viewport .ag-cell': {
+                                                    paddingRight: '8px',
+                                                },
+                                                // Ensure table takes full width
+                                                width: '100%',
+                                                '& .ag-center-cols-viewport': {
+                                                    width: '100% !important',
+                                                },
+                                                '& .ag-center-cols-container': {
+                                                    width: '100% !important',
+                                                },
                                             }}
                                         >
-                                            <option value={10}>10</option>
-                                            <option value={25}>25</option>
-                                            <option value={50}>50</option>
-                                        </select>
-                                        <Typography sx={{ fontSize: '14px', color: '#6B7280' }}>
-                                            of {opportunities.length > 0 ? opportunities.length : 140} rows
-                                        </Typography>
-                                    </Box>
-                                    
-                                    <Pagination
-                                        count={opportunities.length > 0 ? Math.ceil(opportunities.length / rowsPerPage) : 14}
-                                        page={currentPage}
-                                        onChange={(event, value) => setCurrentPage(value)}
-                                        size="small"
-                                        showFirstButton
-                                        showLastButton
-                                    />
-                                </Box>
+                                            <AgGridReact
+                                                ref={gridRef}
+                                                rowData={opportunities.length > 0 ? opportunities : [
+                                                    // Sample data when no opportunities exist
+                                                    { id: '1', name: 'Opportunity Name', contact: { first_name: 'John', last_name: 'Doe' }, amount: '1000', expected_close_date: null, created_on_arrow: 'March 12, 2023', assigned_to: [{ user_details: { email: 'john.doe@example.com' } }] },
+                                                    ...Array.from({ length: 9 }, (_, index) => ({
+                                                        id: `${index + 2}`,
+                                                        name: 'Crm Test',
+                                                        contact: { first_name: 'John', last_name: 'Doe' },
+                                                        amount: '10000',
+                                                        expected_close_date: null,
+                                                        created_on_arrow: index % 3 === 0 ? 'June 27, 2022' : 
+                                                                         index % 3 === 1 ? 'January 8, 2024' : 
+                                                                         index % 3 === 2 ? 'October 5, 2021' : 'February 19, 2023',
+                                                        assigned_to: index < 5 ? [{ user_details: { email: 'john.doe.user@example.com' } }] : [{ user_details: { email: 'john.doe@example.com' } }]
+                                                    }))
+                                                ]}
+                                                columnDefs={columnDefs}
+                                                defaultColDef={defaultColDef}
+                                                suppressRowClickSelection
+                                                suppressCellFocus
+                                                rowHeight={56}
+                                                headerHeight={40}
+                                                onGridReady={(params) => {
+                                                    setGridApi(params.api);
+                                                    params.api.sizeColumnsToFit();
+                                                    // Force column resizing after a short delay
+                                                    setTimeout(() => {
+                                                        params.api.sizeColumnsToFit();
+                                                    }, 100);
+                                                }}
+                                                onFirstDataRendered={(params) => {
+                                                    params.api.sizeColumnsToFit();
+                                                }}
+                                                getRowId={(params) => params.data.id || params.data.name}
+                                                animateRows={true}
+                                                suppressNoRowsOverlay={false}
+                                                rowClassRules={{
+                                                    even: (params) =>
+                                                        params.node &&
+                                                        params.node.rowIndex != null &&
+                                                        params.node.rowIndex % 2 === 1,
+                                                }}
+                                            />
+                                        </Box>
+
+                                        {/* Pagination Footer */}
+                                        <Box
+                                            sx={{
+                                                mt: 2,
+                                                p: 3,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'space-between',
+                                            }}
+                                        >
+                                            {/* Rows per page */}
+                                            <Stack direction="row" alignItems="center" spacing={1}>
+                                                <Typography sx={{ fontSize: '14px', color: '#6B7280' }}>Rows&nbsp;per&nbsp;page:</Typography>
+                                                <Select
+                                                    size="small"
+                                                    value={rowsPerPage}
+                                                    onChange={(e: SelectChangeEvent<number>) => setRowsPerPage(Number(e.target.value))}
+                                                    sx={{ height: 32 }}
+                                                >
+                                                    {[10, 25, 50].map((n) => (
+                                                        <MenuItem key={n} value={n}>
+                                                            {n}
+                                                        </MenuItem>
+                                                    ))}
+                                                </Select>
+                                                <Typography sx={{ ml: 1, fontSize: '14px', color: '#6B7280' }}>
+                                                    of {opportunities.length > 0 ? opportunities.length : 10} rows
+                                                </Typography>
+                                            </Stack>
+                                            
+                                            {/* Page Navigation */}
+                                            <Pagination
+                                                page={currentPage}
+                                                count={opportunities.length > 0 ? Math.ceil(opportunities.length / rowsPerPage) : Math.ceil(10 / rowsPerPage)}
+                                                onChange={(event, value) => setCurrentPage(value)}
+                                                variant="outlined"
+                                                shape="rounded"
+                                                size="small"
+                                                showFirstButton
+                                                showLastButton
+                                                sx={{
+                                                    '& .MuiPaginationItem-root': {
+                                                        borderRadius: '50%',
+                                                        width: 36,
+                                                        height: 36,
+                                                        border: '1px solid #CED4DA',
+                                                    },
+                                                    '& .MuiPaginationItem-root:not(.Mui-selected):hover': {
+                                                        backgroundColor: '#F0F7FF',
+                                                    },
+                                                    '& .MuiPaginationItem-root.Mui-selected': {
+                                                        backgroundColor: '#1E3A5F',
+                                                        color: '#fff',
+                                                        border: '1px solid #284871',
+                                                    },
+                                                    '& .MuiPaginationItem-root.Mui-selected:hover': {
+                                                        backgroundColor: '#1E3A5F',
+                                                    },
+                                                }}
+                                            />
+                                        </Box>
+                                    </>
+                                )}
                             </Box>
                         </ContactDetailCard>
                     </Grid>
                 </Grid>
-            </Container>
+            </Box>
         </Box>
     )
 }

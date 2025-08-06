@@ -695,7 +695,7 @@ export default function Contacts() {
                 lineHeight: '19px !important',
                 height: '40px !important', //
                 minWidth: '140px !important',
-                borderRadius: '8px !important',
+                
                 '&:hover': { backgroundColor: '#1565c0 !important' },
                 textTransform: 'none !important',
                 padding: '8px 24px !important',
