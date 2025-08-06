@@ -28,6 +28,7 @@ import { ContactUrl } from '../../services/ApiUrls';
 import { DeleteModal } from '../../components/DeleteModal';
 import * as XLSX from 'xlsx';
 
+
 // AG Grid imports
 import { ModuleRegistry, ClientSideRowModelModule } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
@@ -658,7 +659,7 @@ export default function Contacts() {
         <Stack direction="row" spacing={2}>
           <Button
             variant="outlined"
-            startIcon={<FaDownload />}
+            startIcon={<FaFileExport />}
             onClick={handleExport}
             sx={{
               background: '#2B5075',
