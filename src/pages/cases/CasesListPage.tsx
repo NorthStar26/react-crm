@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import ApartmentIcon from '@mui/icons-material/Apartment';  
 import PersonIcon from '@mui/icons-material/Person';        
-import { AgGridReact } from 'ag-grid-react';
+import { AgGridReact } from 'ag-grid-react';import { FaDownload, FaFileExport } from 'react-icons/fa';
 import { ModuleRegistry, ClientSideRowModelModule } from 'ag-grid-community';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
@@ -509,19 +509,22 @@ const handleExport = async () => {
 
               <Button
                 variant="contained"
-                startIcon={<FiUpload size={18} />}
+                 startIcon={<FaFileExport />}
                 onClick={handleExport}
                 sx={{
-                  backgroundColor: '#3a4c71ff',
-                  color: 'white',
-                  fontSize: '0.85rem',
-                  padding: '6px 16px',
-                  minHeight: '48px',
-                  borderRadius: '6px',
-                  textTransform: 'none',
-                  '&:hover': { backgroundColor: '#3366ff' },
-                  width: isExtraSmallScreen ? '100%' : 'auto',
-                }}
+              background: '#2B5075',
+              boxShadow:
+                '0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px rgba(0,0,0,0.14), 0px 1px 5px rgba(0,0,0,0.12)',
+              borderRadius: '4px',
+              textTransform: 'none',
+              border: 'none',
+              color: '#FFFFFF',
+              '&:hover': {
+                backgroundColor: '#fff !important',
+                color: '#284871 !important',
+                border: '1px solid #284871 !important',
+              },
+            }}
               >
                 Export
               </Button>
