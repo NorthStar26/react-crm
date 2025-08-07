@@ -22,7 +22,7 @@ import {
 import { Spinner } from '../../components/Spinner';
 import { FiPlus } from '@react-icons/all-files/fi/FiPlus';
 import { FiSearch } from '@react-icons/all-files/fi/FiSearch';
-import { FaDownload, FaTrashAlt, FaEdit } from 'react-icons/fa';
+import { FaDownload, FaTrashAlt, FaEdit,FaFileExport } from 'react-icons/fa';
 import { FiChevronUp } from '@react-icons/all-files/fi/FiChevronUp';
 import { FiChevronDown } from '@react-icons/all-files/fi/FiChevronDown';
 import { CustomToolbar } from '../../styles/CssStyled';
@@ -264,25 +264,30 @@ export default function Accounts() {
       flex: 2,
       sortable: true,
       filter: true,
-      cellRenderer: (params: ICellRendererParams) => (
-        <Stack direction="row" alignItems="center" spacing={1}>
-          <Avatar
-            src={params.data.logo_url || undefined}
-            alt={params.value}
-            sx={{ width: 32, height: 32, fontSize: 14, bgcolor: '#284871' }}
-          >
-            {params.data.contacts?.[0]?.company?.name
-              ?.charAt(0)
-              .toUpperCase() || 'C'}
-          </Avatar>
-          <Typography
-            sx={{ color: '#1a73e8', cursor: 'pointer', textTransform: 'none' }}
-            onClick={() => accountDetail(params.data.id)}
-          >
-            {params.data.contacts?.[0]?.company?.name || '—'}
-          </Typography>
-        </Stack>
-      ),
+      cellRenderer: (params: ICellRendererParams) => {
+        const companyName = params.data.contacts?.[0]?.company?.name || params.data.name || '—';
+        const logoUrl = params.data.contacts?.[0]?.company?.logo_url || params.data.logo_url;
+        
+        return (
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <Avatar
+              src={logoUrl || undefined}
+              alt={companyName}
+              sx={{ width: 32, height: 32, fontSize: 14, bgcolor: '#284871' }}
+            >
+              {companyName && companyName !== '—' 
+                ? companyName.charAt(0).toUpperCase() 
+                : 'C'}
+            </Avatar>
+            <Typography
+              sx={{ color: '#1a73e8', cursor: 'pointer', textTransform: 'none' }}
+              onClick={() => accountDetail(params.data.id)}
+            >
+              {companyName}
+            </Typography>
+          </Stack>
+        );
+      },
     },
 
     {
@@ -292,31 +297,60 @@ export default function Accounts() {
       sortable: true,
       filter: true,
       cellRenderer: (params: ICellRendererParams) => {
-        if (
-          !params.data.industry &&
-          !params.data.contacts?.[0].company?.industry
-        )
-          return '—';
-
-        return (
-          params.data.contacts?.[0].company?.industry ||
-          params.data.industry ||
-          '—'
-        );
+        const industry = params.data.contacts?.[0]?.company?.industry || 
+                        params.data.industry || 
+                        '—';
+        return industry;
       },
     },
     {
-      headerName: 'Contact',
-      field: 'contact',
+      headerName: 'Email',
+      field: 'email',
       flex: 2,
       sortable: true,
       filter: true,
       cellRenderer: (params: ICellRendererParams) => {
-        console.log(params, 'params in contact');
-        const contact = params.data.contacts[0];
-        if (!contact) return '—';
-
-        return `${contact.first_name || ''} ${contact.last_name || ''}`.trim();
+        const email = params.data.email || '—';
+        return (
+          <Typography
+            sx={{ 
+              color: email !== '—' ? '#1a73e8' : 'inherit',
+              cursor: email !== '—' ? 'pointer' : 'default'
+            }}
+            onClick={() => {
+              if (email !== '—') {
+                window.open(`mailto:${email}`, '_blank');
+              }
+            }}
+          >
+            {email}
+          </Typography>
+        );
+      },
+    },
+    {
+      headerName: 'Website',
+      field: 'website',
+      flex: 2,
+      sortable: true,
+      filter: true,
+      cellRenderer: (params: ICellRendererParams) => {
+        const website = params.data.website || '—';
+        return (
+          <Typography
+            sx={{ 
+              color: website !== '—' ? '#1a73e8' : 'inherit',
+              cursor: website !== '—' ? 'pointer' : 'default'
+            }}
+            onClick={() => {
+              if (website !== '—') {
+                window.open(website, '_blank');
+              }
+            }}
+          >
+            {website}
+          </Typography>
+        );
       },
     },
     {
@@ -351,37 +385,6 @@ export default function Accounts() {
         const formatted = `${monthName} ${day}, ${year}`;
 
         return formatted || '—';
-      },
-    },
-    {
-      headerName: 'Assigned To',
-      field: 'assigned_to',
-      flex: 2,
-      sortable: true,
-      filter: true,
-      cellRenderer: (params: ICellRendererParams) => {
-        const assignedTo = params.value;
-        if (!assignedTo || !assignedTo.length) return '—';
-
-        const user = assignedTo[0]?.user_details;
-        if (!user) return '—';
-
-        return (
-          <Stack direction="row" alignItems="center" spacing={1}>
-            <Avatar
-              src={user.profile_pic || ''}
-              alt={user.first_name || user.email || 'User'}
-              sx={{ width: 32, height: 32 }}
-            >
-              {user.first_name?.charAt(0).toUpperCase() || 'U'}
-            </Avatar>
-            <Typography>
-              {user.first_name && user.last_name
-                ? `${user.first_name} ${user.last_name}`
-                : user.email || '—'}
-            </Typography>
-          </Stack>
-        );
       },
     },
   ];
@@ -506,41 +509,6 @@ export default function Accounts() {
               ))}
             </Select>
           </FormControl>
-
-          {/* Contact Filter */}
-          <FormControl sx={{ minWidth: 160 }}>
-            <Select
-              displayEmpty
-              value={selectedContact}
-              onChange={(e) => {
-                setSelectedContact(e.target.value);
-                setCurrentPage(1);
-              }}
-              onOpen={() => setContactSelectOpen(true)}
-              onClose={() => setContactSelectOpen(false)}
-              open={contactSelectOpen}
-              IconComponent={() => (
-                <div style={{ marginRight: 8 }}>
-                  {contactSelectOpen ? <FiChevronUp /> : <FiChevronDown />}
-                </div>
-              )}
-              sx={{
-                background: '#fff',
-                borderRadius: 2,
-                fontSize: 16,
-                height: 40,
-              }}
-            >
-              <MenuItem value="">
-                <em>All Contacts</em>
-              </MenuItem>
-              {getUniqueContacts().map((contact: any) => (
-                <MenuItem key={contact.id} value={contact.id}>
-                  {contact.fullname || '—'}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
         </Stack>
 
         {/* RIGHT: Export + Add Account */}
@@ -555,31 +523,26 @@ export default function Accounts() {
           </CustomButton> */}
           <Button
             variant="outlined"
-            startIcon={<FaDownload />}
+             startIcon={<FaFileExport />}
             onClick={handleExport}
             sx={{
               background: '#2B5075',
               boxShadow:
                 '0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px rgba(0,0,0,0.14), 0px 1px 5px rgba(0,0,0,0.12)',
               borderRadius: '4px',
+              textTransform: 'none',
               border: 'none',
               color: '#FFFFFF',
               '&:hover': {
-                borderColor: '#1565c0',
-                backgroundColor: '#2B5075',
+                backgroundColor: '#fff !important',
+                color: '#284871 !important',
+                border: '1px solid #284871 !important',
               },
             }}
           >
             Export
           </Button>
-          <CustomButton
-            variant="primary"
-            shape="rounded"
-            startIcon={<FiPlus />}
-            onClick={onAddAccount}
-          >
-            Add Account
-          </CustomButton>
+          
         </Stack>
       </CustomToolbar>
 
