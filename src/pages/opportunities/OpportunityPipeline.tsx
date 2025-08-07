@@ -552,10 +552,20 @@ function OpportunityPipeline() {
         // Показываем сообщение только для CLOSED LOST
         if (dataToSend.stage === 'CLOSED LOST') {
           setShowClosedLostMessage(true);
+          // Navigate to cases page after a short delay
+          setTimeout(() => {
+            navigate('/app/cases');
+          }, 3000);
         }
         if (dataToSend.stage === 'CLOSED WON') {
           setShowConfetti(true);
-          setTimeout(() => setShowConfetti(false), 3500);
+          setTimeout(() => {
+            setShowConfetti(false);
+            // Wait an additional 0.5 seconds after confetti ends before navigating
+            setTimeout(() => {
+              navigate('/app/accounts');
+            }, 1500);
+          }, 3500);
           setContractUploaded(false);
         }
         const transitionMessages: { [key: string]: string } = {
