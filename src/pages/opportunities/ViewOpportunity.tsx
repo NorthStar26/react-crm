@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import DescriptionIcon from '@mui/icons-material/Description';
@@ -22,6 +22,23 @@ import {
 } from '@mui/material';
 
 import { CustomAppBar } from '../../components/CustomAppBar';
+import { fetchData } from '../../components/FetchData';
+import { OpportunityUrl } from '../../services/ApiUrls';
+import { SuccessAlert, AlertType } from '../../components/Button/SuccessAlert';
+import { DialogModal } from '../../components/DialogModal';
+
+// Helper function to capitalize the first letter of each word in a string
+const capitalizeFirstLetter = (string: string | undefined | null): string => {
+  if (!string) return '';
+
+  // For URL links, don't capitalize
+  if (string.startsWith('http')) return string;
+
+  return string
+    .split(' ')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+};
 
 const getStageColor = (stage: string): string => {
   const stageColors: { [key: string]: string } = {
@@ -85,6 +102,120 @@ export default function ViewOpportunity() {
   const navigate = useNavigate();
   const opportunity = location.state?.opportunityData;
 
+  // Comment functionality states
+  const [note, setNote] = useState('');
+  const [noteError, setNoteError] = useState('');
+  const [noteSubmitting, setNoteSubmitting] = useState(false);
+  const [commentsToShow, setCommentsToShow] = useState(5);
+  const [opportunityComments, setOpportunityComments] = useState(opportunity?.comments || []);
+  
+  // Alert states
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [alertType, setAlertType] = useState<AlertType>('success');
+  
+  // Add Note modal states
+  const [addNoteDialogOpen, setAddNoteDialogOpen] = useState(false);
+
+  // Update comments when opportunity data changes
+  useEffect(() => {
+    setOpportunityComments(opportunity?.comments || []);
+  }, [opportunity?.comments]);
+
+  // Open add note dialog
+  const handleAddNoteClick = () => {
+    if (!note.trim()) {
+      setNoteError('Note cannot be empty');
+      return;
+    }
+
+    // Clear any previous errors
+    setNoteError('');
+
+    // Open confirmation dialog
+    setAddNoteDialogOpen(true);
+  };
+
+  // Submit note after confirmation
+  const submitNote = () => {
+    // Close the dialog first
+    setAddNoteDialogOpen(false);
+
+    setNoteSubmitting(true);
+
+    const Header = {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      Authorization: localStorage.getItem('Token'),
+      org: localStorage.getItem('org'),
+    };
+
+    const data = JSON.stringify({
+      comment: note,
+    });
+
+    fetchData(`${OpportunityUrl}/${opportunity?.id}/comment/`, 'POST', data, Header)
+      .then((res) => {
+        if (!res.error) {
+          // Refresh the opportunity comments by fetching updated data
+          fetchOpportunityDetails();
+          setNote('');
+          setNoteError('');
+
+          // Show success alert
+          setAlertMessage('Note added successfully');
+          setAlertType('success');
+          setAlertOpen(true);
+        } else {
+          // Show error alert
+          setAlertMessage(res.errors || 'Failed to add note');
+          setAlertType('error');
+          setAlertOpen(true);
+        }
+      })
+      .catch((err) => {
+        console.error('Error submitting note:', err);
+        setNoteError('Failed to submit note. Please try again.');
+
+        // Show error alert
+        setAlertMessage('Failed to add note. Please try again.');
+        setAlertType('error');
+        setAlertOpen(true);
+      })
+      .finally(() => {
+        setNoteSubmitting(false);
+      });
+  };
+
+  // Fetch updated opportunity details
+  const fetchOpportunityDetails = () => {
+    const Header = {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      Authorization: localStorage.getItem('Token'),
+      org: localStorage.getItem('org'),
+    };
+
+    fetchData(`${OpportunityUrl}/${opportunity?.id}/`, 'GET', null as any, Header)
+      .then((res) => {
+        if (!res.error) {
+          setOpportunityComments(res?.comments || []);
+        }
+      })
+      .catch((err) => {
+        console.error('Error fetching opportunity details:', err);
+      });
+  };
+
+  const handleShowMoreComments = () => {
+    setCommentsToShow((prev) => prev + 5);
+  };
+
+  // Handler for closing the alert
+  const handleAlertClose = () => {
+    setAlertOpen(false);
+  };
+
   if (!opportunity) {
     return (
       <Box sx={{ mt: '120px', p: 3, textAlign: 'center' }}>
@@ -114,7 +245,6 @@ export default function ViewOpportunity() {
     created_at,
     description,
     feedback,
-    comments = [],
     meeting_date,
     attachment_links = [],
   } = opportunity;
@@ -153,6 +283,26 @@ export default function ViewOpportunity() {
 
   return (
     <Box>
+      {/* Success/Error Alert */}
+      <SuccessAlert
+        open={alertOpen}
+        message={alertMessage}
+        onClose={handleAlertClose}
+        type={alertType}
+        autoHideDuration={4000}
+        showCloseButton={true}
+      />
+
+      {/* Add Note Dialog */}
+      <DialogModal
+        isDelete={addNoteDialogOpen}
+        onClose={() => setAddNoteDialogOpen(false)}
+        onConfirm={submitNote}
+        modalDialog={`Are you sure you want to add a note to ${name || ''}'s opportunity?`}
+        confirmText="Add"
+        cancelText="Cancel"
+      />
+
       <CustomAppBar
         module="Opportunities"
         crntPage={name}
@@ -448,58 +598,133 @@ export default function ViewOpportunity() {
 
           {/* Right Column */}
           <Grid item xs={12} md={4}>
-            <Card sx={{ p: 3 }}>
-              <Typography 
-                variant="h6"
-                sx={{
-                  fontFamily: 'inherit',
-                  fontWeight: '700 !important',
-                  color: '#0a3b72ff',
-                  borderBottom: '1px solid #e0e0e0',
-                  pb: 1,
-                  mb: 2,
-                  fontSize: '1.25rem'
-                }}
-              >
-                Activities & Notes
+            <Box
+              sx={{
+                p: 2,
+                border: '1px solid #e0e0e0',
+                borderRadius: '8px',
+                bgcolor: 'white',
+                height: 'fit-content'
+              }}
+            >
+              <Typography variant="h6" sx={{ mb: 2 }}>
+                Activities and Notes
               </Typography>
 
-              <TextField
-                multiline
-                minRows={3}
-                maxRows={6}
-                placeholder="It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout."
-                fullWidth
-                sx={{ mb: 2 }}
-              />
-              <Button fullWidth variant="contained" sx={{ mb: 3 }}>
-                + Add Note
-              </Button>
+              {/* Note input field */}
+              <Box sx={{ mb: 3 }}>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={3}
+                  variant="outlined"
+                  placeholder="Write a note..."
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  error={!!noteError}
+                  helperText={noteError}
+                  sx={{ mb: 1 }}
+                />
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={handleAddNoteClick}
+                    disabled={noteSubmitting || !note.trim()}
+                    sx={{ textTransform: 'capitalize' }}
+                  >
+                    {noteSubmitting ? 'Submitting...' : 'Add note'}
+                  </Button>
+                </Box>
+              </Box>
 
-              {comments.length === 0 ? (
-                <Typography>No comments available.</Typography>
-              ) : (
-                comments.map((comment: any, index: number) => (
-                  <Box key={index} mb={2}>
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <Avatar sx={{ width: 32, height: 32 }}>
-                        {comment.commented_by?.first_name?.[0] || 'U'}
-                      </Avatar>
-                      <Box>
-                        <Typography fontWeight="bold">
-                          {comment.commented_by?.email || 'Unknown User'}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {new Date(comment.commented_on).toLocaleString()}
-                        </Typography>
+              {/* Activity items */}
+              <Box sx={{ mt: 3 }}>
+                {/* Display comments from API response */}
+                {opportunityComments && opportunityComments.length > 0 ? (
+                  <>
+                    {[...opportunityComments]
+                      .sort(
+                        (a: any, b: any) =>
+                          new Date(b.commented_on).getTime() -
+                          new Date(a.commented_on).getTime()
+                      )
+                      .slice(0, commentsToShow)
+                      .map((comment: any, index: number) => (
+                        <Box
+                          key={index}
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            mb: 2,
+                          }}
+                        >
+                          <Avatar
+                            sx={{ mr: 1, width: 32, height: 32 }}
+                            src={comment.commented_by_user?.profile_pic}
+                          />
+                          <Box>
+                            <Typography variant="body2" fontWeight="bold">
+                              {capitalizeFirstLetter(
+                                comment.commented_by_user?.first_name
+                              ) || ''}{' '}
+                              {capitalizeFirstLetter(
+                                comment.commented_by_user?.last_name
+                              ) || ''}
+                            </Typography>
+                            <Typography variant="body2">
+                              {comment.comment}
+                            </Typography>
+                          </Box>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ ml: 'auto' }}
+                          >
+                            {new Date(
+                              comment.commented_on
+                            ).toLocaleString()}
+                          </Typography>
+                        </Box>
+                      ))}
+
+                    {/* Show More button for pagination */}
+                    {opportunityComments.length > commentsToShow && (
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'center',
+                          mt: 2,
+                        }}
+                      >
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          onClick={handleShowMoreComments}
+                          sx={{ textTransform: 'capitalize' }}
+                        >
+                          Show more
+                        </Button>
                       </Box>
-                    </Stack>
-                    <Typography sx={{ ml: 5 }}>{comment.comment}</Typography>
-                    <Divider sx={{ my: 1 }} />
+                    )}
+                  </>
+                ) : (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      mb: 2,
+                      justifyContent: 'center',
+                      p: 2,
+                    }}
+                  >
+                    <Typography variant="body2" color="text.secondary">
+                      No notes yet. Add a note to start.
+                    </Typography>
                   </Box>
-                ))
-              )}
-            </Card>
+                )}
+              </Box>
+            </Box>
           </Grid>
         </Grid>
       </Box>

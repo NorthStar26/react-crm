@@ -10,6 +10,8 @@ import {
   Stack,
   Button,
   Chip,
+  TextField,
+  Typography,
 } from '@mui/material';
 import { fetchData } from '../../components/FetchData';
 import { OpportunityUrl } from '../../services/ApiUrls';
@@ -18,6 +20,8 @@ import { CustomAppBar } from '../../components/CustomAppBar';
 import { FaPlus, FaStar } from 'react-icons/fa';
 import FormateTime from '../../components/FormateTime';
 import { Label } from '../../components/Label';
+import { SuccessAlert, AlertType } from '../../components/Button/SuccessAlert';
+import { DialogModal } from '../../components/DialogModal';
 
 export const formatDate = (dateString: any) => {
   const options: Intl.DateTimeFormatOptions = {
@@ -26,6 +30,19 @@ export const formatDate = (dateString: any) => {
     day: 'numeric',
   };
   return new Date(dateString).toLocaleDateString(undefined, options);
+};
+
+// Helper function to capitalize the first letter of each word in a string
+const capitalizeFirstLetter = (string: string | undefined | null): string => {
+  if (!string) return '';
+
+  // For URL links, don't capitalize
+  if (string.startsWith('http')) return string;
+
+  return string
+    .split(' ')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
 };
 type response = {
   created_by: {
@@ -127,12 +144,25 @@ export const OpportunityDetails = (props: any) => {
   const [comments, setComments] = useState([]);
   const [commentList, setCommentList] = useState('Recent Last');
   const [note, setNote] = useState('');
+  
+  // Comment functionality states
+  const [noteError, setNoteError] = useState('');
+  const [noteSubmitting, setNoteSubmitting] = useState(false);
+  const [commentsToShow, setCommentsToShow] = useState(5);
+  
+  // Alert states
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [alertType, setAlertType] = useState<AlertType>('success');
+  
+  // Add Note modal states
+  const [addNoteDialogOpen, setAddNoteDialogOpen] = useState(false);
 
   useEffect(() => {
-    getOpportunityDetails(state.opportunityId);
+    getOpportunityDetails(state.opportunityId, true);
   }, [state.opportunityId]);
 
-  const getOpportunityDetails = (id: any) => {
+  const getOpportunityDetails = (id: any, isInitialLoad = false) => {
     const Header = {
       Accept: 'application/json',
       'Content-Type': 'application/json',
@@ -142,9 +172,11 @@ export const OpportunityDetails = (props: any) => {
     fetchData(`${OpportunityUrl}/${id}/`, 'GET', null as any, Header)
       .then((res) => {
         console.log(res?.opportunity_obj, 'edd');
+        console.log('Opportunity API response - comments:', res?.comments);
         if (!res.error) {
           setOpportunityDetails(res?.opportunity_obj);
           setUsers(res?.users);
+          setComments(res?.comments || []);
           // setContacts(res?.contacts)
           // setIndustries(res?.industries)
           // setUsers(res?.users)
@@ -240,6 +272,86 @@ export const OpportunityDetails = (props: any) => {
     navigate('/app/opportunities');
   };
 
+  // Open add note dialog
+  const handleAddNoteClick = () => {
+    console.log('handleAddNoteClick called with note:', note);
+    if (!note.trim()) {
+      setNoteError('Note cannot be empty');
+      return;
+    }
+
+    // Clear any previous errors
+    setNoteError('');
+
+    // Open confirmation dialog
+    setAddNoteDialogOpen(true);
+  };
+
+  // Submit note after confirmation
+  const submitNote = () => {
+    // Close the dialog first
+    setAddNoteDialogOpen(false);
+
+    setNoteSubmitting(true);
+
+    const Header = {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      Authorization: localStorage.getItem('Token'),
+      org: localStorage.getItem('org'),
+    };
+
+    const data = JSON.stringify({
+      comment: note,
+    });
+
+    console.log('Submitting comment to:', `${OpportunityUrl}/${state.opportunityId}/comment/`);
+    console.log('Comment data:', data);
+    
+    fetchData(`${OpportunityUrl}/${state.opportunityId}/comment/`, 'POST', data, Header)
+      .then((res) => {
+        console.log('Comment submission response:', res);
+        if (!res.error) {
+          // Refresh opportunity details to show the new comment (not initial load)
+          getOpportunityDetails(state.opportunityId, false);
+          setNote('');
+          setNoteError('');
+
+          // Show success alert
+          setAlertMessage('Note added successfully');
+          setAlertType('success');
+          setAlertOpen(true);
+        } else {
+          // Show error alert
+          setAlertMessage(res.errors || 'Failed to add note');
+          setAlertType('error');
+          setAlertOpen(true);
+          console.error('Comment submission error:', res);
+        }
+      })
+      .catch((err) => {
+        console.error('Error submitting note:', err);
+        setNoteError('Failed to submit note. Please try again.');
+
+        // Show error alert
+        setAlertMessage('Failed to add note. Please try again.');
+        setAlertType('error');
+        setAlertOpen(true);
+      })
+      .finally(() => {
+        setNoteSubmitting(false);
+      });
+  };
+
+  const handleShowMoreComments = () => {
+    setCommentsToShow((prev) => prev + 5);
+  };
+
+  // Handler for closing the alert
+  const handleAlertClose = () => {
+    setAlertOpen(false);
+  };
+
   const module = 'Opportunities';
   const crntPage = 'Opportunity Details';
   const backBtn = 'Back To Opportunities';
@@ -247,6 +359,28 @@ export const OpportunityDetails = (props: any) => {
 
   return (
     <Box sx={{ mt: '60px' }}>
+      {/* Success/Error Alert */}
+      <SuccessAlert
+        open={alertOpen}
+        message={alertMessage}
+        onClose={handleAlertClose}
+        type={alertType}
+        autoHideDuration={4000}
+        showCloseButton={true}
+      />
+
+      {/* Add Note Dialog */}
+      <DialogModal
+        isDelete={addNoteDialogOpen}
+        onClose={() => setAddNoteDialogOpen(false)}
+        onConfirm={submitNote}
+        modalDialog={`Are you sure you want to add a note to ${
+          opportunityDetails?.name || ''
+        }'s opportunity?`}
+        confirmText="Add"
+        cancelText="Cancel"
+      />
+
       <div>
         <CustomAppBar
           backbtnHandle={backbtnHandle}
@@ -559,63 +693,126 @@ export const OpportunityDetails = (props: any) => {
                 borderRadius: '10px',
                 border: '1px solid #80808038',
                 backgroundColor: 'white',
+                p: 2,
               }}
             >
-              <div
-                style={{
-                  padding: '20px',
-                  borderBottom: '1px solid lightgray',
-                  display: 'flex',
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
-              >
-                <div
-                  style={{
-                    fontWeight: 600,
-                    fontSize: '18px',
-                    color: '#1a3353f0',
-                  }}
-                >
-                  Attachments
-                </div>
-                <Button
-                  type="submit"
-                  variant="text"
-                  size="small"
-                  startIcon={
-                    <FaPlus style={{ fill: '#3E79F7', width: '12px' }} />
-                  }
-                  style={{
-                    textTransform: 'capitalize',
-                    fontWeight: 600,
-                    fontSize: '16px',
-                  }}
-                >
-                  Add Attachments
-                </Button>
-              </div>
+              <Typography variant="h6" sx={{ mb: 2 }}>
+                Activities and Notes
+              </Typography>
 
-              <div style={{ padding: '10px 10px 10px 15px', marginTop: '5%' }}>
-                {opportunityDetails?.opportunity_attachment?.length
-                  ? opportunityDetails?.opportunity_attachment.map(
-                      (pic: any, i: any) => (
+              {/* Note input field */}
+              <Box sx={{ mb: 3 }}>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={3}
+                  variant="outlined"
+                  placeholder="Write a note..."
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  error={!!noteError}
+                  helperText={noteError}
+                  sx={{ mb: 1 }}
+                />
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={handleAddNoteClick}
+                    disabled={noteSubmitting || !note.trim()}
+                    sx={{ textTransform: 'capitalize' }}
+                  >
+                    {noteSubmitting ? 'Submitting...' : 'Add note'}
+                  </Button>
+                </Box>
+              </Box>
+
+              {/* Activity items */}
+              <Box sx={{ mt: 3 }}>
+                {/* Display comments from API response */}
+                {comments && comments.length > 0 ? (
+                  <>
+                    {[...comments]
+                      .sort(
+                        (a: any, b: any) =>
+                          new Date(b.commented_on).getTime() -
+                          new Date(a.commented_on).getTime()
+                      )
+                      .slice(0, commentsToShow)
+                      .map((comment: any, index: number) => (
                         <Box
-                          key={i}
+                          key={index}
                           sx={{
-                            width: '100px',
-                            height: '100px',
-                            border: '0.5px solid gray',
-                            borderRadius: '5px',
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            mb: 2,
                           }}
                         >
-                          <img src={pic} alt={pic} />
+                          <Avatar
+                            sx={{ mr: 1, width: 32, height: 32 }}
+                            src={comment.commented_by_user?.profile_pic}
+                          />
+                          <Box>
+                            <Typography variant="body2" fontWeight="bold">
+                              {capitalizeFirstLetter(
+                                comment.commented_by_user?.first_name
+                              ) || ''}{' '}
+                              {capitalizeFirstLetter(
+                                comment.commented_by_user?.last_name
+                              ) || ''}
+                            </Typography>
+                            <Typography variant="body2">
+                              {comment.comment}
+                            </Typography>
+                          </Box>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ ml: 'auto' }}
+                          >
+                            {new Date(
+                              comment.commented_on
+                            ).toLocaleString()}
+                          </Typography>
                         </Box>
-                      )
-                    )
-                  : ''}
-              </div>
+                      ))}
+
+                    {/* Show More button for pagination */}
+                    {comments.length > commentsToShow && (
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'center',
+                          mt: 2,
+                        }}
+                      >
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          onClick={handleShowMoreComments}
+                          sx={{ textTransform: 'capitalize' }}
+                        >
+                          Show more
+                        </Button>
+                      </Box>
+                    )}
+                  </>
+                ) : (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      mb: 2,
+                      justifyContent: 'center',
+                      p: 2,
+                    }}
+                  >
+                    <Typography variant="body2" color="text.secondary">
+                      No notes yet. Add a note to start.
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
             </Box>
           </Box>
         </Box>
