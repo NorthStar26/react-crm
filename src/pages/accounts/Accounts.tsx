@@ -1,856 +1,780 @@
-import React, { SyntheticEvent, useEffect, useState } from 'react'
-import { Box, Button, Card, Stack, Tab, Table, TableBody, TableContainer, TableHead, TablePagination, TableRow, Tabs, Toolbar, Typography, Paper, TableCell, IconButton, Checkbox, Tooltip, TableSortLabel, alpha, MenuItem, Select, Avatar, Fab, Container, TextField } from '@mui/material'
-import { FiPlus } from "@react-icons/all-files/fi/FiPlus";
-import { FiChevronLeft } from "@react-icons/all-files/fi/FiChevronLeft";
-import { FiChevronRight } from "@react-icons/all-files/fi/FiChevronRight";
-import { FiChevronDown } from "@react-icons/all-files/fi/FiChevronDown";
-import { FiChevronUp } from "@react-icons/all-files/fi/FiChevronUp";
-import { CustomTab, CustomToolbar, FabLeft, FabRight } from '../../styles/CssStyled';
-import { getComparator, stableSort } from '../../components/Sorting';
-import { FaAd, FaEdit, FaTrashAlt } from 'react-icons/fa';
+import React, { useEffect, useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  Box,
+  Button,
+  Stack,
+  Typography,
+  Paper,
+  Select,
+  MenuItem,
+  Container,
+  Pagination,
+  Avatar,
+  IconButton,
+  InputBase,
+  FormControl,
+  Chip,
+  TextField,
+  InputAdornment,
+  Grid,
+} from '@mui/material';
+import { Spinner } from '../../components/Spinner';
+import { FiPlus } from '@react-icons/all-files/fi/FiPlus';
+import { FiSearch } from '@react-icons/all-files/fi/FiSearch';
+import { FaDownload, FaTrashAlt, FaEdit } from 'react-icons/fa';
+import { FiChevronUp } from '@react-icons/all-files/fi/FiChevronUp';
+import { FiChevronDown } from '@react-icons/all-files/fi/FiChevronDown';
+import { CustomToolbar } from '../../styles/CssStyled';
 import { fetchData } from '../../components/FetchData';
 import { AccountsUrl } from '../../services/ApiUrls';
-import { useNavigate } from 'react-router-dom';
 import { DeleteModal } from '../../components/DeleteModal';
-import { Tags } from '../../components/Tags';
-import { Spinner } from '../../components/Spinner';
-import styled from '@emotion/styled';
-import '../../styles/style.css';
-import { EnhancedTableHead } from '../../components/EnchancedTableHead';
+import { useUser } from '../../context/UserContext';
+import { opportunityStageShortNames } from '../../constants/stageNames';
+import { getStageColor, stageChipStyles } from '../../constants/stageColors';
+import { CustomButton } from '../../components/Button';
+import { SuccessAlert, ErrorAlert } from '../../components/Button/SuccessAlert';
 
-interface HeadCell {
-    disablePadding: boolean;
-    id: any;
-    label: string;
-    numeric: boolean;
-}
+// AG Grid imports
+import { ModuleRegistry, ClientSideRowModelModule } from 'ag-grid-community';
+import { AgGridReact } from 'ag-grid-react';
+import 'ag-grid-community/styles/ag-grid.css';
+import 'ag-grid-community/styles/ag-theme-alpine.css';
+import { ICellRendererParams } from 'ag-grid-community';
+import INDCHOICES from '../../data/INDCHOICES';
+import * as XLSX from 'xlsx';
 
-const headCells: readonly HeadCell[] = [
-    {
-        id: 'user_name',
-        numeric: false,
-        disablePadding: false,
-        label: 'Name'
-    },
-    {
-        id: 'website',
-        numeric: false,
-        disablePadding: false,
-        label: 'Website'
-    },
-    {
-        id: 'created_by',
-        numeric: true,
-        disablePadding: false,
-        label: 'Created By'
-    },
-    {
-        id: 'country',
-        numeric: true,
-        disablePadding: false,
-        label: 'Country'
-    }, {
-        id: 'tags',
-        numeric: true,
-        disablePadding: false,
-        label: 'Tags'
-    },
-    {
-        id: 'actions',
-        numeric: true,
-        disablePadding: false,
-        label: 'Actions'
-    }
-]
+ModuleRegistry.registerModules([ClientSideRowModelModule]);
 
-// function EnhancedTableHead(props: any) {
-//     const {
-//         onSelectAllClick, order, orderBy,
-//         numSelected, rowCount,
-//         numSelectedId, isSelectedId,
-//         onRequestSort
-//     } = props
-
-//     const createSortHandler =
-//         (property: any) => (event: React.MouseEvent<unknown>) => {
-//             onRequestSort(event, property);
-//         };
-
-//     return (
-//         <TableHead>
-//             <TableRow>
-//                 {/* <TableCell padding='checkbox'>
-//                     <Checkbox
-//                         onChange={onSelectAllClick}
-//                         checked={numSelected === rowCount}
-//                         sx={{ color: 'inherit' }}
-//                     />
-//                 </TableCell> */}
-//                 {
-//                     headCells.map((headCell) => (
-//                         headCell.label === 'Actions' || headCell.label === 'Tags' ?
-//                             <TableCell
-//                                 sx={{ fontWeight: 'bold', color: 'rgb(26, 51, 83)' }}
-//                                 key={headCell.id}
-//                                 align={headCell.numeric ? 'left' : 'left'}
-//                                 padding={headCell.disablePadding ? 'none' : 'normal'}>{headCell.label}</TableCell>
-//                             : <TableCell
-//                                 sx={{ fontWeight: 'bold', color: 'rgb(26, 51, 83)' }}
-//                                 key={headCell.id}
-//                                 align={headCell.numeric ? 'left' : 'left'}
-//                                 padding={headCell.disablePadding ? 'none' : 'normal'}
-//                                 sortDirection={orderBy === headCell.id ? order : false}
-//                             >
-//                                 <TableSortLabel
-//                                     active={orderBy === headCell.id}
-//                                     direction={orderBy === headCell.id ? order : 'asc'}
-//                                     onClick={createSortHandler(headCell.id)}
-//                                 >
-//                                     {headCell.label}
-//                                     {
-//                                         orderBy === headCell.id
-//                                             ? (
-//                                                 <Box component='span' sx={{ display: 'none' }}>
-//                                                     {order === 'desc' ? 'sorted descending' : 'sorted ascending'}
-//                                                 </Box>
-//                                             )
-//                                             : null
-//                                     }
-//                                 </TableSortLabel>
-//                             </TableCell>
-//                     ))
-//                 }
-//             </TableRow>
-//         </TableHead>
-//     )
-// }
-
-type Item = {
-    id: string;
-};
 export default function Accounts() {
-    const navigate = useNavigate()
+  const navigate = useNavigate();
+  const { user } = useUser();
+  const [loading, setLoading] = useState(true);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [accounts, setAccounts] = useState<any[]>([]);
+  const [contacts, setContacts] = useState([]);
+  const [leads, setLeads] = useState([]);
+  const [status, setStatus] = useState([]);
+  const [tags, setTags] = useState([]);
+  const [currency, setCurrency] = useState([]);
+  const [leadSource, setLeadSource] = useState([]);
+  const [account, setAccount] = useState([]);
+  const [industries, setIndustries] = useState([]);
+  const [teams, setTeams] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [countries, setCountries] = useState([]);
+  const [deleteRowModal, setDeleteRowModal] = useState(false);
+  const [selectedId, setSelectedId] = useState('');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-    const [tab, setTab] = useState('open');
-    const [loading, setLoading] = useState(true);
-    const [order, setOrder] = useState('asc')
-    const [orderBy, setOrderBy] = useState('Website')
-    const [initial, setInitial] = useState(true)
-    const [openOffset, setOpenOffset] = useState(0)
-    const [openValue] = useState(1)
-    const [closeOffset, setCloseOffset] = useState(0)
-    const [setCloseValue] = useState(1)
-    const [deleteItems, setDeleteItems] = useState([])
-    const [page, setPage] = useState(0)
-    const [values, setValues] = useState(10)
-    const [dense] = useState(false)
-    const [rowsPerPage, setRowsPerPage] = useState(10)
-    const [deleteItemId, setDeleteItemId] = useState('')
-    const [loader, setLoader] = useState(true)
-    const [isDelete, setIsDelete] = useState(false)
-    const [selectOpen, setSelectOpen] = useState(false);
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [recordsPerPage, setRecordsPerPage] = useState<number>(10);
+  const [totalPages, setTotalPages] = useState<number>(0);
+  const [totalaccounts, setTotalAccounts] = useState<number>(0);
 
-    const [contacts, setContacts] = useState([])
-    const [status, setStatus] = useState([])
-    const [source, setSource] = useState([])
-    const [companies, setCompanies] = useState([])
-    const [tags, setTags] = useState([])
-    const [users, setUsers] = useState([])
-    const [countries, setCountries] = useState([])
-    const [industries, setIndustries] = useState([])
-    const [leads, setLeads] = useState([])
-    const [teams, setTeams] = useState([])
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedStage, setSelectedStage] = useState('');
+  const [selectedContact, setSelectedContact] = useState('');
+  const [stageSelectOpen, setIndustrySelectOpen] = useState(false);
+  const [contactSelectOpen, setContactSelectOpen] = useState(false);
 
-    const [openAccounts, setOpenAccounts] = useState<Item[]>([])
-    const [openAccountsCount, setOpenAccountsCount] = useState(0)
-    const [openAccountsOffset, setOpenAccountsOffset] = useState(0)
-    const [closedAccounts, setClosedAccounts] = useState<Item[]>([])
-    const [closedAccountsCount, setClosedAccountsCount] = useState(0)
-    const [closedAccountsOffset, setClosedAccountsOffset] = useState(0)
-    const [deleteRowModal, setDeleteRowModal] = useState(false)
+  const gridRef = useRef<AgGridReact>(null);
+  const [gridApi, setGridApi] = useState<any>(null);
 
-    const [selected, setSelected] = useState<string[]>([]);
-    const [selectedId, setSelectedId] = useState<string[]>([]);
-    const [isSelectedId, setIsSelectedId] = useState<boolean[]>([]);
+  // Effect hook to fetch accounts when filters or pagination changes
+  useEffect(() => {
+    getAccounts();
+  }, [currentPage, recordsPerPage, selectedStage, selectedContact]);
 
-    const [openCurrentPage, setOpenCurrentPage] = useState<number>(1);
-    const [openRecordsPerPage, setOpenRecordsPerPage] = useState<number>(10);
-    const [openTotalPages, setOpenTotalPages] = useState<number>(0);
-    const [openLoading, setOpenLoading] = useState(true);
+  // Debounced search
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      getAccounts();
+    }, 500);
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm]);
 
-
-    const [closedCurrentPage, setClosedCurrentPage] = useState<number>(1);
-    const [closedRecordsPerPage, setClosedRecordsPerPage] = useState<number>(10);
-    const [closedTotalPages, setClosedTotalPages] = useState<number>(0);
-    const [closedLoading, setClosedLoading] = useState(true);
-
-    useEffect(() => {
-        getAccounts()
-    }, [openCurrentPage, openRecordsPerPage, closedCurrentPage, closedRecordsPerPage]);
-
-    const handleChangeTab = (e: SyntheticEvent, val: any) => {
-        setTab(val)
-    }
-
-    const getAccounts = async () => {
-        const Header = {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-            Authorization: localStorage.getItem('Token'),
-            org: localStorage.getItem('org')
-          }
-        try {
-            const openOffset = (openCurrentPage - 1) * openRecordsPerPage;
-            const closeOffset = (closedCurrentPage - 1) * closedRecordsPerPage;
-            await fetchData(`${AccountsUrl}/?offset=${tab === "open" ? openOffset : closeOffset}&limit=${tab === "open" ? openRecordsPerPage : closedRecordsPerPage}`, 'GET', null as any, Header)
-                .then((res: any) => {
-                    if (!res.error) {
-                        // console.log(res, 'accounts')
-                        setOpenAccounts(res?.active_accounts?.open_accounts)
-                        // setOpenAccountsCount(res?.active_accounts?.active_users_count)
-                        // setOpenAccountsOffset(res?.active_accounts?.offset)
-                        setClosedAccounts(res?.closed_accounts?.close_accounts)
-                        // setClosedAccountsCount(res?.closed_accounts?.close_accounts_count)
-                        // setClosedAccountsOffset(res?.closed_accounts?.offset)
-                        setContacts(res?.contacts)
-                        setIndustries(res?.industries)
-                        setUsers(res?.users)
-                        setStatus(res?.status)
-                        setCountries(res?.countries)
-                        setLeads(res?.leads)
-                        setTags(res?.tags)
-                        setTeams(res?.teams)
-                        setLoading(false)
-                    }
-                })
-        }
-        catch (error) {
-            console.error('Error fetching data:', error);
-        }
-
-    }
-
-    const accountDetail = (accountId: any) => {
-        navigate(`/app/accounts/account-details/${accountId}`)
-    }
-    const handleRecordsPerPage = (event: React.ChangeEvent<HTMLSelectElement>) => {
-        if (tab == 'open') {
-            setOpenLoading(true)
-            setOpenRecordsPerPage(parseInt(event.target.value));
-            setOpenCurrentPage(1);
-        } else {
-            setClosedLoading(true)
-            setClosedRecordsPerPage(parseInt(event.target.value));
-            setClosedCurrentPage(1);
-        }
-
-    };
-    const handlePreviousPage = () => {
-        if (tab == 'open') {
-            setOpenLoading(true)
-            setOpenCurrentPage((prevPage) => Math.max(prevPage - 1, 1));
-        } else {
-            setClosedLoading(true)
-            setClosedCurrentPage((prevPage) => Math.max(prevPage - 1, 1));
-        }
+  // Fetch accounts from API
+  const getAccounts = async () => {
+    const Header = {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      Authorization: localStorage.getItem('Token'),
+      org: localStorage.getItem('org'),
     };
 
-    const handleNextPage = () => {
-        if (tab == 'open') {
-            setOpenLoading(true)
-            setOpenCurrentPage((prevPage) => Math.min(prevPage + 1, openTotalPages));
-        } else {
-            setClosedLoading(true)
-            setClosedCurrentPage((prevPage) => Math.min(prevPage + 1, closedTotalPages));
-        }
-    };
-    const handleRequestSort = (event: any, property: any) => {
-        const isAsc = orderBy === property && order === 'asc'
-        setOrder(isAsc ? 'desc' : 'asc')
-        setOrderBy(property)
+    try {
+      const offset = (currentPage - 1) * recordsPerPage;
+
+      // Build URL with filters
+      let url = `${AccountsUrl}/?offset=${offset}&limit=${recordsPerPage}`;
+      if (searchTerm.trim()) {
+        url += `&name=${encodeURIComponent(searchTerm.trim())}`;
+      }
+      if (selectedStage) {
+        url += `&industry=${encodeURIComponent(selectedStage)}`;
+      }
+      if (selectedContact) {
+        url += `&contact_id=${encodeURIComponent(selectedContact)}`;
+      }
+
+      const data = await fetchData(url, 'GET', null as any, Header);
+      console.log('Fetched accounts:', data);
+      if (!data.error) {
+        setAccounts(
+          data?.active_accounts && data?.closed_accounts
+            ? [
+                ...data.active_accounts?.open_accounts,
+                ...data.closed_accounts?.close_accounts,
+              ]
+            : []
+        );
+        setTotalAccounts(accounts.length || 0);
+        setTotalPages(data?.page_number[-1] || 1);
+
+        // Set reference data
+        setContacts(data.contacts || []);
+        setAccount(data.accounts_list || []);
+        setCurrency(data.currency || []);
+        setLeadSource(data.lead_source || []);
+        setIndustries(data.industries || []);
+        setTags(data.tags || []);
+        setTeams(data.teams || []);
+        setUsers(data.users || []);
+        setCountries(data.countries || []);
+        setLeads(data.leads || []);
+        setStatus(data.status || []);
+
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Error fetching accounts:', error);
+      setErrorMessage('Failed to fetch accounts');
+      setLoading(false);
     }
+  };
 
-    type SelectedItem = string[];
+  // Get unique contacts from accounts for filtering
+  const getUniqueContacts = () => {
+    const contact = contacts.map((item: any) => {
+      return { fullname: `${item.first_name} ${item.last_name}`, id: item.id };
+    });
 
-    const isSelected = (name: string, selected: SelectedItem): boolean => {
-        return selected.indexOf(name) !== -1;
-    };
+    return contact;
+  };
 
-    const deleteItemBox = (deleteId: any) => {
-        setDeleteItemId(deleteId)
-        setIsDelete(!isDelete)
+  // Navigation handlers
+  const onAddAccount = () => {
+    if (!loading) {
+      navigate('/app/accounts/add-account', {
+        state: {
+          detail: false,
+          contacts: contacts || [],
+          status: status || [],
+          tags: tags || [],
+          users: users || [],
+          countries: countries || [],
+          teams: teams || [],
+          leads: leads || [],
+        },
+      });
     }
+  };
 
-    const onclose = () => {
-        setIsDelete(!isDelete)
-    }
+  const handleViewAccount = (account: any) => {
+    navigate('view', {
+      state: { accountData: account },
+    });
+  };
 
-    const onDelete = (id: any) => {
-        const Header = {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-            Authorization: localStorage.getItem('Token'),
-            org: localStorage.getItem('org')
-          }
-        fetchData(`${AccountsUrl}/${id}/`, 'delete', null as any, Header)
-            .then((data) => {
-                if (!data.error) {
-                    getAccounts()
-                    setIsDelete(false)
-                }
-            })
-            .catch(() => {
-            })
-    }
+  const accountDetail = (accountId: any) => {
+    navigate(`/app/accounts/account-details/${accountId}`);
+  };
 
-    const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - 7) : 0
+  // Delete handlers
+  const deleteRow = (id: any) => {
+    setSelectedId(id);
+    setDeleteRowModal(true);
+  };
 
-    const onAddAccount = () => {
-        if (!loading) {
-            navigate('/app/accounts/add-account', {
-                state: {
-                    detail: false,
-                    contacts: contacts || [], status: status || [], tags: tags || [], users: users || [], countries: countries || [], teams: teams || [], leads: leads || []
-                }
-            })
-        }
-    }
-    const deleteRow = (id: any) => {
-        setSelectedId(id)
-        setDeleteRowModal(!deleteRowModal)
-    }
+  const deleteRowModalClose = () => {
+    setDeleteRowModal(false);
+    setSelectedId('');
+  };
 
-    const EditItem = (accountId: any) => {
-        getAccountDetail(accountId)
-    }
-
-    const deleteRowModalClose = () => {
-        setDeleteRowModal(false)
-        setSelectedId([])
-    }
-    const deleteItem = () => {
-        const Header = {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-            Authorization: localStorage.getItem('Token'),
-            org: localStorage.getItem('org')
-          }
-        fetchData(`${AccountsUrl}/${selectedId}/`, 'DELETE', null as any, Header)
-            .then((res: any) => {
-                console.log('delete:', res);
-                if (!res.error) {
-                    deleteRowModalClose()
-                    getAccounts()
-                }
-            })
-            .catch(() => {
-            })
-    }
-
-    const handleSelectAllClick = () => {
-        if (tab === 'open') {
-            if (selected.length === openAccounts.length) {
-                setSelected([]);
-                setSelectedId([]);
-                setIsSelectedId([]);
-            } else {
-                const newSelectedIds = openAccounts.map((account) => account.id);
-                setSelected(newSelectedIds);
-                setSelectedId(newSelectedIds);
-                setIsSelectedId(newSelectedIds.map(() => true));
-            }
-        } else {
-            if (selected.length === closedAccounts.length) {
-                setSelected([]);
-                setSelectedId([]);
-                setIsSelectedId([]);
-            } else {
-                const newSelectedIds = closedAccounts.map((account) => account.id);
-                setSelected(newSelectedIds);
-                setSelectedId(newSelectedIds);
-                setIsSelectedId(newSelectedIds.map(() => true));
-            }
-        }
-
+  const deleteItem = async () => {
+    setDeleteLoading(true);
+    const Header = {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      Authorization: localStorage.getItem('Token'),
+      org: localStorage.getItem('org'),
     };
 
-    const handleRowSelect = (accountId: string) => {
-        const selectedIndex = selected.indexOf(accountId);
-        let newSelected: string[] = [...selected];
-        let newSelectedIds: string[] = [...selectedId];
-        let newIsSelectedId: boolean[] = [...isSelectedId];
+    try {
+      const res = await fetchData(
+        `${AccountsUrl}/${selectedId}/`,
+        'DELETE',
+        null as any,
+        Header
+      );
 
-        if (selectedIndex === -1) {
-            newSelected.push(accountId);
-            newSelectedIds.push(accountId);
-            newIsSelectedId.push(true);
-        } else {
-            newSelected.splice(selectedIndex, 1);
-            newSelectedIds.splice(selectedIndex, 1);
-            newIsSelectedId.splice(selectedIndex, 1);
-        }
-
-        setSelected(newSelected);
-        setSelectedId(newSelectedIds);
-        setIsSelectedId(newIsSelectedId);
-    };
-
-    const getAccountDetail = (id: any) => {
-        const Header = {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-            Authorization: localStorage.getItem('Token'),
-            org: localStorage.getItem('org')
-          }
-        fetchData(`${AccountsUrl}/${id}/`, 'GET', null as any, Header)
-            .then((res) => {
-                console.log(res, 'resDetail');
-                if (!res.error) {
-                    const data = res?.account_obj
-                    navigate('/app/accounts/edit-account', {
-                        state: {
-                            value: {
-                                // email: data?.email,
-                                // name: data?.name,
-                                // role: data?.role,
-                                // phone: data?.phone,
-                                // alternate_phone: data?.alternate_phone,
-                                // address_line: data?.address?.address_line,
-                                // street: data?.address?.street,
-                                // city: data?.address?.city,
-                                // state: data?.address?.state,
-                                // pincode: data?.address?.postcode,
-                                // country: data?.address?.country,
-                                // profile_pic: data?.user_details?.profile_pic,
-                                // has_sales_access: data?.has_sales_access,
-                                // has_marketing_access: data?.has_marketing_access,
-                                // is_organization_admin: data?.is_organization_admin,
-                            }, accountId: id, edit: true
-                        }
-                    })
-                }
-            })
+      if (!res.error) {
+        setSuccessMessage('Account deleted successfully');
+        deleteRowModalClose();
+        getAccounts();
+      } else {
+        setErrorMessage('Failed to delete account');
+      }
+    } catch (error) {
+      setErrorMessage('Failed to delete account');
+    } finally {
+      setDeleteLoading(false);
     }
-    const handleDelete = (id: any) => {
-        console.log(id, 's;ected')
-    }
-    const modalDialog = 'Are You Sure You want to delete this Account?'
-    const modalTitle = 'Delete Account'
+  };
 
-    const recordsList = [[10, '10 Records per page'], [20, '20 Records per page'], [30, '30 Records per page'], [40, '40 Records per page'], [50, '50 Records per page']]
+  // Pagination handlers
+  const handlePageChange = (_e: any, page: number) => {
+    setCurrentPage(page);
+  };
 
-    // const selectClasses = selectOpen ? 'select-opened' : '';
-    // console.log(!!(selectedId?.length === 0), 'asd');
+  const handleRecordsPerPageChange = (event: any) => {
+    setRecordsPerPage(Number(event.target.value));
+    setCurrentPage(1);
+  };
 
-    return (
-      <Box sx={{ mt: '60px' }}>
-        <CustomToolbar>
-          <Tabs
-            defaultValue={tab}
-            onChange={handleChangeTab}
-            sx={{ mt: '26px' }}
+  // Grid theme
+  const gridTheme = {
+    '--ag-header-background-color': '#2E4258',
+    '--ag-header-foreground-color': '#FFFFFF',
+    '--ag-header-border-color': 'transparent',
+    '--ag-odd-row-background-color': '#FFFFFF',
+    '--ag-even-row-background-color': '#F3F8FF',
+    '--ag-row-border-color': '#E0E0E0',
+  } as React.CSSProperties;
+
+  // AG Grid column definitions
+  const columnDefs = [
+    {
+      headerName: 'Company Name',
+      field: 'company_name',
+      flex: 2,
+      sortable: true,
+      filter: true,
+      cellRenderer: (params: ICellRendererParams) => (
+        <Stack direction="row" alignItems="center" spacing={1}>
+          <Avatar
+            src={params.data.logo_url || undefined}
+            alt={params.value}
+            sx={{ width: 32, height: 32, fontSize: 14, bgcolor: '#284871' }}
           >
-            <CustomTab
-              value="open"
-              label="Open"
-              sx={{
-                backgroundColor: tab === 'open' ? '#F0F7FF' : '#284871',
-                color: tab === 'open' ? '#3f51b5' : 'white',
+            {params.data.contacts?.[0]?.company?.name
+              ?.charAt(0)
+              .toUpperCase() || 'C'}
+          </Avatar>
+          <Typography
+            sx={{ color: '#1a73e8', cursor: 'pointer', textTransform: 'none' }}
+            onClick={() => accountDetail(params.data.id)}
+          >
+            {params.data.contacts?.[0]?.company?.name || '—'}
+          </Typography>
+        </Stack>
+      ),
+    },
+
+    {
+      headerName: 'Industry',
+      field: 'industry',
+      flex: 1.5,
+      sortable: true,
+      filter: true,
+      cellRenderer: (params: ICellRendererParams) => {
+        if (
+          !params.data.industry &&
+          !params.data.contacts?.[0].company?.industry
+        )
+          return '—';
+
+        return (
+          params.data.contacts?.[0].company?.industry ||
+          params.data.industry ||
+          '—'
+        );
+      },
+    },
+    {
+      headerName: 'Contact',
+      field: 'contact',
+      flex: 2,
+      sortable: true,
+      filter: true,
+      cellRenderer: (params: ICellRendererParams) => {
+        console.log(params, 'params in contact');
+        const contact = params.data.contacts[0];
+        if (!contact) return '—';
+
+        return `${contact.first_name || ''} ${contact.last_name || ''}`.trim();
+      },
+    },
+    {
+      headerName: 'Close Date',
+      field: 'expected_close_date',
+      flex: 1.5,
+      sortable: true,
+      filter: true,
+      valueFormatter: (params: any) => {
+        const dateString = params.data.created_at;
+        const date = new Date(dateString);
+
+        const months = [
+          'January',
+          'February',
+          'March',
+          'April',
+          'May',
+          'June',
+          'July',
+          'August',
+          'September',
+          'October',
+          'November',
+          'December',
+        ];
+
+        const day = date.getDate();
+        const monthName = months[date.getMonth()];
+        const year = date.getFullYear();
+
+        const formatted = `${monthName} ${day}, ${year}`;
+
+        return formatted || '—';
+      },
+    },
+    {
+      headerName: 'Assigned To',
+      field: 'assigned_to',
+      flex: 2,
+      sortable: true,
+      filter: true,
+      cellRenderer: (params: ICellRendererParams) => {
+        const assignedTo = params.value;
+        if (!assignedTo || !assignedTo.length) return '—';
+
+        const user = assignedTo[0]?.user_details;
+        if (!user) return '—';
+
+        return (
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <Avatar
+              src={user.profile_pic || ''}
+              alt={user.first_name || user.email || 'User'}
+              sx={{ width: 32, height: 32 }}
+            >
+              {user.first_name?.charAt(0).toUpperCase() || 'U'}
+            </Avatar>
+            <Typography>
+              {user.first_name && user.last_name
+                ? `${user.first_name} ${user.last_name}`
+                : user.email || '—'}
+            </Typography>
+          </Stack>
+        );
+      },
+    },
+  ];
+
+  // Default column definition
+  const defaultColDef = {
+    resizable: true,
+    sortable: true,
+    filter: true,
+    wrapText: true,
+    autoHeight: true,
+    unSortIcon: true,
+    cellStyle: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+      paddingLeft: '8px',
+    },
+  };
+
+  // Modal dialog text
+  const modalDialog = 'Are you sure you want to delete this account?';
+  const modalTitle = 'Delete Account';
+
+  const handleExport = () => {
+    const selectedNodes = gridRef.current?.api.getSelectedNodes();
+    const selectedData = selectedNodes?.map((node) => node.data) || [];
+    const dataToExport = selectedData.length > 0 ? selectedData : accounts;
+
+    const ws = XLSX.utils.json_to_sheet(dataToExport);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Accounts');
+    XLSX.writeFile(wb, 'accounts.xlsx');
+  };
+
+  return (
+    <Box sx={{ mt: '65px' }}>
+      {/* Toolbar with search and filters */}
+      <CustomToolbar
+        sx={{
+          bgcolor: '#F3F8FF !important',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          p: '2px 16px',
+          borderBottom: '1px solid #e0e0e0',
+          flexWrap: 'wrap',
+          gap: 2,
+          minHeight: '44px',
+        }}
+      >
+        {/* LEFT: Filters */}
+        <Stack
+          direction="row"
+          spacing={2}
+          alignItems="center"
+          sx={{ flexWrap: 'wrap' }}
+        >
+          {/* Search */}
+          <Box
+            sx={{ position: 'relative', display: 'flex', alignItems: 'center' }}
+          >
+            <FiSearch
+              style={{
+                position: 'absolute',
+                left: 12,
+                zIndex: 1,
+                color: '#666',
               }}
             />
-            <CustomTab
-              value="closed"
-              label="Closed"
+            <InputBase
+              placeholder="Search accounts..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
               sx={{
-                backgroundColor: tab === 'closed' ? '#F0F7FF' : '#284871',
-                color: tab === 'closed' ? '#3f51b5' : 'white',
-                ml: '5px',
+                background: '#fff',
+                borderRadius: 2,
+                px: 2,
+                py: 0.5,
+                pl: 5,
+                border: '1px solid #D9D9D9',
+                minWidth: 200,
+                fontSize: 16,
               }}
             />
-          </Tabs>
+          </Box>
 
-          <Stack
-            sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}
-          >
+          {/* Industry Filter */}
+          <FormControl sx={{ minWidth: 160 }}>
             <Select
-              value={tab === 'open' ? openRecordsPerPage : closedRecordsPerPage}
-              onChange={(e: any) => handleRecordsPerPage(e)}
-              open={selectOpen}
-              onOpen={() => setSelectOpen(true)}
-              onClose={() => setSelectOpen(false)}
-              className={`custom-select`}
-              onClick={() => setSelectOpen(!selectOpen)}
+              displayEmpty
+              value={selectedStage}
+              onChange={(e) => {
+                setSelectedStage(e.target.value);
+                setCurrentPage(1);
+              }}
+              onOpen={() => setIndustrySelectOpen(true)}
+              onClose={() => setIndustrySelectOpen(false)}
+              open={stageSelectOpen}
               IconComponent={() => (
-                <div
-                  onClick={() => setSelectOpen(!selectOpen)}
-                  className="custom-select-icon"
-                >
-                  {selectOpen ? (
-                    <FiChevronUp style={{ marginTop: '12px' }} />
-                  ) : (
-                    <FiChevronDown style={{ marginTop: '12px' }} />
-                  )}
+                <div style={{ marginRight: 8 }}>
+                  {stageSelectOpen ? <FiChevronUp /> : <FiChevronDown />}
                 </div>
               )}
               sx={{
-                '& .MuiSelect-select': { overflow: 'visible !important' },
+                background: '#fff',
+                borderRadius: 2,
+                fontSize: 16,
+                height: 40,
               }}
             >
-              {recordsList?.length &&
-                recordsList.map((item: any, i: any) => (
-                  <MenuItem key={i} value={item[0]}>
-                    {item[1]}
-                  </MenuItem>
-                ))}
+              <MenuItem value="">
+                <em>Industry</em>
+              </MenuItem>
+              {INDCHOICES.map(([code, name]) => (
+                <MenuItem key={code} value={code}>
+                  {name}
+                </MenuItem>
+              ))}
             </Select>
-            <Box
+          </FormControl>
+
+          {/* Contact Filter */}
+          <FormControl sx={{ minWidth: 160 }}>
+            <Select
+              displayEmpty
+              value={selectedContact}
+              onChange={(e) => {
+                setSelectedContact(e.target.value);
+                setCurrentPage(1);
+              }}
+              onOpen={() => setContactSelectOpen(true)}
+              onClose={() => setContactSelectOpen(false)}
+              open={contactSelectOpen}
+              IconComponent={() => (
+                <div style={{ marginRight: 8 }}>
+                  {contactSelectOpen ? <FiChevronUp /> : <FiChevronDown />}
+                </div>
+              )}
               sx={{
-                borderRadius: '7px',
-                backgroundColor: 'white',
-                height: '40px',
-                minHeight: '40px',
-                maxHeight: '40px',
-                display: 'flex',
-                flexDirection: 'row',
-                alignItems: 'center',
-                mr: 1,
-                p: '0px',
+                background: '#fff',
+                borderRadius: 2,
+                fontSize: 16,
+                height: 40,
               }}
             >
-              <FabLeft
-                onClick={handlePreviousPage}
-                disabled={
-                  tab === 'open'
-                    ? openCurrentPage === 1
-                    : closedCurrentPage === 1
-                }
-              >
-                <FiChevronLeft style={{ height: '15px' }} />
-              </FabLeft>
-              <Typography
-                sx={{
-                  mt: 0,
-                  textTransform: 'lowercase',
-                  fontSize: '15px',
-                  color: '#1A3353',
-                  textAlign: 'center',
-                }}
-              >
-                {tab === 'open'
-                  ? `${openCurrentPage} to ${openTotalPages}`
-                  : `${closedCurrentPage} to ${closedTotalPages}`}
-              </Typography>
-              <FabRight
-                onClick={handleNextPage}
-                disabled={
-                  tab === 'open'
-                    ? openCurrentPage === openTotalPages
-                    : closedCurrentPage === closedTotalPages
-                }
-              >
-                <FiChevronRight style={{ height: '15px' }} />
-              </FabRight>
-            </Box>
-            <Button
-              variant="contained"
-              startIcon={<FiPlus className="plus-icon" />}
-              onClick={onAddAccount}
-              className={'add-button'}
-            >
-              Add Account
-            </Button>
-          </Stack>
-        </CustomToolbar>
-        <Container sx={{ width: '100%', maxWidth: '100%', minWidth: '100%' }}>
-          <Box sx={{ width: '100%', minWidth: '100%', m: '15px 0px 0px 0px' }}>
-            <Paper
-              sx={{ width: 'cal(100%-15px)', mb: 2, p: '0px 15px 15px 15px' }}
-            >
-              {/* <Toolbar sx={{ pl: { sm: 2 }, pr: { xs: 1, sm: 1 } }}>
-                            <Tooltip title='Delete'>
-                                <Button
-                                    variant='outlined'
-                                    onClick={() => !!(selectedId?.length !== 0) && handleDelete(selectedId)}
-                                    startIcon={<FaTrashAlt color='red' style={{ width: '12px' }} />}
-                                    size='small'
-                                    color='error'
-                                    sx={{ fontWeight: 'bold', textTransform: 'capitalize', color: 'red', borderColor: 'darkgrey' }}
-                                >
-                                    Delete
-                                </Button>
-                            </Tooltip>
-                            {selected.length > 0 ? (
-                                <Typography sx={{ flex: '1 1 100%', margin: '5px' }} color='inherit' variant='subtitle1' component='div'>
-                                    {selected.length} selected
-                                </Typography>
-                            ) : (
-                                ''
-                            )}
-                        </Toolbar> */}
-              <TableContainer>
-                <Table>
-                  <EnhancedTableHead
-                    numSelected={selected.length}
-                    order={order}
-                    orderBy={orderBy}
-                    onSelectAllClick={handleSelectAllClick}
-                    onRequestSort={handleRequestSort}
-                    rowCount={
-                      tab === 'open'
-                        ? openAccounts?.length
-                        : closedAccounts?.length
-                    }
-                    numSelectedId={selectedId}
-                    isSelectedId={isSelectedId}
-                    headCells={headCells}
-                  />
-                  {tab === 'open' ? (
-                    <TableBody>
-                      {
-                        openAccounts?.length > 0 ? (
-                          stableSort(
-                            openAccounts,
-                            getComparator(order, orderBy)
-                          )
-                            // .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((item: any, index: any) => {
-                            .map((item: any, index: any) => {
-                              const labelId = `enhanced-table-checkbox-${index}`;
-                              const rowIndex = selectedId.indexOf(item.id);
-                              return (
-                                <TableRow
-                                  tabIndex={-1}
-                                  key={index}
-                                  sx={{
-                                    border: 0,
-                                    '&:nth-of-type(even)': {
-                                      backgroundColor: 'whitesmoke',
-                                    },
-                                    color: 'rgb(26, 51, 83)',
-                                    textTransform: 'capitalize',
-                                  }}
-                                >
-                                  {/* <TableCell
-                                                                    padding='checkbox'
-                                                                    sx={{ border: 0, color: 'inherit' }}
-                                                                    align='left'
-                                                                >
-                                                                    <Checkbox
-                                                                        checked={isSelectedId[rowIndex] || false}
-                                                                        onChange={() => handleRowSelect(item.id)}
-                                                                        inputProps={{
-                                                                            'aria-labelledby': labelId,
-                                                                        }}
-                                                                        sx={{ border: 0, color: 'inherit' }}
-                                                                    />
-                                                                </TableCell> */}
-                                  <TableCell
-                                    className="tableCell-link"
-                                    onClick={() => accountDetail(item.id)}
-                                  >
-                                    {item?.name ? item?.name : '---'}
-                                  </TableCell>
-                                  <TableCell className="tableCell">
-                                    {item?.website ? item?.website : '---'}
-                                  </TableCell>
-                                  <TableCell className="tableCell">
-                                    <Stack
-                                      style={{
-                                        display: 'flex',
-                                        flexDirection: 'row',
-                                        alignItems: 'center',
-                                      }}
-                                    >
-                                      <Avatar
-                                        src={
-                                          item?.lead?.created_by?.profile_pic
-                                        }
-                                        alt={item?.lead?.created_by?.email}
-                                      />
-                                      <Stack sx={{ ml: 1 }}>
-                                        {item?.lead?.account_name
-                                          ? item?.lead?.account_name
-                                          : '---'}
-                                      </Stack>
-                                    </Stack>
-                                  </TableCell>
-                                  <TableCell className="tableCell">
-                                    {item?.lead?.country
-                                      ? item?.lead?.country
-                                      : '---'}
-                                  </TableCell>
-                                  <TableCell className="tableCell">
-                                    {item?.tags?.length
-                                      ? item?.tags.map((tag: any, i: any) => (
-                                          <Stack sx={{ mr: 0.5 }}>
-                                            {' '}
-                                            Tags(tag)
-                                          </Stack>
-                                        ))
-                                      : '---'}
-                                  </TableCell>
-                                  <TableCell className="tableCell">
-                                    {/* <IconButton>
-                                                                        <FaEdit
-                                                                            onClick={() => EditItem(item?.id)}
-                                                                            style={{ fill: '#1A3353', cursor: 'pointer', width: '18px' }}
-                                                                        />
-                                                                    </IconButton> */}
-                                    <IconButton>
-                                      <FaTrashAlt
-                                        onClick={() => deleteRow(item?.id)}
-                                        style={{
-                                          fill: '#1A3353',
-                                          cursor: 'pointer',
-                                          width: '15px',
-                                        }}
-                                      />
-                                    </IconButton>
-                                  </TableCell>
-                                </TableRow>
-                              );
-                            })
-                        ) : (
-                          <TableRow>
-                            {' '}
-                            <TableCell
-                              colSpan={6}
-                              sx={{ border: 0 }}
-                            ></TableCell>
-                          </TableRow>
-                        )
-                      }
-                      {
-                        // emptyRows > 0 && (
-                        //     <TableRow
-                        //         style={{
-                        //             height: (dense ? 33 : 53) * emptyRows
-                        //         }}
-                        //     >
-                        //         <TableCell colSpan={6} />
-                        //     </TableRow>
-                        // )
-                      }
-                    </TableBody>
-                  ) : (
-                    <TableBody>
-                      {closedAccounts?.length > 0 ? (
-                        stableSort(
-                          closedAccounts,
-                          getComparator(order, orderBy)
-                        ).map((item: any, index: any) => {
-                          // .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((item: any, index: any) => {
-                          const labelId = `enhanced-table-checkbox-${index}`;
-                          const rowIndex = selectedId.indexOf(item.id);
-                          return (
-                            <TableRow
-                              tabIndex={-1}
-                              key={index}
-                              sx={{
-                                border: 0,
-                                '&:nth-of-type(even)': {
-                                  backgroundColor: 'whitesmoke',
-                                },
-                                color: 'rgb(26, 51, 83)',
-                                textTransform: 'capitalize',
-                              }}
-                            >
-                              {/* <TableCell
-                                                                    padding='checkbox'
-                                                                    sx={{ border: 0, color: 'inherit' }}
-                                                                    align='left'
-                                                                >
-                                                                    <Checkbox
-                                                                        checked={isSelectedId[rowIndex] || false}
-                                                                        onChange={() => handleRowSelect(item.id)}
-                                                                        inputProps={{
-                                                                            'aria-labelledby': labelId,
-                                                                        }}
-                                                                        sx={{ border: 0, color: 'inherit' }}
-                                                                    />
-                                                                </TableCell> */}
-                              <TableCell
-                                className="tableCell-link"
-                                onClick={() => accountDetail(item.id)}
-                              >
-                                {item?.name ? item?.name : '---'}
-                              </TableCell>
-                              <TableCell className="tableCell">
-                                {item?.website ? item?.website : '---'}
-                              </TableCell>
-                              <TableCell className="tableCell">
-                                <Stack
-                                  style={{
-                                    display: 'flex',
-                                    flexDirection: 'row',
-                                    alignItems: 'center',
-                                  }}
-                                >
-                                  <Avatar
-                                    src={item?.lead?.created_by?.profile_pic}
-                                    alt={item?.lead?.created_by?.email}
-                                  />
-                                  <Stack sx={{ ml: 1 }}>
-                                    {item?.lead?.account_name
-                                      ? item?.lead?.account_name
-                                      : '---'}
-                                  </Stack>
-                                </Stack>
-                              </TableCell>
-                              <TableCell className="tableCell">
-                                {item?.lead?.country
-                                  ? item?.lead?.country
-                                  : '---'}
-                              </TableCell>
-                              <TableCell className="tableCell">
-                                {item?.tags?.length
-                                  ? item?.tags.map((tag: any, i: any) => (
-                                      <Stack sx={{ mr: 0.5 }}> Tags(tag)</Stack>
-                                    ))
-                                  : '---'}
-                              </TableCell>
-                              <TableCell className="tableCell">
-                                {/* <IconButton>
-                                                                        <FaEdit
-                                                                            onClick={() => EditItem(item?.id)}
-                                                                            style={{ fill: '#1A3353', cursor: 'pointer', width: '18px' }}
-                                                                        />
-                                                                    </IconButton> */}
-                                <IconButton>
-                                  <FaTrashAlt
-                                    onClick={() => deleteRow(item?.id)}
-                                    style={{
-                                      fill: '#1A3353',
-                                      cursor: 'pointer',
-                                      width: '15px',
-                                    }}
-                                  />
-                                </IconButton>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })
-                      ) : (
-                        <TableRow>
-                          {' '}
-                          <TableCell colSpan={6} sx={{ border: 0 }}></TableCell>
-                        </TableRow>
+              <MenuItem value="">
+                <em>All Contacts</em>
+              </MenuItem>
+              {getUniqueContacts().map((contact: any) => (
+                <MenuItem key={contact.id} value={contact.id}>
+                  {contact.fullname || '—'}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Stack>
 
-                      )}
-                    </TableBody>
-                  )}
-                </Table>
-              </TableContainer>
+        {/* RIGHT: Export + Add Account */}
+        <Stack direction="row" spacing={2}>
+          {/* <CustomButton
+            variant="outline"
+            shape="rounded"
+            startIcon={<FaDownload />}
+            onClick={() => {}}
+          >
+            Export
+          </CustomButton> */}
+          <Button
+            variant="outlined"
+            startIcon={<FaDownload />}
+            onClick={handleExport}
+            sx={{
+              background: '#2B5075',
+              boxShadow:
+                '0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px rgba(0,0,0,0.14), 0px 1px 5px rgba(0,0,0,0.12)',
+              borderRadius: '4px',
+              border: 'none',
+              color: '#FFFFFF',
+              '&:hover': {
+                borderColor: '#1565c0',
+                backgroundColor: '#2B5075',
+              },
+            }}
+          >
+            Export
+          </Button>
+          <CustomButton
+            variant="primary"
+            shape="rounded"
+            startIcon={<FiPlus />}
+            onClick={onAddAccount}
+          >
+            Add Account
+          </CustomButton>
+        </Stack>
+      </CustomToolbar>
+
+      {/* Grid + Pagination */}
+      <Container
+        maxWidth={false}
+        disableGutters
+        sx={{ pl: 1, pr: 1, mt: 2, px: 1 }}
+      >
+        <Grid container spacing={0}>
+          <Grid item xs={12}>
+            <Paper
+              sx={{ width: '100%', mb: 2, p: 0, border: 'none' }}
+              elevation={0}
+              square
+            >
+              {loading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+                  <Spinner />
+                </Box>
+              ) : (
+                <>
+                  {/* AG Grid */}
+                  <Box
+                    className="ag-theme-alpine accounts-ag-theme"
+                    sx={{
+                      width: '100%',
+                      ...gridTheme,
+                      '--ag-icon-color': '#FFFFFF',
+                      '& .ag-root-wrapper': {
+                        border: 'none',
+                      },
+                      // Styles for rounded header corners
+                      '& .ag-header': {
+                        borderRadius: '8px 8px 0 0',
+                        overflow: 'hidden',
+                      },
+                      '& .ag-header-cell:first-of-type': {
+                        borderTopLeftRadius: '8px',
+                      },
+                      '& .ag-header-cell:last-of-type': {
+                        borderTopRightRadius: '8px',
+                      },
+                      '& .ag-header-row': {
+                        borderBottom: 'none',
+                      },
+                      // Icon styling
+                      '& .ag-header-cell-label .ag-icon, & .ag-header-cell-label .ag-icon-wrapper svg':
+                        {
+                          fill: '#FFFFFF',
+                          color: '#FFFFFF',
+                        },
+                      '& .ag-sort-ascending-icon, & .ag-sort-descending-icon, & .ag-sort-none-icon':
+                        {
+                          fill: '#FFFFFF',
+                          color: '#FFFFFF',
+                        },
+                      // Row and cell styling
+                      '& .ag-row': { display: 'flex', alignItems: 'center' },
+                      '& .ag-cell': {
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'flex-start',
+                        paddingLeft: '4px',
+                        paddingRight: '4px',
+                      },
+                      '& .ag-header-cell': {
+                        paddingLeft: '4px',
+                        paddingRight: '4px',
+                      },
+                      '& .ag-pinned-right-cols-viewport .ag-cell': {
+                        paddingRight: '8px',
+                      },
+                    }}
+                  >
+                    <AgGridReact
+                      ref={gridRef}
+                      rowData={accounts}
+                      columnDefs={columnDefs}
+                      defaultColDef={defaultColDef}
+                      domLayout="autoHeight"
+                      suppressCellFocus
+                      rowHeight={56}
+                      headerHeight={40}
+                      onGridReady={(params) => {
+                        setGridApi(params.api);
+                        params.api.sizeColumnsToFit();
+                      }}
+                      context={{ componentParent: { deleteRow } }}
+                      getRowId={(params) => params.data.id}
+                      animateRows={true}
+                      suppressNoRowsOverlay={false}
+                      rowClassRules={{
+                        even: (params) =>
+                          params.node &&
+                          params.node.rowIndex != null &&
+                          params.node.rowIndex % 2 === 1,
+                      }}
+                    />
+                  </Box>
+
+                  {/* Pagination Footer */}
+                  <Box
+                    sx={{
+                      mt: 1,
+                      px: 2,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                    }}
+                  >
+                    {/* Rows per page */}
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <Typography>Rows&nbsp;per&nbsp;page:</Typography>
+                      <Select
+                        size="small"
+                        value={recordsPerPage}
+                        onChange={handleRecordsPerPageChange}
+                        sx={{ height: 32 }}
+                      >
+                        {[5, 10, 20, 30, 40, 50].map((n) => (
+                          <MenuItem key={n} value={n}>
+                            {n}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                      <Typography sx={{ ml: 1 }}>
+                        {`of ${totalaccounts} rows`}
+                      </Typography>
+                    </Stack>
+
+                    {/* Page Navigation */}
+                    <Pagination
+                      page={currentPage}
+                      count={totalPages}
+                      onChange={handlePageChange}
+                      variant="outlined"
+                      shape="rounded"
+                      size="small"
+                      showFirstButton
+                      showLastButton
+                      sx={{
+                        '& .MuiPaginationItem-root': {
+                          borderRadius: '50%',
+                          width: 36,
+                          height: 36,
+                          border: '1px solid #CED4DA',
+                        },
+                        '& .MuiPaginationItem-root:not(.Mui-selected):hover': {
+                          backgroundColor: '#F0F7FF',
+                        },
+                        '& .MuiPaginationItem-root.Mui-selected': {
+                          backgroundColor: '#1E3A5F',
+                          color: '#fff',
+                          border: '1px solid #284871',
+                        },
+                        '& .MuiPaginationItem-root.Mui-selected:hover': {
+                          backgroundColor: '#1E3A5F',
+                        },
+                      }}
+                    />
+                  </Box>
+                </>
+              )}
             </Paper>
-          </Box>
-        </Container>
-        <DeleteModal
-          onClose={deleteRowModalClose}
-          open={deleteRowModal}
-          id={selectedId}
-          modalDialog={modalDialog}
-          modalTitle={modalTitle}
-          DeleteItem={deleteItem}
-        />
-      </Box>
-    );
+          </Grid>
+        </Grid>
+      </Container>
+
+      {/* Delete Modal */}
+      <DeleteModal
+        onClose={deleteRowModalClose}
+        open={deleteRowModal}
+        id={selectedId}
+        modalDialog={modalDialog}
+        modalTitle={modalTitle}
+        DeleteItem={deleteItem}
+        loading={deleteLoading}
+      />
+
+      {/* Success Alert */}
+      <SuccessAlert
+        open={!!successMessage}
+        message={successMessage || ''}
+        onClose={() => setSuccessMessage(null)}
+        type="success"
+      />
+
+      {/* Error Alert */}
+      <ErrorAlert
+        open={!!errorMessage}
+        message={errorMessage || ''}
+        onClose={() => setErrorMessage(null)}
+        showCloseButton={true}
+      />
+    </Box>
+  );
 }
