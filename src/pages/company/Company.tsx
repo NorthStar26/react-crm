@@ -34,6 +34,7 @@ import INDCHOICES from '../../data/INDCHOICES';
 import * as XLSX from 'xlsx';
 import { CustomButton } from '../../components/Button';
 
+
 // AG Grid imports
 import { ModuleRegistry, ClientSideRowModelModule } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
@@ -114,7 +115,6 @@ export default function Company() {
       //   );
       //   setLoading(false);
       // }
-
     } catch (error) {
       console.error('Error fetching companies:', error);
       setLoading(false);
@@ -278,7 +278,7 @@ export default function Company() {
       field: 'name',
       flex: 2,
       sortable: true,
-      filter: true,
+      // filter: true,
       cellRenderer: (params: any) => (
         <Stack direction="row" alignItems="center" spacing={1}>
           <Avatar
@@ -302,7 +302,7 @@ export default function Company() {
       field: 'email',
       flex: 2,
       sortable: true,
-      filter: true,
+      // filter: true,
       cellRenderer: (params: any) => params.value || '—',
     },
     {
@@ -310,7 +310,7 @@ export default function Company() {
       field: 'phone',
       flex: 1.5,
       sortable: true,
-      filter: true,
+      // filter: true,
       cellRenderer: (params: any) => params.value || '—',
     },
     {
@@ -318,7 +318,7 @@ export default function Company() {
       field: 'industry',
       flex: 1.5,
       sortable: true,
-      filter: true,
+      // filter: true,
       cellRenderer: (params: any) => getIndustryName(params.value) || '—',
     },
     {
@@ -326,7 +326,7 @@ export default function Company() {
       field: 'billing_country',
       flex: 1.5,
       sortable: true,
-      filter: true,
+      // filter: true,
       cellRenderer: (params: any) => getCountryName(params.value) || '—',
     },
     {
@@ -334,13 +334,14 @@ export default function Company() {
       field: 'created_at',
       flex: 1.5,
       sortable: true,
-      filter: true,
+      // filter: true,
       cellRenderer: (params: any) => formatDate(params.value) || '—',
     },
     {
       headerName: 'Actions',
       field: 'id',
       minWidth: 120,
+      flex: 1,
       sortable: false,
       suppressClickEventBubbling: true,
       cellRenderer: (params: ICellRendererParams) => (
@@ -393,7 +394,7 @@ export default function Company() {
   const defaultColDef = {
     resizable: true,
     sortable: true,
-    filter: true,
+    // filter: true,
     wrapText: true,
     autoHeight: true,
     unSortIcon: true,
@@ -540,8 +541,25 @@ export default function Company() {
           <CustomButton
             variant="outline"
             shape="rounded"
-            startIcon={<FaDownload />}
+            startIcon={<FaFileExport />}
             onClick={exportExcel}
+            sx={{
+              backgroundColor: '#2B5075 !important',
+              color: '#f3f8ff !important',
+              border: '1px solid #284871 !important',
+              fontFamily: 'Roboto, Arial, sans-serif !important',
+              fontWeight: '500 !important',
+              fontSize: '15px !important',
+              lineHeight: '19px !important',
+              minWidth: '96px',
+              width: '96px',
+              textTransform: 'none !important',
+              '&:hover': {
+                backgroundColor: '#f3f8ff !important',
+                color: '#284871 !important',
+                border: '1px solid #284871 !important',
+              },
+            }}
           >
             Export
           </CustomButton>
@@ -550,6 +568,14 @@ export default function Company() {
             shape="rounded"
             startIcon={<FiPlus />}
             onClick={addCompany}
+            sx={[
+              {
+                fontFamily: 'Roboto !important',
+                fontWeight: '500 !important',
+                fontSize: '16px !important',
+                lineHeight: '19px !important',
+              },
+            ]}
           >
             Add Company
           </CustomButton>
@@ -561,11 +587,11 @@ export default function Company() {
       <Container
         maxWidth={false}
         disableGutters
-        sx={{ pl: 1, pr: 1, mt: 2, px: 1 }}
+        sx={{ pl: 1, pr: 1, mt: 2, px: 1, ml: 1.5 }}
       >
         <Grid container spacing={0}>
           <Grid item xs={12}>
-            <Paper sx={{ width: '100%', mb: 2, p: 0 }} elevation={0} square>
+            <Paper sx={{ width: '98%', mb: 3, p: 0 }} elevation={0} square>
               {loading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
                   <Spinner />
@@ -667,7 +693,7 @@ export default function Company() {
                         }}
                         sx={{ height: 32 }}
                       >
-                        {[5,10, 20, 30, 40, 50].map((n) => (
+                        {[5, 10, 20, 30, 40, 50].map((n) => (
                           <MenuItem key={n} value={n}>
                             {n}
                           </MenuItem>

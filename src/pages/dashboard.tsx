@@ -64,12 +64,11 @@ function formatDate(dateStr: string) {
   const year = date.getFullYear();
   return `${month} ${day}, ${year}`;
 }
+
 function Dashboard() {
   const [data, setData] = useState<any>(null);
-  const [leadStatus, setLeadStatus] = useState<string | undefined>();
-  const [opportunityStage, setOpportunityStage] = useState<
-    string | undefined
-  >();
+  const [leadStatus, setLeadStatus] = useState<string>(''); // Пустая строка для "All"
+  const [opportunityStage, setOpportunityStage] = useState<string>(''); // Пустая строка для "All"
   const [days, setDays] = useState<number>(7);
 
   useEffect(() => {
@@ -152,7 +151,7 @@ function Dashboard() {
           { label: 'Contacts', value: data.contacts_count },
           { label: 'Leads', value: data.leads_count },
           { label: 'Opportunities', value: data.opportunities_count },
-          { label: 'Accounts', value: data.accounts_count || 140 },
+          { label: 'Accounts', value: data.accounts_count },
           {
             label: 'Pipeline Value',
             value: `€${Number(data.total_pipeline_value).toLocaleString()}`,
@@ -218,9 +217,9 @@ function Dashboard() {
               <FormControl size="small" sx={{ minWidth: 136 }}>
                 <InputLabel>Status</InputLabel>
                 <Select
-                  value={leadStatus || ''}
+                  value={leadStatus}
                   label="Status"
-                  onChange={(e) => setLeadStatus(e.target.value || undefined)}
+                  onChange={(e) => setLeadStatus(e.target.value)}
                 >
                   <MenuItem value="">All</MenuItem>
                   {data.lead_status_choices?.map((status: any) => (
@@ -315,11 +314,9 @@ function Dashboard() {
               <FormControl size="small" sx={{ minWidth: 136 }}>
                 <InputLabel>Stage</InputLabel>
                 <Select
-                  value={opportunityStage || ''}
+                  value={opportunityStage}
                   label="Stage"
-                  onChange={(e) =>
-                    setOpportunityStage(e.target.value || undefined)
-                  }
+                  onChange={(e) => setOpportunityStage(e.target.value)}
                 >
                   <MenuItem value="">All</MenuItem>
                   {data.opportunity_stage_choices?.map((stage: any) => (
@@ -451,7 +448,7 @@ function Dashboard() {
                       <TableCell className="dashboard-table-cell">
                         <Box className="dashboard-name-cell">
                           <Typography className="dashboard-primary-text">
-                            {lead.contact_name}
+                            {lead.lead_title}
                           </Typography>
                           <Typography className="dashboard-secondary-text">
                             {lead.company_name}

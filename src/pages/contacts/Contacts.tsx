@@ -27,7 +27,7 @@ import { fetchData } from '../../components/FetchData';
 import { ContactUrl } from '../../services/ApiUrls';
 import { DeleteModal } from '../../components/DeleteModal';
 import * as XLSX from 'xlsx';
-
+import { CustomButton } from '../../components/Button/CustomButton';
 // AG Grid imports
 import { ModuleRegistry, ClientSideRowModelModule } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
@@ -91,7 +91,6 @@ const NameCellRenderer = (props: ICellRendererParams) => {
     </span>
   );
 };
-
 const PhoneNumberCellRenderer = (props: ICellRendererParams) => {
   const phoneNumber = props.value;
   const doNotCall = props.data.do_not_call;
@@ -105,7 +104,14 @@ const PhoneNumberCellRenderer = (props: ICellRendererParams) => {
         position: 'relative',
       }}
     >
-      {phoneNumber || '---'}
+      <span
+        style={{
+          color: doNotCall ? '#D32F2F' : 'inherit',
+          fontWeight: doNotCall ? 500 : 'normal',
+        }}
+      >
+        {phoneNumber || '---'}
+      </span>
       {doNotCall && (
         <span style={{ display: 'flex', alignItems: 'center' }}>
           {/* SVG "Do Not Call" icon */}
@@ -216,8 +222,8 @@ export default function Contacts() {
       checkboxSelection: true,
       headerCheckboxSelectionFilteredOnly: true,
       suppressSizeToFit: true,
-      width: 40,
-      maxWidth: 40,
+      width: 20,
+      maxWidth: 20,
       sortable: false,
       filter: false,
     },
@@ -228,13 +234,15 @@ export default function Contacts() {
       valueGetter: (params) =>
         `${params.data.first_name} ${params.data.last_name}`,
       minWidth: 150,
+      width: 150,
       flex: 1,
       sortable: true,
     },
     {
       field: 'primary_email',
       headerName: 'Email',
-      minWidth: 250,
+      minWidth: 300,
+      width: 260,
       flex: 1,
       sortable: true,
     },
@@ -255,7 +263,9 @@ export default function Contacts() {
     {
       field: 'language',
       headerName: 'Language',
-      minWidth: 40,
+      minWidth: 80, // Увеличьте с 20 до 80
+      width: 130, // Добавьте фиксированную ширину
+      maxWidth: 130, // Ограничьте максимальную ширину
       valueGetter: (params) => {
         const code = params.data.language;
         const found = LANGUAGE_CHOICES.find(([c]) => c === code);
@@ -266,7 +276,9 @@ export default function Contacts() {
     {
       field: 'created_at',
       headerName: 'Creation Date',
-      minWidth: 20,
+      minWidth: 80, // Увеличьте с 20 до 80
+      width: 140, // Увеличьте с 100 до 120
+      maxWidth: 140, // Добавьте максимальную ширину
       valueFormatter: (params) => {
         if (params.value) {
           const date = new Date(params.value);
@@ -295,7 +307,7 @@ export default function Contacts() {
   const defaultColDef = {
     resizable: true,
     sortable: true,
-    filter: true,
+    // filter: true,
     wrapText: true,
     autoHeight: true,
     unSortIcon: true,
@@ -304,8 +316,8 @@ export default function Contacts() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'flex-start',
-      paddingRight: '4px',
-      paddingLeft: '4px',
+      paddingRight: '1px',
+      paddingLeft: '1px',
     },
   };
 
@@ -652,18 +664,20 @@ export default function Contacts() {
         <Stack direction="row" spacing={2}>
           <Button
             variant="outlined"
-            startIcon={<FaDownload />}
+            startIcon={<FaFileExport />}
             onClick={handleExport}
             sx={{
               background: '#2B5075',
               boxShadow:
                 '0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px rgba(0,0,0,0.14), 0px 1px 5px rgba(0,0,0,0.12)',
               borderRadius: '4px',
+              textTransform: 'none',
               border: 'none',
               color: '#FFFFFF',
               '&:hover': {
-                borderColor: '#1565c0',
-                backgroundColor: '#2B5075',
+                backgroundColor: '#fff !important',
+                color: '#284871 !important',
+                border: '1px solid #284871 !important',
               },
             }}
           >
@@ -673,11 +687,24 @@ export default function Contacts() {
             variant="contained"
             startIcon={<FiPlus />}
             onClick={addContact}
-            sx={{
-              fontFamily: 'Roboto',
-              backgroundColor: '#1976d2',
-              '&:hover': { backgroundColor: '#1565c0' },
-            }}
+            sx={[
+              {
+                fontFamily: 'Roboto !important',
+                fontWeight: '500 !important',
+                fontSize: '16px !important',
+                lineHeight: '19px !important',
+                height: '40px !important', //
+                minWidth: '140px !important',
+                
+                '&:hover': { backgroundColor: '#1565c0 !important' },
+                textTransform: 'none !important',
+                padding: '8px 24px !important',
+                boxSizing: 'border-box !important',
+                display: 'flex !important',
+                alignItems: 'center !important',
+                justifyContent: 'center !important',
+              },
+            ]}
           >
             Add Contact
           </Button>
@@ -689,9 +716,9 @@ export default function Contacts() {
       <Container
         maxWidth={false}
         disableGutters
-        sx={{ pl: 1, pr: 1, mt: 2, px: 1 }}
+        sx={{ pl: 1, pr: 1, mt: 2, px: 1, ml: 1.5 }}
       >
-        <Paper sx={{ width: '100%', mb: 2, p: 0 }} elevation={0} square>
+        <Paper sx={{ width: '98%', mb: 2, p: 0 }} elevation={0} square>
           {loading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
               <Spinner />
@@ -780,8 +807,8 @@ export default function Contacts() {
               {/* Pagination Footer */}
               <Box
                 className="contacts-pagination"
-                sx={{
-                  mt: 1,
+                sx={{width: '100%',
+                  mt: 3,
                   px: 2,
                   display: 'flex',
                   alignItems: 'center',
@@ -795,7 +822,7 @@ export default function Contacts() {
                     size="small"
                     value={recordsPerPage}
                     onChange={handleRecordsPerPageChange}
-                    sx={{ height: 32 }}
+                    sx={{ height: 32, width: 80, fontSize: 14 }}
                   >
                     {[10, 20, 30, 40, 50, 100].map((n) => (
                       <MenuItem key={n} value={n}>
@@ -804,7 +831,7 @@ export default function Contacts() {
                     ))}
                   </Select>
                   <Typography
-                    sx={{ ml: 1 }}
+                    sx={{ ml: 1, width: '100px' }}
                   >{`of ${totalContacts} rows`}</Typography>
                 </Stack>
                 {/* Page Navigation */}
