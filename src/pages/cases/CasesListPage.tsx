@@ -312,6 +312,20 @@ export default function CasesListPage() {
     deleteRowModalClose();
   };
 
+  const handleRowClick = (event: any) => {
+    const caseId = event.data.id;
+    navigate('/app/cases/case-details', {
+      state: { 
+        caseId: caseId,
+        contacts: contacts,
+        priority: [], // You can populate these if available
+        typeOfCases: [],
+        account: [],
+        status: []
+      }
+    });
+  };
+
 const handleExport = async () => {
   try {
     const exportUrl = `${API_URL}/${CasesUrl}/?export=true`;
@@ -551,7 +565,14 @@ const handleExport = async () => {
                   fill: '#FFFFFF',
                   color: '#FFFFFF',
                 },
-                '& .ag-row': { display: 'flex', alignItems: 'center' },
+                '& .ag-row': { 
+                  display: 'flex', 
+                  alignItems: 'center',
+                  cursor: 'pointer',
+                  '&:hover': {
+                    backgroundColor: '#f5f5f5 !important',
+                  }
+                },
                 '& .ag-cell': {
                   display: 'flex',
                   alignItems: 'center',
@@ -578,10 +599,10 @@ const handleExport = async () => {
                 columnDefs={columnDefs}
                 defaultColDef={defaultColDef}
                 domLayout="autoHeight"
-                suppressRowClickSelection
                 suppressCellFocus
                 rowHeight={56}
                 headerHeight={40}
+                onRowClicked={handleRowClick}
                 onGridReady={(params) => {
                   params.api.sizeColumnsToFit();
                 }}

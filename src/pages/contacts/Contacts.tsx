@@ -807,8 +807,8 @@ export default function Contacts() {
               {/* Pagination Footer */}
               <Box
                 className="contacts-pagination"
-                sx={{
-                  mt: 1,
+                sx={{width: '100%',
+                  mt: 3,
                   px: 2,
                   display: 'flex',
                   alignItems: 'center',
@@ -822,7 +822,7 @@ export default function Contacts() {
                     size="small"
                     value={recordsPerPage}
                     onChange={handleRecordsPerPageChange}
-                    sx={{ height: 32 }}
+                    sx={{ height: 32, width: 80, fontSize: 14 }}
                   >
                     {[10, 20, 30, 40, 50, 100].map((n) => (
                       <MenuItem key={n} value={n}>
@@ -831,7 +831,7 @@ export default function Contacts() {
                     ))}
                   </Select>
                   <Typography
-                    sx={{ ml: 1 }}
+                    sx={{ ml: 1, width: '100px' }}
                   >{`of ${totalContacts} rows`}</Typography>
                 </Stack>
                 {/* Page Navigation */}
