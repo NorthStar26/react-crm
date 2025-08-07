@@ -17,6 +17,7 @@ import {
   MenuItem,
   Select,
   FormControl,
+  Avatar,
 } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -42,6 +43,7 @@ import {
   PipelineTransitionAlert,
 } from '../../components/Button/SuccessAlert';
 import { CloudinaryFileUpload } from '../../components/CloudinaryFileUpload';
+import { DialogModal } from '../../components/DialogModal';
 import { fireEuroConfetti } from '../../utils/fireConfetti';
 import {
   SectionContainer,
@@ -74,6 +76,19 @@ import {
 import EuroConfetti from '../../components/EuroConfetti';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
+
+// Helper function to capitalize the first letter of each word in a string
+const capitalizeFirstLetter = (string: string | undefined | null): string => {
+  if (!string) return '';
+
+  // For URL links, don't capitalize
+  if (string.startsWith('http')) return string;
+
+  return string
+    .split(' ')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+};
 
 // Используем стили PipelineIcons для кастомного коннектора
 const CustomConnector = styled(StepConnector)(() => ({
@@ -136,9 +151,19 @@ function OpportunityPipeline() {
   });
   const [showClosedLostMessage, setShowClosedLostMessage] = useState(false);
   const [contractUploaded, setContractUploaded] = useState(false);
+  
+  // Comment functionality states
+  const [note, setNote] = useState('');
+  const [noteError, setNoteError] = useState('');
+  const [noteSubmitting, setNoteSubmitting] = useState(false);
+  const [commentsToShow, setCommentsToShow] = useState(5);
+  const [opportunityComments, setOpportunityComments] = useState<any[]>([]);
   const module = 'Opportunities';
   const crntPage = opportunity?.name || 'Opportunity';
   const [showConfetti, setShowConfetti] = useState(false);
+  
+  // Add Note modal states
+  const [addNoteDialogOpen, setAddNoteDialogOpen] = useState(false);
 
   const handleConfetti = () => {
     setShowConfetti(true);
@@ -191,6 +216,11 @@ function OpportunityPipeline() {
         if (!res.error) {
           setOpportunity(res.opportunity);
           setPipelineMetadata(res.pipeline_metadata);
+          
+          // Set comments from the API response
+          if (res.comments) {
+            setOpportunityComments(res.comments);
+          }
 
           // Initialize form data based on the opportunity data
           setFormData((prev: typeof formData) => ({
@@ -234,6 +264,87 @@ function OpportunityPipeline() {
   const handleFieldChange = (field: string, value: any) => {
     setFormData({ ...formData, [field]: value });
     setErrors({ ...errors, [field]: null });
+  };
+
+  // Open add note dialog
+  const handleAddNoteClick = () => {
+    if (!note.trim()) {
+      setNoteError('Note cannot be empty');
+      return;
+    }
+
+    // Clear any previous errors
+    setNoteError('');
+
+    // Open confirmation dialog
+    setAddNoteDialogOpen(true);
+  };
+
+  // Submit note after confirmation
+  const submitNote = () => {
+    // Close the dialog first
+    setAddNoteDialogOpen(false);
+
+    setNoteSubmitting(true);
+
+    const Header = {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      Authorization: localStorage.getItem('Token'),
+      org: localStorage.getItem('org'),
+    };
+
+    const data = JSON.stringify({
+      comment: note,
+    });
+
+    fetchData(`${OpportunityUrl}/${id}/comment/`, 'POST', data, Header)
+      .then((res) => {
+        if (!res.error) {
+          // Refresh the opportunity data to get updated comments
+          fetchOpportunityData();
+          setNote('');
+          setNoteError('');
+
+          // Show success alert
+          setAlertState({
+            ...alertState,
+            success: {
+              open: true,
+              message: 'Note added successfully',
+            },
+          });
+        } else {
+          // Show error alert
+          setAlertState({
+            ...alertState,
+            error: {
+              open: true,
+              message: res.errors || 'Failed to add note',
+            },
+          });
+        }
+      })
+      .catch((err) => {
+        console.error('Error submitting note:', err);
+        setNoteError('Failed to submit note. Please try again.');
+
+        // Show error alert
+        setAlertState({
+          ...alertState,
+          error: {
+            open: true,
+            message: 'Failed to add note. Please try again.',
+          },
+        });
+      })
+      .finally(() => {
+        setNoteSubmitting(false);
+      });
+  };
+
+  const handleShowMoreComments = () => {
+    setCommentsToShow((prev) => prev + 5);
   };
 
   const handleSave = async () => {
@@ -441,10 +552,20 @@ function OpportunityPipeline() {
         // Показываем сообщение только для CLOSED LOST
         if (dataToSend.stage === 'CLOSED LOST') {
           setShowClosedLostMessage(true);
+          // Navigate to cases page after a short delay
+          setTimeout(() => {
+            navigate('/app/cases');
+          }, 3000);
         }
         if (dataToSend.stage === 'CLOSED WON') {
           setShowConfetti(true);
-          setTimeout(() => setShowConfetti(false), 3500);
+          setTimeout(() => {
+            setShowConfetti(false);
+            // Wait an additional 0.5 seconds after confetti ends before navigating
+            setTimeout(() => {
+              navigate('/app/accounts');
+            }, 1500);
+          }, 3500);
           setContractUploaded(false);
         }
         const transitionMessages: { [key: string]: string } = {
@@ -1281,7 +1402,7 @@ function OpportunityPipeline() {
             {/* Main Content Grid */}
             <Box sx={{ display: 'flex', gap: 3, px: '38px', pb: 4 }}>
               {/* Left Panel */}
-              <Box sx={{ flex: 1, maxWidth: '724px' }}>
+              <Box sx={{ flex: 2, minWidth: 0 }}>
                 {/* Opportunity Name Section */}
                 <SectionContainer>
                   {/* Header */}
@@ -1612,60 +1733,127 @@ function OpportunityPipeline() {
               </Box>
 
               {/* Right Panel - Activities */}
-              <Box sx={{ width: 450 }}>
+              <Box sx={{ flex: 1, minWidth: 300, maxWidth: 400 }}>
                 <SectionContainer>
                   <SectionTitle>Activities & Notes</SectionTitle>
                   <Divider sx={{ mb: 3 }} />
 
-                  <TextField
-                    multiline
-                    rows={4}
-                    fullWidth
-                    placeholder="Add a note..."
-                    sx={{
-                      mb: 2,
-                      '& .MuiOutlinedInput-root': {
-                        backgroundColor: '#F9FAFB',
-                      },
-                    }}
-                  />
-                  <Button
-                    fullWidth
-                    variant="contained"
-                    startIcon={<AttachFileIcon />}
-                    sx={{
-                      backgroundColor: '#1976D2',
-                      textTransform: 'capitalize',
-                      mb: 3,
-                    }}
-                  >
-                    Add Note
-                  </Button>
+                  {/* Note input field */}
+                  <Box sx={{ mb: 3 }}>
+                    <TextField
+                      fullWidth
+                      multiline
+                      rows={3}
+                      variant="outlined"
+                      placeholder="Write a note..."
+                      value={note}
+                      onChange={(e) => setNote(e.target.value)}
+                      error={!!noteError}
+                      helperText={noteError}
+                      sx={{ 
+                        mb: 1,
+                        '& .MuiOutlinedInput-root': {
+                          backgroundColor: '#F9FAFB',
+                        },
+                      }}
+                    />
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={handleAddNoteClick}
+                        disabled={noteSubmitting || !note.trim()}
+                        sx={{ textTransform: 'capitalize' }}
+                      >
+                        {noteSubmitting ? 'Submitting...' : 'Add note'}
+                      </Button>
+                    </Box>
+                  </Box>
 
-                  {/* Activities */}
+                  {/* Activity items */}
                   <Box sx={{ mt: 3 }}>
-                    {activities.length > 0 ? (
-                      activities.map((activity, index) => (
-                        <ActivityItem key={index}>
+                    {/* Display comments from API response */}
+                    {opportunityComments && opportunityComments.length > 0 ? (
+                      <>
+                        {[...opportunityComments]
+                          .sort(
+                            (a: any, b: any) =>
+                              new Date(b.commented_on).getTime() -
+                              new Date(a.commented_on).getTime()
+                          )
+                          .slice(0, commentsToShow)
+                          .map((comment: any, index: number) => (
+                            <Box
+                              key={comment.id || index}
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'flex-start',
+                                mb: 2,
+                              }}
+                            >
+                              <Avatar
+                                sx={{ mr: 1, width: 32, height: 32 }}
+                                src={comment.commented_by_user?.profile_pic}
+                              />
+                              <Box>
+                                <Typography variant="body2" fontWeight="bold">
+                                  {capitalizeFirstLetter(
+                                    comment.commented_by_user?.first_name
+                                  ) || ''}{' '}
+                                  {capitalizeFirstLetter(
+                                    comment.commented_by_user?.last_name
+                                  ) || ''}
+                                </Typography>
+                                <Typography variant="body2">
+                                  {comment.comment}
+                                </Typography>
+                              </Box>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ ml: 'auto' }}
+                              >
+                                {new Date(
+                                  comment.commented_on
+                                ).toLocaleString()}
+                              </Typography>
+                            </Box>
+                          ))}
+
+                        {/* Show More button for pagination */}
+                        {opportunityComments.length > commentsToShow && (
                           <Box
                             sx={{
                               display: 'flex',
-                              alignItems: 'center',
-                              gap: 1,
+                              justifyContent: 'center',
+                              mt: 2,
                             }}
                           >
-                            <ActivityAuthor>{activity.author}</ActivityAuthor>
-                            <ActivityDate>
-                              <Typography>{activity.date}</Typography>
-                            </ActivityDate>
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              onClick={handleShowMoreComments}
+                              sx={{ textTransform: 'capitalize' }}
+                            >
+                              Show more
+                            </Button>
                           </Box>
-                          <ActivityContent>{activity.content}</ActivityContent>
-                        </ActivityItem>
-                      ))
+                        )}
+                      </>
                     ) : (
-                      <Typography sx={{ color: '#666', textAlign: 'center' }}>
-                        No activities yet
-                      </Typography>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          mb: 2,
+                          justifyContent: 'center',
+                          p: 2,
+                        }}
+                      >
+                        <Typography variant="body2" color="text.secondary">
+                          No notes yet. Add a note to start.
+                        </Typography>
+                      </Box>
                     )}
                   </Box>
                 </SectionContainer>
@@ -1674,6 +1862,16 @@ function OpportunityPipeline() {
           </Box>
 
           {/* Alert Components - размещаем в конце компонента */}
+          {/* Add Note Dialog */}
+          <DialogModal
+            isDelete={addNoteDialogOpen}
+            onClose={() => setAddNoteDialogOpen(false)}
+            onConfirm={submitNote}
+            modalDialog={`Are you sure you want to add a note to ${opportunity?.name || ''}'s opportunity?`}
+            confirmText="Add"
+            cancelText="Cancel"
+          />
+
           <SuccessAlert
             open={alertState.success.open}
             message={alertState.success.message}
