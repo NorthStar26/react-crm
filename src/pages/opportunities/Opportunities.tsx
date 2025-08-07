@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -49,7 +49,7 @@ export default function Opportunities() {
   const { user } = useUser();
   const [loading, setLoading] = useState(true);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [opportunities, setOpportunities] = useState([]);
+  const [allOpportunities, setAllOpportunities] = useState([]); // Store ALL opportunities
   const [contacts, setContacts] = useState([]);
   const [tags, setTags] = useState([]);
   const [currency, setCurrency] = useState([]);
@@ -67,8 +67,6 @@ export default function Opportunities() {
   // Pagination states
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [recordsPerPage, setRecordsPerPage] = useState<number>(10);
-  const [totalPages, setTotalPages] = useState<number>(0);
-  const [totalOpportunities, setTotalOpportunities] = useState<number>(0);
 
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -80,21 +78,58 @@ export default function Opportunities() {
   const gridRef = useRef<AgGridReact>(null);
   const [gridApi, setGridApi] = useState<any>(null);
 
-  // Effect hook to fetch opportunities when filters or pagination changes
+  // Fetch ALL opportunities once on component mount
   useEffect(() => {
-    getOpportunities();
-  }, [currentPage, recordsPerPage, selectedStage, selectedContact]);
+    getAllOpportunities();
+  }, []);
 
-  // Debounced search
+  // Frontend filtering and pagination
+  const filteredAndPaginatedData = useMemo(() => {
+    let filtered = [...allOpportunities];
+
+    // Apply search filter
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = filtered.filter((opportunity: any) =>
+        opportunity.name?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Apply stage filter
+    if (selectedStage) {
+      filtered = filtered.filter((opportunity: any) =>
+        opportunity.stage === selectedStage
+      );
+    }
+
+    // Apply contact filter
+    if (selectedContact) {
+      filtered = filtered.filter((opportunity: any) =>
+        opportunity.contact?.id === selectedContact
+      );
+    }
+
+    // Calculate pagination
+    const totalFiltered = filtered.length;
+    const totalPages = Math.ceil(totalFiltered / recordsPerPage);
+    const startIndex = (currentPage - 1) * recordsPerPage;
+    const endIndex = startIndex + recordsPerPage;
+    const paginatedData = filtered.slice(startIndex, endIndex);
+
+    return {
+      data: paginatedData,
+      totalItems: totalFiltered,
+      totalPages: totalPages
+    };
+  }, [allOpportunities, searchTerm, selectedStage, selectedContact, currentPage, recordsPerPage]);
+
+  // Reset to first page when filters change
   useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      getOpportunities();
-    }, 500);
-    return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm]);
+    setCurrentPage(1);
+  }, [searchTerm, selectedStage, selectedContact]);
 
-  // Fetch opportunities from API
-  const getOpportunities = async () => {
+  // Fetch ALL opportunities from API (no pagination, no filters)
+  const getAllOpportunities = async () => {
     const Header = {
       Accept: 'application/json',
       'Content-Type': 'application/json',
@@ -103,28 +138,13 @@ export default function Opportunities() {
     };
 
     try {
-      const offset = (currentPage - 1) * recordsPerPage;
-
-      // Build URL with filters
-      let url = `${OpportunityUrl}/?offset=${offset}&limit=${recordsPerPage}`;
-      if (searchTerm.trim()) {
-        url += `&name=${encodeURIComponent(searchTerm.trim())}`;
-      }
-      if (selectedStage) {
-        url += `&stage=${encodeURIComponent(selectedStage)}`;
-      }
-      if (selectedContact) {
-        url += `&contact_id=${encodeURIComponent(selectedContact)}`;
-      }
+      // Fetch ALL opportunities - remove offset, limit, and filter parameters
+      const url = `${OpportunityUrl}/`;
 
       const data = await fetchData(url, 'GET', null as any, Header);
 
       if (!data.error) {
-        setOpportunities(data.opportunities || []);
-        setTotalOpportunities(data.opportunities_count || 0);
-        setTotalPages(
-          Math.ceil((data.opportunities_count || 0) / recordsPerPage)
-        );
+        setAllOpportunities(data.opportunities || []);
 
         // Set reference data
         setContacts(data.contacts_list || []);
@@ -146,11 +166,11 @@ export default function Opportunities() {
     }
   };
 
-  // Get unique stages from opportunities for filtering
+  // Get unique stages from ALL opportunities for filtering
   const getUniqueStages = () => {
-    if (!opportunities || opportunities.length === 0) return [];
+    if (!allOpportunities || allOpportunities.length === 0) return [];
 
-    const stages = opportunities
+    const stages = allOpportunities
       .map((item: any) => item?.stage)
       .filter((stage: string) => stage && stage.trim() !== '')
       .filter(
@@ -161,9 +181,9 @@ export default function Opportunities() {
     return stages;
   };
 
-  // Get unique contacts from opportunities for filtering
+  // Get unique contacts from ALL opportunities for filtering
   const getUniqueContacts = () => {
-    const contacts = opportunities
+    const contacts = allOpportunities
       .map((item: any) => {
         if (item?.contact) {
           const fullName = `${item.contact.salutation || ''} ${
@@ -256,7 +276,7 @@ export default function Opportunities() {
       if (!res.error) {
         setSuccessMessage('Opportunity deleted successfully');
         deleteRowModalClose();
-        getOpportunities();
+        getAllOpportunities(); // Refresh all data
       } else {
         setErrorMessage('Failed to delete opportunity');
       }
@@ -497,7 +517,6 @@ export default function Opportunities() {
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
-                setCurrentPage(1);
               }}
               sx={{
                 background: '#fff',
@@ -519,7 +538,6 @@ export default function Opportunities() {
               value={selectedStage}
               onChange={(e) => {
                 setSelectedStage(e.target.value);
-                setCurrentPage(1);
               }}
               onOpen={() => setStageSelectOpen(true)}
               onClose={() => setStageSelectOpen(false)}
@@ -565,7 +583,6 @@ export default function Opportunities() {
               value={selectedContact}
               onChange={(e) => {
                 setSelectedContact(e.target.value);
-                setCurrentPage(1);
               }}
               onOpen={() => setContactSelectOpen(true)}
               onClose={() => setContactSelectOpen(false)}
@@ -695,7 +712,7 @@ export default function Opportunities() {
                   >
                     <AgGridReact
                       ref={gridRef}
-                      rowData={opportunities}
+                      rowData={filteredAndPaginatedData.data} // Use filtered and paginated data
                       columnDefs={columnDefs}
                       defaultColDef={defaultColDef}
                       domLayout="autoHeight"
@@ -746,14 +763,14 @@ export default function Opportunities() {
                         ))}
                       </Select>
                       <Typography sx={{ ml: 1 }}>
-                        {`of ${totalOpportunities} rows`}
+                        {`of ${filteredAndPaginatedData.totalItems} rows`}
                       </Typography>
                     </Stack>
 
                     {/* Page Navigation */}
                     <Pagination
                       page={currentPage}
-                      count={totalPages}
+                      count={filteredAndPaginatedData.totalPages}
                       onChange={handlePageChange}
                       variant="outlined"
                       shape="rounded"
