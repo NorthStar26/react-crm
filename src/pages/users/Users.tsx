@@ -453,6 +453,7 @@ export default function Users() {
         cellRenderer: (params: any) => (
           <Stack direction="row" alignItems="center" spacing={1}>
             <Avatar
+              src={params.data.profilePic || undefined}
               sx={{ bgcolor: '#284871', width: 32, height: 32, fontSize: 14 }}
             >
               {params.value?.charAt(0).toUpperCase() || 'U'}
@@ -549,6 +550,7 @@ export default function Users() {
     role: u.role || '—',
     id: u.user_details?.id, // Use the actual user ID, not the profile ID
     profileId: u.id, // Keep the profile ID for reference if needed
+    profilePic: u.user_details?.profile_pic || null, // Add profile picture
   }));
 
   // Export all users to Excel

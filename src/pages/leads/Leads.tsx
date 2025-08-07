@@ -316,26 +316,9 @@ export default function Leads() {
         justifyContent: 'flex-start',
         paddingLeft: '8px',
       },
-      cellRenderer: (params: ICellRendererParams) => {
+      valueFormatter: (params: any) => {
         if (!params.value) return '—';
-        return (
-          <Chip
-            label={params.value}
-            size="small"
-            sx={{
-              backgroundColor: '#E3F2FD',
-              color: '#1976D2 !important',
-              fontWeight: 'bold',
-              fontSize: '0.75rem',
-              height: '28px',
-              borderRadius: '12px',justifyContent: 'flex-start',
-              minWidth: '120px',
-              textTransform: 'capitalize',
-              boxShadow:
-                '0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px rgba(0,0,0,0.14),0px 1px 3px rgba(0,0,0,0.12)',
-            }}
-          />
-        );
+        return params.value.charAt(0).toUpperCase() + params.value.slice(1).toLowerCase();
       },
     },
     {
