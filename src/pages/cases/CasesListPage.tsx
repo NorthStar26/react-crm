@@ -196,10 +196,14 @@ export default function CasesListPage() {
       flex: 2,
       sortable: true,
       filter: false,
-      valueGetter: (params: any) =>
-        `${params.data?.created_by?.first_name || ''} ${
-          params.data?.created_by?.last_name || ''
-        }`,
+      valueGetter: (params: any) => {
+        const assignedTo = params.data?.assigned_to;
+        if (assignedTo && assignedTo.length > 0) {
+          const user = assignedTo[0].user_details;
+          return `${user?.first_name || ''} ${user?.last_name || ''}`.trim();
+        }
+        return '—';
+      },
     },
   ];
 
