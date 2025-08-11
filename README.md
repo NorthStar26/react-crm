@@ -1,3 +1,16 @@
+# Useful Links of the project (developed by North Star Team)
+
+## Documentation
+- [Definition of Done](https://docs.google.com/spreadsheets/d/1KhPfUfZwbnFayucOUlE5Pro7lhlEFsDLdvQ8BF68MrM/edit?gid=203165786#gid=203165786)
+- [User Stories List](https://docs.google.com/spreadsheets/d/1lyhKHYPr8rfa8AP7hwtoS1URho2owpy_Y23eBwhMQWE/edit?gid=0#gid=0)
+- [Functional Handbook](https://docs.google.com/document/d/17jgpdMnjOAI6J_HTYbmDf9jbC4pYuCzFM8jC7D4C4_k/edit?tab=t.0)
+- [Design](https://www.figma.com/design/a3HbqYc6m7HiW85xEU7JwF/CRM-Login---Register--Copy-?node-id=0-1&p=f&t=ReZJNqM1TFzyZeOR-0)
+- [Material UI Design](https://www.figma.com/design/XIwUNfD4P6PIx6j8z5c5Gm/Material-UI-for-Figma--and-MUI-X---Community-?node-id=6036-164056&p=f&t=Kiesd6Y3asHdT83J-0)
+
+## App
+
+
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).

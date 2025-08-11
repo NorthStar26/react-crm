@@ -1,549 +1,752 @@
-import React, { SyntheticEvent, useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Avatar, AvatarGroup, Box, Button, Card, List, Stack, Tab, TablePagination, Tabs, Toolbar, Typography, Link, MenuItem, Select } from '@mui/material'
-import styled from '@emotion/styled';
-import { LeadUrl } from '../../services/ApiUrls';
-import { DeleteModal } from '../../components/DeleteModal';
-import { Label } from '../../components/Label';
-import { fetchData } from '../../components/FetchData';
+import {
+  Box,
+  Stack,Button,
+  Typography,
+  Paper,
+  Select,
+  MenuItem,
+  Container,
+  Pagination,
+  IconButton,
+  InputBase,
+  FormControl,
+  Chip,
+  Grid,
+} from '@mui/material';
 import { Spinner } from '../../components/Spinner';
-import FormateTime from '../../components/FormateTime';
-import { getComparator, stableSort } from '../../components/Sorting';
-import { FaTrashAlt } from 'react-icons/fa';
+import { FiPlus } from '@react-icons/all-files/fi/FiPlus';
+import { FiSearch } from '@react-icons/all-files/fi/FiSearch';
+import { FaTrashAlt, FaEdit, FaFileExport } from 'react-icons/fa';
 import { FiChevronUp } from '@react-icons/all-files/fi/FiChevronUp';
 import { FiChevronDown } from '@react-icons/all-files/fi/FiChevronDown';
-import { FiPlus } from "@react-icons/all-files/fi/FiPlus";
-import { FiChevronLeft } from "@react-icons/all-files/fi/FiChevronLeft";
-import { FiChevronRight } from "@react-icons/all-files/fi/FiChevronRight";
-import { CustomTab, CustomToolbar, FabLeft, FabRight } from '../../styles/CssStyled';
-import '../../styles/style.css'
+import { CustomToolbar } from '../../styles/CssStyled';
+import { fetchData } from '../../components/FetchData';
+import { LeadUrl } from '../../services/ApiUrls';
+import { DeleteModal } from '../../components/DeleteModal';
+import { useUser } from '../../context/UserContext';
+import { CustomButton } from '../../components/Button';
+import { SuccessAlert, ErrorAlert } from '../../components/Button/SuccessAlert';
 
-// import css from './css';
-// import emotionStyled from '@emotion/styled';
-// import { styled } from '@mui/system';
-// import { css } from '@emotion/react';
+// AG Grid imports
+import { ModuleRegistry, ClientSideRowModelModule } from 'ag-grid-community';
+import { AgGridReact } from 'ag-grid-react';
+import 'ag-grid-community/styles/ag-grid.css';
+import 'ag-grid-community/styles/ag-theme-alpine.css';
+import { ICellRendererParams } from 'ag-grid-community';
 
+ModuleRegistry.registerModules([ClientSideRowModelModule]);
 
-
-// margin-bottom: -15px;
-//   display: flex;
-//   justify-content: space-between;
-//   background-color: #1A3353;
-export const CustomTablePagination = styled(TablePagination)`
-.MuiToolbar-root {
-  min-width: 100px;
-}
-.MuiTablePagination-toolbar {
-  background-color: #f0f0f0;
-  color: #333;
-}
-.MuiTablePagination-caption {
-  color: #999;
-}
-'.MuiTablePagination-displayedRows': {
-  display: none;
-}
-'.MuiTablePagination-actions': {
-  display: none;
-}
-'.MuiTablePagination-selectLabel': {
-  margin-top: 4px;
-  margin-left: -15px;
-}
-'.MuiTablePagination-select': {
-  color: black;
-  margin-right: 0px;
-  margin-left: -12px;
-  margin-top: -6px;
-}
-'.MuiSelect-icon': {
-  color: black;
-  margin-top: -5px;
-}
-background-color: white;
-border-radius: 1;
-height: 10%;
-overflow: hidden;
-padding: 0;
-margin: 0;
-width: 39%;
-padding-bottom: 5;
-color: black;
-margin-right: 1;
-`;
-
-
-export const Tabss = styled(Tab)({
-  height: '34px',
-  textDecoration: 'none',
-  fontWeight: 'bold'
-});
-
-export const ToolbarNew = styled(Toolbar)({
-  minHeight: '48px', height: '48px', maxHeight: '48px',
-  width: '100%', display: 'flex', justifyContent: 'space-between', backgroundColor: '#1A3353',
-  '& .MuiToolbar-root': { minHeight: '48px !important', height: '48px !important', maxHeight: '48px !important' },
-  '@media (min-width:600px)': {
-    '& .MuiToolbar-root': {
-      minHeight: '48px !important', height: '48px !important', maxHeight: '48px !important'
-    }
-  }
-});
-// export const formatDate = (dateString: any) => {
-//   const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' }
-//   return new Date(dateString).toLocaleDateString(undefined, options)
-// }
-// interface LeadList {
-//   drawer: number;
-// }
-export default function Leads(props: any) {
-  // const {drawer}=props
-  const navigate = useNavigate()
-  const [tab, setTab] = useState('open');
+export default function Leads() {
+  const navigate = useNavigate();
+  const { user } = useUser();
   const [loading, setLoading] = useState(true);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [leads, setLeads] = useState([]);
+  const [leadsCount, setLeadsCount] = useState(0);
+  const [contacts, setContacts] = useState([]);
+  const [status, setStatus] = useState([]);
+  const [source, setSource] = useState([]);
+  const [companies, setCompanies] = useState([]);
+  const [tags, setTags] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [countries, setCountries] = useState([]);
+  const [industries, setIndustries] = useState([]);
+  const [deleteLeadModal, setDeleteLeadModal] = useState(false);
+  const [selectedId, setSelectedId] = useState('');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const [leads, setLeads] = useState([])
-  const [valued, setValued] = useState(10)
-  const [rowsPerPage, setRowsPerPage] = useState(10)
-  const [page, setPage] = useState(0)
-  const [initial, setInitial] = useState(true)
-  const [order] = useState('asc')
-  const [orderBy] = useState('calories')
-
-  const [openLeads, setOpenLeads] = useState([])
-  const [openLeadsCount, setOpenLeadsCount] = useState(0)
-  const [closedLeads, setClosedLeads] = useState([])
-  const [openClosedCount, setClosedLeadsCount] = useState(0)
-  const [contacts, setContacts] = useState([])
-  const [status, setStatus] = useState([])
-  const [source, setSource] = useState([])
-  const [companies, setCompanies] = useState([])
-  const [tags, setTags] = useState([])
-  const [users, setUsers] = useState([])
-  const [countries, setCountries] = useState([])
-  const [industries, setIndustries] = useState([])
-
-  const [selectOpen, setSelectOpen] = useState(false);
+  // Pagination states
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [recordsPerPage, setRecordsPerPage] = useState<number>(10);
   const [totalPages, setTotalPages] = useState<number>(0);
 
-  const [openCurrentPage, setOpenCurrentPage] = useState<number>(1);
-  const [openRecordsPerPage, setOpenRecordsPerPage] = useState<number>(10);
-  const [openTotalPages, setOpenTotalPages] = useState<number>(0);
-  const [openLoading, setOpenLoading] = useState(true);
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [sourceFilter, setSourceFilter] = useState('');
+  const [statusSelectOpen, setStatusSelectOpen] = useState(false);
+  const [sourceSelectOpen, setSourceSelectOpen] = useState(false);
 
+  const gridRef = useRef<AgGridReact>(null);
+  const [gridApi, setGridApi] = useState<any>(null);
 
-  const [closedCurrentPage, setClosedCurrentPage] = useState<number>(1);
-  const [closedRecordsPerPage, setClosedRecordsPerPage] = useState<number>(10);
-  const [closedTotalPages, setClosedTotalPages] = useState<number>(0);
-  const [closedLoading, setClosedLoading] = useState(true);
+  const statusList = [
+    { value: '', label: 'All Status' },
+    { value: 'new', label: 'New' },
+    { value: 'qualified', label: 'Qualified' },
+    { value: 'disqualified', label: 'Disqualified' },
+    { value: 'recycled', label: 'Recycled' },
+  ];
 
-  const [deleteLeadModal, setDeleteLeadModal] = useState(false)
-  const [selectedId, setSelectedId] = useState('')
+  const sourceList = [
+    { value: '', label: 'All Sources' },
+    { value: 'call', label: 'Call' },
+    { value: 'email', label: 'Email' },
+    { value: 'existing customer', label: 'Existing Customer' },
+    { value: 'partner', label: 'Partner' },
+    { value: 'public relations', label: 'Public Relations' },
+    { value: 'compaign', label: 'Campaign' },
+    { value: 'other', label: 'Other' },
+  ];
 
+  // Effect hook to fetch leads when filters or pagination changes
   useEffect(() => {
-    if (!!localStorage.getItem('org')) {
-      getLeads()
-    }
-  }, [!!localStorage.getItem('org')]);
+    getLeads();
+  }, [currentPage, recordsPerPage, statusFilter, sourceFilter]);
 
+  // Debounced search
   useEffect(() => {
-    getLeads()
-  }, [openCurrentPage, openRecordsPerPage, closedCurrentPage, closedRecordsPerPage]);
+    const delayDebounceFn = setTimeout(() => {
+      getLeads();
+    }, 500);
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm]);
+
   const getLeads = async () => {
     const Header = {
       Accept: 'application/json',
       'Content-Type': 'application/json',
       Authorization: localStorage.getItem('Token'),
       org: localStorage.getItem('org')
-    }
+    };
+
     try {
-      const openOffset = (openCurrentPage - 1) * openRecordsPerPage;
-      const closeOffset = (closedCurrentPage - 1) * closedRecordsPerPage;
-      await fetchData(`${LeadUrl}/?offset=${tab === "open" ? openOffset : closeOffset}&limit=${tab === "open" ? openRecordsPerPage : closedRecordsPerPage}`, 'GET', null as any, Header)
-        .then((res) => {
-          // console.log(res, 'leads')
-          if (!res.error) {
-            // if (initial) {
-            setOpenLeads(res?.open_leads?.open_leads)
-            setOpenLeadsCount(res?.open_leads?.leads_count)
-            setOpenTotalPages(Math.ceil(res?.open_leads?.leads_count / openRecordsPerPage));
-            setClosedLeads(res?.close_leads?.close_leads)
-            setClosedLeadsCount(res?.close_leads?.leads_count)
-            setClosedTotalPages(Math.ceil(res?.close_leads?.leads_count / closedRecordsPerPage));
-            setContacts(res?.contacts)
-            setStatus(res?.status)
-            setSource(res?.source)
-            setCompanies(res?.companies)
-            setTags(res?.tags)
-            setUsers(res?.users)
-            setCountries(res?.countries)
-            setIndustries(res?.industries)
-            setLoading(false)
-            // setLeadsList();
-            // setInitial(false)
-          }
-          // else {
-          //     // setContactList(Object.assign([], contacts, [data.contact_obj_list]))
-          //     setContactList(prevContactList => prevContactList.concat(data.contact_obj_list));
-          //     // setContactList(...contactList,data.contact_obj_list)
-          //     setLoading(false)
-          // }
-          // }
-        })
-    }
-    catch (error) {
+      const offset = (currentPage - 1) * recordsPerPage;
+      const queryParams = new URLSearchParams({
+        offset: offset.toString(),
+        limit: recordsPerPage.toString(),
+      });
+
+      if (searchTerm) queryParams.append('search', searchTerm);
+      if (statusFilter) queryParams.append('status', statusFilter);
+      if (sourceFilter) queryParams.append('lead_source', sourceFilter);
+
+      const res = await fetchData(`${LeadUrl}/?${queryParams.toString()}`, 'GET', undefined, Header);
+
+      if (!res.error) {
+        const openLeads = res?.open_leads?.open_leads || [];
+        setLeads(openLeads);
+        setLeadsCount(res?.open_leads?.leads_count || openLeads.length);
+        setTotalPages(Math.ceil((res?.open_leads?.leads_count || openLeads.length) / recordsPerPage));
+
+        setContacts(res?.contacts || []);
+        setStatus(res?.status || []);
+        setSource(res?.source || []);
+        setCompanies(res?.companies || []);
+        setTags(res?.tags || []);
+        setUsers(res?.users || []);
+        setCountries(res?.countries || []);
+        setIndustries(res?.industries || []);
+        setLoading(false);
+      }
+    } catch (error) {
       console.error('Error fetching data:', error);
-    }
-  }
-
-  const handleChangeTab = (e: SyntheticEvent, val: any) => {
-    setTab(val)
-  }
-  const handleRecordsPerPage = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    if (tab == 'open') {
-      setOpenLoading(true)
-      setOpenRecordsPerPage(parseInt(event.target.value));
-      setOpenCurrentPage(1);
-    } else {
-      setClosedLoading(true)
-      setClosedRecordsPerPage(parseInt(event.target.value));
-      setClosedCurrentPage(1);
-    }
-
-  };
-  const handlePreviousPage = () => {
-    if (tab == 'open') {
-      setOpenLoading(true)
-      setOpenCurrentPage((prevPage) => Math.max(prevPage - 1, 1));
-    } else {
-      setClosedLoading(true)
-      setClosedCurrentPage((prevPage) => Math.max(prevPage - 1, 1));
+      setErrorMessage('Failed to fetch leads');
+      setLoading(false);
     }
   };
 
-  const handleNextPage = () => {
-    if (tab == 'open') {
-      setOpenLoading(true)
-      setOpenCurrentPage((prevPage) => Math.min(prevPage + 1, openTotalPages));
-    } else {
-      setClosedLoading(true)
-      setClosedCurrentPage((prevPage) => Math.min(prevPage + 1, closedTotalPages));
-    }
+  // Get unique statuses from leads for filtering
+  const getUniqueStatuses = () => {
+    if (!leads || leads.length === 0) return [];
+
+    const statuses = leads
+      .map((item: any) => item?.status)
+      .filter((status: string) => status && status.trim() !== '')
+      .filter(
+        (status: string, index: number, arr: string[]) =>
+          arr.indexOf(status) === index
+      );
+
+    return statuses;
   };
+
+  // Get unique sources from leads for filtering
+  const getUniqueSources = () => {
+    if (!leads || leads.length === 0) return [];
+
+    const sources = leads
+      .map((item: any) => item?.lead_source)
+      .filter((source: string) => source && source.trim() !== '')
+      .filter(
+        (source: string, index: number, arr: string[]) =>
+          arr.indexOf(source) === index
+      );
+
+    return sources;
+  };
+
+  // Navigation handlers
   const onAddHandle = () => {
     if (!loading) {
       navigate('/app/leads/add-leads', {
         state: {
           detail: false,
-          contacts: contacts || [], status: status || [], source: source || [], companies: companies || [], tags: tags || [], users: users || [], countries: countries || [], industries: industries || []
-          // status: leads.status, source: leads.source, industry: leads.industries, users: leads.users, tags: leads.tags, contacts: leads.contacts 
+          contacts: contacts || [], 
+          status: status || [], 
+          source: source || [], 
+          companies: companies || [], 
+          tags: tags || [], 
+          users: users || [], 
+          countries: countries || [], 
+          industries: industries || []
         }
-      })
+      });
     }
-  }
+  };
+
+  const handleViewLead = (lead: any) => {
+    navigate(`/app/leads/${lead.id}`);
+  };
 
   const selectLeadList = (leadId: any) => {
-    navigate(`/app/leads/lead-details`, { state: { leadId, detail: true, contacts: contacts || [], status: status || [], source: source || [], companies: companies || [], tags: tags || [], users: users || [], countries: countries || [], industries: industries || [] } })
-    // navigate('/app/leads/lead-details', { state: { leadId: leadItem.id, edit: storeData, value } })
-  }
-  const deleteLead = (deleteId: any) => {
-    setDeleteLeadModal(true)
-    setSelectedId(deleteId)
-  }
+    navigate(`/app/leads/${leadId}`);
+  };
+
+  const redirectToEditLead = (leadId: any) => {
+    navigate(`/app/leads/${leadId}/edit`);
+  };
+
+  // Delete handlers
+  const deleteLead = (id: any) => {
+    setSelectedId(id);
+    setDeleteLeadModal(true);
+  };
 
   const deleteLeadModalClose = () => {
-    setDeleteLeadModal(false)
-    setSelectedId('')
-  }
-  const modalDialog = 'Are You Sure You want to delete selected Lead?'
-  const modalTitle = 'Delete Lead'
+    setDeleteLeadModal(false);
+    setSelectedId('');
+  };
 
-  const deleteItem = () => {
+  const deleteItem = async () => {
+    setDeleteLoading(true);
     const Header = {
       Accept: 'application/json',
       'Content-Type': 'application/json',
       Authorization: localStorage.getItem('Token'),
       org: localStorage.getItem('org')
-    }
-    fetchData(`${LeadUrl}/${selectedId}/`, 'DELETE', null as any, Header)
-      .then((res: any) => {
-        // console.log('delete:', res);
-        if (!res.error) {
-          deleteLeadModalClose()
-          getLeads()
-        }
-      })
-      .catch(() => {
-      })
-  }
+    };
 
-  const formatDate = (inputDate: string): string => {
-    const currentDate = new Date();
-    const targetDate = new Date(inputDate);
-    const timeDifference = currentDate.getTime() - targetDate.getTime();
+    try {
+      const res = await fetchData(`${LeadUrl}/${selectedId}/`, 'DELETE', null as any, Header);
 
-    const secondsDifference = Math.floor(timeDifference / 1000);
-    const minutesDifference = Math.floor(secondsDifference / 60);
-    const hoursDifference = Math.floor(minutesDifference / 60);
-    const daysDifference = Math.floor(hoursDifference / 24);
-    const monthsDifference = Math.floor(daysDifference / 30);
-
-    if (monthsDifference >= 12) {
-      const yearsDifference = Math.floor(monthsDifference / 12);
-      return `${yearsDifference} ${yearsDifference === 1 ? 'year' : 'years'} ago`;
-    } else if (monthsDifference >= 1) {
-      return `${monthsDifference} ${monthsDifference === 1 ? 'month' : 'months'} ago`;
-    } else if (daysDifference >= 1) {
-      return `${daysDifference} ${daysDifference === 1 ? 'day' : 'days'} ago`;
-    } else if (hoursDifference >= 1) {
-      return `${hoursDifference} ${hoursDifference === 1 ? 'hour' : 'hours'} ago`;
-    } else if (minutesDifference >= 1) {
-      return `${minutesDifference} ${minutesDifference === 1 ? 'minute' : 'minutes'} ago`;
-    } else {
-      return `${secondsDifference} ${secondsDifference === 1 ? 'second' : 'seconds'} ago`;
+      if (!res.error) {
+        setSuccessMessage('Lead deleted successfully');
+        deleteLeadModalClose();
+        getLeads();
+      } else {
+        setErrorMessage('Failed to delete lead');
+      }
+    } catch (error) {
+      setErrorMessage('Failed to delete lead');
+    } finally {
+      setDeleteLoading(false);
     }
   };
-  const recordsList = [[10, '10 Records per page'], [20, '20 Records per page'], [30, '30 Records per page'], [40, '40 Records per page'], [50, '50 Records per page']]
-  const tag = ['account', 'leading', 'account', 'leading', 'account', 'leading', 'account', 'account', 'leading', 'account', 'leading', 'account', 'leading', 'leading', 'account', 'account', 'leading', 'account', 'leading', 'account', 'leading', 'account', 'leading', 'account', 'leading', 'account', 'leading']
-  return (
-    <Box sx={{
-      mt: '60px',
-      // width: '1370px' 
-    }}>
 
-      <CustomToolbar>
-        <Tabs defaultValue={tab} onChange={handleChangeTab} sx={{ mt: '26px' }}>
-          <CustomTab value="open" label="Open"
+  // Pagination handlers
+  const handlePageChange = (_e: any, page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleRecordsPerPageChange = (event: any) => {
+    setRecordsPerPage(Number(event.target.value));
+    setCurrentPage(1);
+  };
+
+  // Grid theme
+  const gridTheme = {
+    '--ag-header-background-color': '#1A3353',
+    '--ag-header-foreground-color': '#FFFFFF',
+    '--ag-header-border-color': 'transparent',
+    '--ag-odd-row-background-color': '#FFFFFF',
+    '--ag-even-row-background-color': '#F3F8FF',
+    '--ag-row-border-color': '#E0E0E0',
+  } as React.CSSProperties;
+
+  // AG Grid column definitions
+  const columnDefs = [
+    {
+      headerName: 'Lead Name',
+      field: 'lead_title',
+      flex: 2,
+      sortable: true,
+      cellRenderer: (params: ICellRendererParams) => (
+        <span
+          style={{
+            cursor: 'pointer',
+            color: '#1976d2',
+            fontWeight: 500,
+          }}
+          onClick={() => handleViewLead(params.data)}
+        >
+          {params.value || '—'}
+        </span>
+      ),
+    },
+    {
+      headerName: 'Contact',
+      field: 'contact_name',
+      flex: 1.5,
+      sortable: true,
+      valueFormatter: (params: any) => params.value || '—',
+    },
+    {
+      headerName: 'Company',
+      field: 'company_name',
+      flex: 2,
+      sortable: true,
+      cellRenderer: (params: ICellRendererParams) => {
+        const company = params.value;
+        if (!company) return '—';
+        return company.length > 15 ? `${company.substring(0, 15)}...` : company;
+      },
+    },
+    {
+      headerName: 'Source',
+      field: 'lead_source',
+      flex: 1.5,
+      sortable: true,
+      cellStyle: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        paddingLeft: '8px',
+      },
+      valueFormatter: (params: any) => {
+        if (!params.value) return '—';
+        return params.value.charAt(0).toUpperCase() + params.value.slice(1).toLowerCase();
+      },
+    },
+    {
+      headerName: 'Status',
+      field: 'status',
+      flex: 1.5,
+      sortable: true,
+      cellStyle: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        paddingLeft: '8px',
+      },
+      cellRenderer: (params: ICellRendererParams) => {
+        if (!params.value) return '—';
+        
+        const getStatusColor = (status: string) => {
+          switch (status.toLowerCase()) {
+            case 'new': return '#2196F3';
+            case 'qualified': return'#4CAF50' ;
+            case 'disqualified': return '#F44336';
+            case 'recycled': return '#FF9800';
+            default: return '#9E9E9E';
+          }
+        };
+
+        return (
+          <Chip
+            label={params.value}
+            size="small"
             sx={{
-              backgroundColor: tab === 'open' ? '#F0F7FF' : '#284871',
-              color: tab === 'open' ? '#3f51b5' : 'white',
-            }} />
-          <CustomTab value="closed" label="Closed"
-            sx={{
-              backgroundColor: tab === 'closed' ? '#F0F7FF' : '#284871',
-              color: tab === 'closed' ? '#3f51b5' : 'white',
-              ml: '5px',
+              backgroundColor: getStatusColor(params.value),
+              color: 'white !important',
+              fontWeight: 'bold',
+              fontSize: '0.75rem',
+              height: '28px',
+              borderRadius: '12px',
+              minWidth: '120px',
+              textTransform: 'capitalize',
+              boxShadow:
+                '0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px rgba(0,0,0,0.14),0px 1px 3px rgba(0,0,0,0.12)',
             }}
           />
-        </Tabs>
+        );
+      },
+    },
+    {
+      headerName: 'Creation Date',
+      field: 'created_date',
+      flex: 1.5,
+      sortable: true,
+      valueFormatter: (params: any) => params.value || '—',
+    },
+    {
+      headerName: 'Actions',
+      field: 'id',
+      minWidth: 120,
+      flex: 1,
+      sortable: false,
+      cellRenderer: (params: ICellRendererParams) => (
+        <Stack direction="row" spacing={1}>
+          <IconButton
+            size="small"
+            onClick={() => redirectToEditLead(params.value)}
+            sx={{ color: '#1A3353' }}
+          >
+            <FaEdit />
+          </IconButton>
+          {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
+            <IconButton
+              size="small"
+              onClick={() => deleteLead(params.value)}
+              sx={{ color: '#D32F2F' }}
+            >
+              <FaTrashAlt />
+            </IconButton>
+          )}
+        </Stack>
+      ),
+    },
+  ];
 
-        <Stack sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-          <Select
-            value={tab === 'open' ? openRecordsPerPage : closedRecordsPerPage}
-            onChange={(e: any) => handleRecordsPerPage(e)}
-            open={selectOpen}
-            onOpen={() => setSelectOpen(true)}
-            onClose={() => setSelectOpen(false)}
-            className={`custom-select`}
-            onClick={() => setSelectOpen(!selectOpen)}
-            IconComponent={() => (
-              <div onClick={() => setSelectOpen(!selectOpen)} className="custom-select-icon">
-                {selectOpen ? <FiChevronUp style={{ marginTop: '12px' }} /> : <FiChevronDown style={{ marginTop: '12px' }} />}
-              </div>
-            )}
+  // Default column definition
+  const defaultColDef = {
+    resizable: true,
+    sortable: true,
+    wrapText: true,
+    autoHeight: true,
+    unSortIcon: true,
+    cellStyle: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+      paddingLeft: '8px',
+    },
+  };
+
+  // Modal dialog text
+  const modalDialog = 'Are you sure you want to delete this lead?';
+  const modalTitle = 'Delete Lead';
+  return (
+    <Box sx={{ mt: '65px' }}>
+      {/* Toolbar with search and filters */}
+      <CustomToolbar
+        sx={{
+          bgcolor: '#1A3353 !important',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          p: '2px 16px',
+          borderBottom: '1px solid #e0e0e0',
+          flexWrap: 'wrap',
+          gap: 2,
+          minHeight: '44px',
+        }}
+      >
+        {/* LEFT: Filters */}
+        <Stack
+          direction="row"
+          spacing={2}
+          alignItems="center"
+          sx={{ flexWrap: 'wrap' }}
+        >
+          {/* Search */}
+          <Box
+            sx={{ position: 'relative', display: 'flex', alignItems: 'center' }}
+          >
+            <FiSearch
+              style={{
+                position: 'absolute',
+                left: 12,
+                zIndex: 1,
+                color: '#666',
+              }}
+            />
+            <InputBase
+              placeholder="Search leads..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
+              sx={{
+                background: '#fff',
+                borderRadius: 2,
+                px: 2,
+                py: 0.5,
+                pl: 5,
+                border: '1px solid #D9D9D9',
+                minWidth: 200,
+                fontSize: 16,
+              }}
+            />
+          </Box>
+
+          {/* Status Filter */}
+          <FormControl sx={{ minWidth: 160 }}>
+            <Select
+              displayEmpty
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              onOpen={() => setStatusSelectOpen(true)}
+              onClose={() => setStatusSelectOpen(false)}
+              open={statusSelectOpen}
+              IconComponent={() => (
+                <div style={{ marginRight: 8 }}>
+                  {statusSelectOpen ? <FiChevronUp /> : <FiChevronDown />}
+                </div>
+              )}
+              sx={{
+                background: '#fff',
+                borderRadius: 2,
+                fontSize: 16,
+                height: 40,
+              }}
+            >
+              <MenuItem value="">
+                <em>All Status</em>
+              </MenuItem>
+              {statusList.slice(1).map((status, index: number) => (
+                <MenuItem key={`status-${index}-${status.value}`} value={status.value}>
+                  {status.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          {/* Source Filter */}
+          <FormControl sx={{ minWidth: 160 }}>
+            <Select
+              displayEmpty
+              value={sourceFilter}
+              onChange={(e) => {
+                setSourceFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              onOpen={() => setSourceSelectOpen(true)}
+              onClose={() => setSourceSelectOpen(false)}
+              open={sourceSelectOpen}
+              IconComponent={() => (
+                <div style={{ marginRight: 8 }}>
+                  {sourceSelectOpen ? <FiChevronUp /> : <FiChevronDown />}
+                </div>
+              )}
+              sx={{
+                background: '#fff',
+                borderRadius: 2,
+                fontSize: 16,
+                height: 40,
+              }}
+            >
+              <MenuItem value="">
+                <em>All Sources</em>
+              </MenuItem>
+              {sourceList.slice(1).map((source, index: number) => (
+                <MenuItem key={`source-${index}-${source.value}`} value={source.value}>
+                  {source.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Stack>
+
+        {/* RIGHT: Export + Add Lead */}
+        <Stack direction="row" spacing={2}>
+          <Button
+            variant="outlined"
+            startIcon={<FaFileExport />}
+            onClick={() => {}}
             sx={{
-              '& .MuiSelect-select': { overflow: 'visible !important' }
+              background: '#2B5075',
+              boxShadow:
+                '0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px rgba(0,0,0,0.14), 0px 1px 5px rgba(0,0,0,0.12)',
+              borderRadius: '4px',
+              textTransform: 'none',
+              border: 'none',
+              color: '#FFFFFF',
+              '&:hover': {
+                backgroundColor: '#fff !important',
+                color: '#284871 !important',
+                border: '1px solid #284871 !important',
+              },
             }}
           >
-            {recordsList?.length && recordsList.map((item: any, i: any) => (
-              <MenuItem key={i} value={item[0]}>
-                {item[1]}
-              </MenuItem>
-            ))}
-          </Select>
-          <Box sx={{ borderRadius: '7px', backgroundColor: 'white', height: '40px', minHeight: '40px', maxHeight: '40px', display: 'flex', flexDirection: 'row', alignItems: 'center', mr: 1, p: '0px' }}>
-            <FabLeft onClick={handlePreviousPage} disabled={tab === 'open' ? openCurrentPage === 1 : closedCurrentPage === 1}>
-              <FiChevronLeft style={{ height: '15px' }} />
-            </FabLeft>
-            <Typography sx={{ mt: 0, textTransform: 'lowercase', fontSize: '15px', color: '#1A3353', textAlign: 'center' }}>
-              {tab === 'open' ? `${openCurrentPage} to ${openTotalPages}` : `${closedCurrentPage} to ${closedTotalPages}`}
-
-            </Typography>
-            <FabRight onClick={handleNextPage} disabled={tab === 'open' ? (openCurrentPage === openTotalPages) : (closedCurrentPage === closedTotalPages)}>
-              <FiChevronRight style={{ height: '15px' }} />
-            </FabRight>
-          </Box>
-          <Button
-            variant='contained'
-            startIcon={<FiPlus className='plus-icon' />}
+            Export
+          </Button>
+          <CustomButton
+            variant="primary"
+            shape="rounded"
+            startIcon={<FiPlus />}
             onClick={onAddHandle}
-            className={'add-button'}
           >
             Add Lead
-          </Button>
+          </CustomButton>
         </Stack>
       </CustomToolbar>
 
-      {tab === 'open' ?
-        <Box sx={{ p: '10px', mt: '5px' }}>
-          {
-            // leads.open && leads.open
-            //   ? stableSort(leads.open && leads.open, getComparator(order, orderBy)).slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((item, index) => (
-            // stableSort(openLeads, getComparator(order, orderBy)).slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((item: any, index: any) => (
-            openLeads?.length ? openLeads.map((item: any, index: any) => (
-              <Box key={index}>
-                <Box className='lead-box'>
-                  <Box className='lead-box1'>
-                    <Stack className='lead-row1'>
-                      <div style={{ color: '#1A3353', fontSize: '1rem', fontWeight: '500', cursor: 'pointer' }} onClick={() => selectLeadList(item?.id)}>
-                        {item?.title}
-                      </div>
-                      <div onClick={() => deleteLead(item?.id)}>
-                        <FaTrashAlt style={{ cursor: 'pointer', color: 'gray' }} />
-                      </div>
-                    </Stack>
-                    <Stack className='lead-row2'>
-                      <div className='lead-row2-col1'>
-                        <div style={{ color: 'gray', fontSize: '16px', textTransform: 'capitalize' }}>
-                          {item?.country || ''} - source <span style={{ color: '#1a3353', fontWeight: 500 }}>{item?.source || '--'}</span> - status <span style={{ color: '#1a3353', fontWeight: 500 }}>{item?.status || '--'}</span>
-                        </div>
-                        <Box sx={{
-                          ml: 1
-                          //  flexWrap: 'wrap', width: '50%' 
-                        }}>
-                          {
-                            item.tags.map((tagData: any, index: any) => (
-                              // tag.slice(0, 3).map((tagData: any, index: any) => (
-                              <Label tags={tagData} key={index} />
-                            ))
-                          }{item.tags.length > 4 ? <Link sx={{ ml: 1 }}>+{item.tags.length - 4}</Link> : ''}
-                        </Box>
-                        <Box sx={{ ml: 1 }}>
-                          <div style={{ display: 'flex' }}>
-                            <AvatarGroup
-                              // total={2}
-                              max={3}
-                            >
-                              {/* <Tooltip title={con.user.username}> */}
-                              {/* {tag.map((tagData: any, index: any) => ( */}
-                              {item?.team && item?.team?.map((team: any, index: any) => (
-                                <Avatar
-                                  alt={team}
-                                  src={team}
-                                >
-                                  {team}
-                                </Avatar>
-                              ))}
-                              {/* </Tooltip> */}
-                              {/* )} */}
-                            </AvatarGroup>
-                          </div>
-
-                        </Box>
-                        {/* {
-                          item.assigned_to.map((assignItem: any, index: any) => (
-                            assignItem.user_details.profile_pic
-                              ? <Avatar alt='Remy Sharp'
-                                src={assignItem.user_details.profile_pic}
-                              />
-                              : <Avatar alt='Remy Sharp'
-                                size='small'
-                              // sx={{ backgroundColor: 'deepOrange', color: 'white', textTransform: 'capitalize', mt: '-20px', ml: '10px' }}
-                              >
-                                {assignItem.user_details.first_name.charAt(0)}
-                              </Avatar>
-                          ))
-                        } */}
-                      </div>
-                      <div className='lead-row2-col2'>
-                        {/* created on {formatDate(item.created_on)} by   &nbsp;<span> */}
-                        created&nbsp; {FormateTime(item?.created_at)}&nbsp; by
-                        <Avatar
-                          alt={item?.first_name}
-                          src={item?.created_by?.profile_pic}
-                          sx={{ ml: 1 }}
-                        // style={{
-                        //   height: '20px',
-                        //   width: '20px'
-                        // }}
-                        /> &nbsp;&nbsp;{item?.first_name}&nbsp;{item?.last_name}
-                      </div>
-                    </Stack>
-                  </Box>
+      {/* Grid + Pagination */}
+      <Container
+        maxWidth={false}
+        disableGutters
+        sx={{ pl: 1, pr: 1, mt: 2, px: 1, ml: 1.5 }}
+      >
+        <Grid container spacing={0}>
+          <Grid item xs={12}>
+            <Paper
+              sx={{ width: '98%', mb: 2, p: 0, border: 'none' }}
+              elevation={0}
+              square
+            >
+              {loading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+                  <Spinner />
                 </Box>
-              </Box>
-            )) : <Spinner />
-          }
-        </Box>
-        : <Box sx={{ p: '10px', mt: '5px' }}>
-          {
-            // stableSort(closedLeads?.length || [], getComparator(order, orderBy)).slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((item: any, index: any) => (
-            closedLeads?.length ? closedLeads.map((item: any, index: any) => (
-              <Box key={index}>
-                <Box className='lead-box'>
-                  <Box className='lead-box1'>
-                    <Stack className='lead-row1'>
-                      <div style={{ color: '#1A3353', fontSize: '1rem', fontWeight: '500', cursor: 'pointer' }} onClick={() => selectLeadList(item?.id)}>
-                        {item?.title}
-                      </div>
-                      <div onClick={() => deleteLead(item)}>
-                        <FaTrashAlt style={{ cursor: 'pointer', color: 'gray' }} />
-                      </div>
-                    </Stack>
-                    <Stack className='lead-row2'>
-                      <div className='lead-row2-col1'>
-                        <div style={{ color: 'gray', fontSize: '16px', textTransform: 'capitalize' }}>
-                          {item?.country || ''} - source <span style={{ color: '#1a3353', fontWeight: 500 }}>{item?.source || '--'}</span> - status <span style={{ color: '#1a3353', fontWeight: 500 }}>{item?.status || '--'}</span>
-                        </div>
-                        <Box sx={{ ml: 1 }}>
-                          {
-                            item.tags.map((tagData: any, index: any) => (
-                              // tag.slice(0, 3).map((tagData: any, index: any) => (
-                              <Label tags={tagData} key={index} />
-                            ))
-                          }{item.tags.length > 4 ? <Link sx={{ ml: 1 }}>+{item.tags.length - 4}</Link> : ''}
-                        </Box>
-                        <Box sx={{ ml: 1 }}>
-                          <div style={{ display: 'flex' }}>
-                            <AvatarGroup
-                              // total={2}
-                              max={3}
-                            >
-                              {/* {con.map((con) => */}
-                              {/* <Tooltip title={con.user.username}> */}
-                              {item?.team && item?.team?.map((team: any, index: any) => (
-                                <Avatar
-                                  alt={team}
-                                  src={team}
-                                >
-                                  {team}
-                                </Avatar>
-                              ))}
-                              {/* </Tooltip> */}
-                              {/* )} */}
-                            </AvatarGroup>
-                          </div>
-
-                        </Box>
-
-                      </div>
-                      <div className='lead-row2-col2'>
-                        created&nbsp; {FormateTime(item?.created_at)}&nbsp; by
-                        <Avatar
-                          alt={item?.first_name}
-                          src={item?.created_by?.profile_pic}
-                          sx={{ ml: 1 }}
-                        /> &nbsp;&nbsp;{item?.first_name}&nbsp;{item?.last_name}
-                      </div>
-                    </Stack>
+              ) : (
+                <>
+                  {/* AG Grid */}
+                  <Box
+                    className="ag-theme-alpine leads-ag-theme"
+                    sx={{
+                      width: '100%',
+                      ...gridTheme,
+                      '--ag-icon-color': '#FFFFFF',
+                      '& .ag-root-wrapper': {
+                        border: 'none',
+                      },
+                      // Styles for rounded header corners
+                      '& .ag-header': {
+                        borderRadius: '8px 8px 0 0',
+                        overflow: 'hidden',
+                      },
+                      '& .ag-header-cell:first-of-type': {
+                        borderTopLeftRadius: '8px',
+                      },
+                      '& .ag-header-cell:last-of-type': {
+                        borderTopRightRadius: '8px',
+                      },
+                      '& .ag-header-row': {
+                        borderBottom: 'none',
+                      },
+                      // Icon styling
+                      '& .ag-header-cell-label .ag-icon, & .ag-header-cell-label .ag-icon-wrapper svg':
+                        {
+                          fill: '#FFFFFF',
+                          color: '#FFFFFF',
+                        },
+                      '& .ag-sort-ascending-icon, & .ag-sort-descending-icon, & .ag-sort-none-icon':
+                        {
+                          fill: '#FFFFFF',
+                          color: '#FFFFFF',
+                        },
+                      // Row and cell styling
+                      '& .ag-row': { display: 'flex', alignItems: 'center' },
+                      '& .ag-cell': {
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'flex-start',
+                        paddingLeft: '4px',
+                        paddingRight: '4px',
+                      },
+                      '& .ag-header-cell': {
+                        paddingLeft: '4px',
+                        paddingRight: '4px',
+                      },
+                      '& .ag-pinned-right-cols-viewport .ag-cell': {
+                        paddingRight: '8px',
+                      },
+                    }}
+                  >
+                    <AgGridReact
+                      ref={gridRef}
+                      rowData={leads}
+                      columnDefs={columnDefs}
+                      defaultColDef={defaultColDef}
+                      domLayout="autoHeight"
+                      suppressRowClickSelection
+                      suppressCellFocus
+                      rowHeight={56}
+                      headerHeight={40}
+                      onGridReady={(params) => {
+                        setGridApi(params.api);
+                        params.api.sizeColumnsToFit();
+                      }}
+                      context={{ componentParent: { deleteLead } }}
+                      getRowId={(params) => params.data.id}
+                      animateRows={true}
+                      suppressNoRowsOverlay={false}
+                      rowClassRules={{
+                        even: (params) =>
+                          params.node &&
+                          params.node.rowIndex != null &&
+                          params.node.rowIndex % 2 === 1,
+                      }}
+                    />
                   </Box>
-                </Box>
-              </Box>
-            )) :
-              <Spinner />
-          }
-        </Box>}
-      {/* {loading &&
-        <Spinner />} */}
-      {/* <DeleteModal
-        onClose={deleteLeadModalClose}
-        open={deleteLeadModal}
-        id={selectedId}
-        modalDialog={modalDialog}
-        modalTitle={modalTitle}
-      /> */}
+
+                  {/* Pagination Footer */}
+                  <Box
+                    sx={{
+                      mt: 1,
+                      px: 2,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                    }}
+                  >
+                    {/* Rows per page */}
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <Typography>Rows&nbsp;per&nbsp;page:</Typography>
+                      <Select
+                        size="small"
+                        value={recordsPerPage}
+                        onChange={handleRecordsPerPageChange}
+                        sx={{ height: 32 }}
+                      >
+                        {[5, 10, 20, 30, 40, 50].map((n) => (
+                          <MenuItem key={n} value={n}>
+                            {n}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                      <Typography sx={{ ml: 1 }}>
+                        {`of ${leadsCount} rows`}
+                      </Typography>
+                    </Stack>
+
+                    {/* Page Navigation */}
+                    <Pagination
+                      page={currentPage}
+                      count={totalPages}
+                      onChange={handlePageChange}
+                      variant="outlined"
+                      shape="rounded"
+                      size="small"
+                      showFirstButton
+                      showLastButton
+                      sx={{
+                        '& .MuiPaginationItem-root': {
+                          borderRadius: '50%',
+                          width: 36,
+                          height: 36,
+                          border: '1px solid #CED4DA',
+                        },
+                        '& .MuiPaginationItem-root:not(.Mui-selected):hover': {
+                          backgroundColor: '#F0F7FF',
+                        },
+                        '& .MuiPaginationItem-root.Mui-selected': {
+                          backgroundColor: '#1A3353',
+                          color: '#fff',
+                          border: '1px solid #1A3353',
+                        },
+                        '& .MuiPaginationItem-root.Mui-selected:hover': {
+                          backgroundColor: '#1A3353',
+                        },
+                      }}
+                    />
+                  </Box>
+                </>
+              )}
+            </Paper>
+          </Grid>
+        </Grid>
+      </Container>
+
+      {/* Delete Modal */}
       <DeleteModal
         onClose={deleteLeadModalClose}
         open={deleteLeadModal}
@@ -551,7 +754,24 @@ export default function Leads(props: any) {
         modalDialog={modalDialog}
         modalTitle={modalTitle}
         DeleteItem={deleteItem}
+        loading={deleteLoading}
+      />
+
+      {/* Success Alert */}
+      <SuccessAlert
+        open={!!successMessage}
+        message={successMessage || ''}
+        onClose={() => setSuccessMessage(null)}
+        type="success"
+      />
+
+      {/* Error Alert */}
+      <ErrorAlert
+        open={!!errorMessage}
+        message={errorMessage || ''}
+        onClose={() => setErrorMessage(null)}
+        showCloseButton={true}
       />
     </Box>
-  )
+  );
 }

@@ -1,106 +1,124 @@
-import React, { useEffect, useRef, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   TextField,
-  FormControl,
-  Select,
   AccordionDetails,
   Accordion,
   AccordionSummary,
   Typography,
   Box,
-  MenuItem,
-  Tooltip,
   Divider,
+  FormControl,
+  Select,
+  MenuItem,
   FormHelperText,
-  Button
-} from '@mui/material'
+  Switch,
+  FormControlLabel,
+  Button,
+  Alert,
+} from '@mui/material';
 import { useQuill } from 'react-quilljs';
 import 'quill/dist/quill.snow.css';
-import { ContactUrl } from '../../services/ApiUrls';
+import { ContactUrl, CompaniesUrl } from '../../services/ApiUrls';
 import { CustomAppBar } from '../../components/CustomAppBar';
-import { fetchData, Header } from '../../components/FetchData';
-import { AntSwitch, CustomSelectField, RequiredTextField } from '../../styles/CssStyled';
+import { fetchData } from '../../components/FetchData';
+import { RequiredTextField } from '../../styles/CssStyled';
+import '../../styles/style.css';
 import { FiChevronDown } from '@react-icons/all-files/fi/FiChevronDown';
 import { FiChevronUp } from '@react-icons/all-files/fi/FiChevronUp';
 import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
-import '../../styles/style.css'
+import { SuccessAlert, ErrorAlert } from '../../components/Button/SuccessAlert';
+import { Spinner } from '../../components/Spinner';
+import { DialogModal } from '../../components/DialogModal';
+import { COUNTRIES } from '../../data/countries';
+import LANGUAGE_CHOICES from '../../data/LANGUAGE';
 
-// interface FormErrors {
-//   [key: string]: string;
-// }
+// Type definitions for form errors
 type FormErrors = {
   salutation?: string[];
   first_name?: string[];
   last_name?: string[];
-  organization?: string[];
-  title?: string[];
   primary_email?: string[];
-  secondary_email?: string[];
   mobile_number?: string[];
-  secondary_number?: string[];
-  department?: string[];
+  company?: string[];
+  title?: string[];
   country?: string[];
   language?: string[];
-  do_not_call?: string[];
-  address_line?: string[];
-  street?: string[];
-  city?: string[];
-  state?: string[];
-  postcode?: string[];
   description?: string[];
-  linked_in_url?: string[];
-  facebook_url?: string[];
-  twitter_username?: string[];
+  department?: string[];
+  non_field_errors?: string[];
+  detail?: string[];
+  [key: string]: string[] | undefined;
 };
 
-// interface FormData {
-//   salutation: string;
-//   // Add other form fields as needed
-// }
+// Interface for form data structure
+interface FormData {
+  salutation: string;
+  first_name: string;
+  last_name: string;
+  primary_email: string;
+  mobile_number: string;
+  company: string;
+  title: string;
+  country: string;
+  language: string;
+  description: string;
+  do_not_call: boolean;
+  department?: string; // Optional field for department
+}
+
+// Available salutation options
+const SALUTATIONS = [
+  { value: 'Mr', label: 'Mr' },
+  { value: 'Ms', label: 'Ms' },
+];
+
 function EditContact() {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   const location = useLocation();
   const { state } = location;
   const { quill, quillRef } = useQuill();
-  // const initialContentRef = useRef(null);
   const initialContentRef = useRef<string | null>(null);
   const pageContainerRef = useRef<HTMLDivElement | null>(null);
 
+  // State variables
   const [hasInitialFocus, setHasInitialFocus] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [showSuccessAlert, setShowSuccessAlert] = useState(false);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [companies, setCompanies] = useState<any[]>([]);
+  const [errors, setErrors] = useState<FormErrors>({});
 
-  const [reset, setReset] = useState(false)
-  const [error, setError] = useState(false)
-  const [formData, setFormData] = useState({
+  // Select dropdown states
+  const [salutationSelectOpen, setSalutationSelectOpen] = useState(false);
+  const [companySelectOpen, setCompanySelectOpen] = useState(false);
+  const [countrySelectOpen, setCountrySelectOpen] = useState(false);
+  const [languageSelectOpen, setLanguageSelectOpen] = useState(false);
+
+  // Form data with default values
+  const [formData, setFormData] = useState<FormData>({
     salutation: '',
     first_name: '',
     last_name: '',
     primary_email: '',
-    secondary_email: '',
     mobile_number: '',
-    secondary_number: '',
-    date_of_birth: '',
-    organization: '',
+    company: '',
     title: '',
-    language: '',
-    do_not_call: false,
-    department: '',
-    address_line: '',
-    street: '',
-    city: '',
-    state: '',
     country: '',
-    postcode: '',
+    language: '',
     description: '',
-    linked_in_url: '',
-    facebook_url: '',
-    twitter_username: ''
-  })
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [countrySelectOpen, setCountrySelectOpen] = useState(false)
+    do_not_call: false,
+    department: '', // Optional field for department
+  });
 
+  // Load companies list on component mount
   useEffect(() => {
-    // Scroll to the top of the page when the component mounts
+    fetchCompanies();
+  }, []);
+
+  // Handle scroll to top and focus when component mounts
+  useEffect(() => {
     window.scrollTo(0, 0);
     // Set focus to the page container after the Quill editor loads its content
     if (quill && !hasInitialFocus) {
@@ -119,486 +137,898 @@ function EditContact() {
     };
   }, [quill, hasInitialFocus]);
 
+  // Populate form data when contact details are available
   useEffect(() => {
-    setFormData(state?.value)
-  }, [state?.id])
+    if (state?.value) {
+      setFormData({
+        salutation: state.value.salutation || '',
+        first_name: state.value.first_name || '',
+        last_name: state.value.last_name || '',
+        primary_email: state.value.primary_email || '',
+        mobile_number: state.value.mobile_number || '',
+        company: state.value.company || '',
+        title: state.value.title || '',
+        country: state.value.country || '',
+        language: state.value.language || '',
+        description: state.value.description || '',
+        do_not_call: state.value.do_not_call || false,
+        department: '',
+      });
+    }
+  }, [state?.id, state?.value]);
 
+  // Initialize Quill editor with description content
   useEffect(() => {
-    if (reset) {
-      setFormData(state?.value)
-      if (quill && initialContentRef.current !== null) {
-        quill.clipboard.dangerouslyPasteHTML(initialContentRef.current);
+    if (quill && formData.description) {
+      // Save the initial state (HTML content) of the Quill editor
+      if (initialContentRef.current === null) {
+        initialContentRef.current = formData.description;
+        quill.clipboard.dangerouslyPasteHTML(formData.description);
       }
-    }
-    return () => {
-      setReset(false)
-    }
-  }, [reset, quill, state?.value])
-
-  useEffect(() => {
-    if (quill && initialContentRef.current === null) {
-      // Save the initial state (HTML content) of the Quill editor only if not already saved
-      initialContentRef.current = formData.description;
-      quill.clipboard.dangerouslyPasteHTML(formData.description);
     }
   }, [quill, formData.description]);
 
-  const handleChange = (e: any) => {
-    const { name, value, files, type, checked } = e.target;
-    if (type === 'checkbox') {
-      setFormData({ ...formData, [name]: checked });
-    }
-    else {
-      setFormData({ ...formData, [name]: value });
-    }
-  };
+  // Fetch companies from API
+  const fetchCompanies = async () => {
+    const token = localStorage.getItem('Token');
+    const cleanToken = token ? token.replace(/^Bearer\s+/, '') : '';
 
-  // const emptyDescription = () => {
-  //   // Reset the Quill editor to its initial state
-  //   setFormData({ ...formData, description: '' })
-  //   if (quill && initialContentRef.current !== null) {
-  //     quill.clipboard.dangerouslyPasteHTML(initialContentRef.current);
-  //   }
-  // };
-  const emptyDescription = () => {
-    setFormData({ ...formData, description: '' })
-    if (quill) {
-      quill.clipboard.dangerouslyPasteHTML('');
-    }
-  };
-
-  const handleSubmit = (e: any) => {
-    e.preventDefault();
-    submitForm();
-  };
-
-  const isValidEmail = (email: any) => {
-    return /^\S+@\S+\.\S+$/.test(email);
-  };
-
-  const isValidPhoneNumber = (phoneNumber: any) => {
-    return /^\+91\d{10}$/.test(phoneNumber);
-  };
-
-  const submitForm = () => {
-    const Header = {
+    const headers = {
       Accept: 'application/json',
       'Content-Type': 'application/json',
-      Authorization: localStorage.getItem('Token'),
-      org: localStorage.getItem('org')
+      Authorization: cleanToken ? `Bearer ${cleanToken}` : '',
+      org: localStorage.getItem('org') || '',
+    };
+
+    try {
+      console.log('Fetching companies with headers:', headers);
+      const response = await fetchData(
+        CompaniesUrl,
+        'GET',
+        null as any,
+        headers
+      );
+
+      if (!response.error) {
+        // Check different possible response structures
+        const companiesList =
+          response.data || response.company_obj_list || response.results || [];
+        setCompanies(companiesList);
+        console.log('Companies loaded:', companiesList);
+      } else {
+        console.error('Error loading companies:', response.error);
+      }
+    } catch (err) {
+      console.error('Error fetching companies:', err);
     }
-    // console.log('Form data:', data);
-    const data = {
-      salutation: formData.salutation,
-      first_name: formData.first_name,
-      last_name: formData.last_name,
-      organization: formData.organization,
-      title: formData.title,
-      primary_email: formData.primary_email,
-      secondary_email: formData.secondary_email,
-      mobile_number: formData.mobile_number,
-      secondary_number: formData.secondary_number,
-      department: formData.department,
-      country: formData.country,
-      language: formData.language,
-      do_not_call: formData.do_not_call,
-      address_line: formData.address_line,
-      street: formData.street,
-      city: formData.city,
-      state: formData.state,
-      description: formData.description,
-      linked_in_url: formData.linked_in_url,
-      facebook_url: formData.facebook_url,
-      twitter_username: formData.twitter_username
-    }
-    // console.log(data, 'edit')
-    fetchData(`${ContactUrl}/${state?.id}/`, 'PUT', JSON.stringify(data), Header)
-      .then((res: any) => {
-        console.log('Form data:', res);
-        if (!res.error) {
-          backbtnHandle()
-          // setResponceError(data.error)
-          // navigate('/contacts')
-          // resetForm()
-        }
-        if (res.error) {
-          setError(true)
-          setErrors(res?.errors?.contact_errors)
-        }
-      })
-      .catch(() => {
-      })
   };
 
-  const backbtnHandle = () => {
-    navigate('/app/contacts/contact-details', { state: { contactId: { id: state?.id }, detail: true } })
-  }
-  const module = 'Contacts'
-  const crntPage = 'Edit Contact'
-  const backBtn = 'Back to Contact Detail'
+  // Extract error message helper
+  const extractErrorMessage = (error: any): string => {
+    if (typeof error === 'string') {
+      return error;
+    }
 
+    if (error && typeof error === 'object') {
+      if (error.string) {
+        return error.string;
+      }
+      if (error.message) {
+        return error.message;
+      }
+      if (error.toString && typeof error.toString === 'function') {
+        const str = error.toString();
+        const match = str.match(/ErrorDetail\(string='([^']+)'/);
+        if (match) {
+          return match[1];
+        }
+        return str;
+      }
+    }
+
+    return String(error);
+  };
+
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setErrors({});
+
+    try {
+      const token = localStorage.getItem('Token');
+      const org = localStorage.getItem('org');
+
+      const headers = {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        Authorization: token
+          ? `Bearer ${token.replace(/^Bearer\s+/i, '')}`
+          : '',
+        org: org || '',
+      };
+
+      if (!headers.Authorization || !headers.org) {
+        setError('Missing authentication tokens');
+        setLoading(false);
+        return;
+      }
+
+      // Get description from Quill editor if available
+      const descriptionContent =
+        quill && quill.root ? quill.root.innerHTML : formData.description;
+
+      // Prepare data for submission
+      const data = {
+        salutation: formData.salutation || null,
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        primary_email: formData.primary_email || null,
+        mobile_number: formData.mobile_number || null,
+        company: formData.company || null,
+        title: formData.title || null,
+        country: formData.country || null,
+        language: formData.language || null,
+        description: descriptionContent || null,
+        do_not_call: formData.do_not_call,
+        department: formData.department || null, // Include department if available
+      };
+
+      console.log('Updating contact data:', data);
+
+      const res = await fetchData(
+        `${ContactUrl}/${state?.id}/`,
+        'PATCH',
+        JSON.stringify(data),
+        headers
+      );
+
+      console.log('API Response:', res);
+
+      if (res.success || !res.error) {
+        setShowSuccessAlert(true);
+        setTimeout(() => {
+          backbtnHandle();
+        }, 2000);
+      } else {
+        // Handle field validation errors
+        if (res.details && typeof res.details === 'object') {
+          console.log('Field errors received:', res.details);
+          const newErrors: FormErrors = {};
+
+          Object.keys(res.details).forEach((field) => {
+            const fieldErrors = res.details[field];
+            console.log(`Error for field ${field}:`, fieldErrors);
+
+            if (Array.isArray(fieldErrors)) {
+              newErrors[field as keyof FormErrors] =
+                fieldErrors.map(extractErrorMessage);
+            } else {
+              newErrors[field as keyof FormErrors] = [
+                extractErrorMessage(fieldErrors),
+              ];
+            }
+          });
+
+          setErrors(newErrors);
+
+          // Also set general error message if provided
+          if (res.message) {
+            setError(res.message);
+          }
+        } else if (typeof res.message === 'string') {
+          setError(res.message);
+        } else {
+          setError('Failed to update contact. Please try again.');
+        }
+      }
+    } catch (err: any) {
+      console.error('API Error:', err);
+
+      if (
+        err.message &&
+        err.message.includes('An unexpected error occurred:')
+      ) {
+        try {
+          const jsonMatch = err.message.match(
+            /An unexpected error occurred: ({.*})/
+          );
+          if (jsonMatch) {
+            const errorData = JSON.parse(jsonMatch[1].replace(/'/g, '"'));
+            console.log('Parsed error data:', errorData);
+
+            const newErrors: FormErrors = {};
+
+            Object.keys(errorData).forEach((field) => {
+              const fieldErrors = errorData[field];
+              console.log(`Error for field ${field}:`, fieldErrors);
+
+              if (Array.isArray(fieldErrors)) {
+                newErrors[field as keyof FormErrors] =
+                  fieldErrors.map(extractErrorMessage);
+              } else {
+                newErrors[field as keyof FormErrors] = [
+                  extractErrorMessage(fieldErrors),
+                ];
+              }
+            });
+
+            setErrors(newErrors);
+            return;
+          }
+        } catch (parseError) {
+          console.error('Error parsing error message:', parseError);
+        }
+      }
+
+      if (err.data?.details && typeof err.data.details === 'object') {
+        console.log('Field errors received:', err.data.details);
+        const newErrors: FormErrors = {};
+
+        Object.keys(err.data.details).forEach((field) => {
+          const fieldErrors = err.data.details[field];
+
+          if (Array.isArray(fieldErrors)) {
+            newErrors[field as keyof FormErrors] =
+              fieldErrors.map(extractErrorMessage);
+          } else {
+            newErrors[field as keyof FormErrors] = [
+              extractErrorMessage(fieldErrors),
+            ];
+          }
+        });
+
+        setErrors(newErrors);
+
+        if (err.data?.message) {
+          setError(err.data.message);
+        }
+      } else if (err.data?.message) {
+        setError(err.data.message);
+      } else if (err.responseText) {
+        try {
+          const parsedError = JSON.parse(err.responseText);
+
+          if (parsedError.details && typeof parsedError.details === 'object') {
+            const newErrors: FormErrors = {};
+
+            Object.keys(parsedError.details).forEach((field) => {
+              const fieldErrors = parsedError.details[field];
+
+              if (Array.isArray(fieldErrors)) {
+                newErrors[field as keyof FormErrors] =
+                  fieldErrors.map(extractErrorMessage);
+              } else {
+                newErrors[field as keyof FormErrors] = [
+                  extractErrorMessage(fieldErrors),
+                ];
+              }
+            });
+
+            setErrors(newErrors);
+
+            if (parsedError.message) {
+              setError(parsedError.message);
+            }
+          } else if (parsedError.message) {
+            setError(parsedError.message);
+          } else {
+            setError('Failed to update contact. Please try again.');
+          }
+        } catch (parseErr) {
+          console.error('Error parsing response:', parseErr);
+          setError('Failed to update contact. Please try again.');
+        }
+      } else {
+        setError(err?.message || 'Failed to update contact. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Close success alert handler
+  const handleCloseSuccessAlert = () => {
+    setShowSuccessAlert(false);
+  };
+
+  // Check if the form has unsaved changes
+  const isFormDirty = () => {
+    if (!state?.value) return false;
+
+    return (
+      formData.salutation !== (state.value.salutation || '') ||
+      formData.first_name !== (state.value.first_name || '') ||
+      formData.last_name !== (state.value.last_name || '') ||
+      formData.primary_email !== (state.value.primary_email || '') ||
+      formData.mobile_number !== (state.value.mobile_number || '') ||
+      formData.company !== (state.value.company || '') ||
+      formData.title !== (state.value.title || '') ||
+      formData.country !== (state.value.country || '') ||
+      formData.language !== (state.value.language || '') ||
+      formData.do_not_call !== (state.value.do_not_call || false) ||
+      formData.description !== (state.value.description || '')
+    );
+  };
+
+  // Handle cancel button click
   const onCancel = () => {
-    setReset(true)
-    // resetForm()
+    if (isFormDirty()) {
+      setShowCancelDialog(true);
+    } else {
+      backbtnHandle();
+    }
+  };
+
+  // Close cancel dialog
+  const handleCloseDialog = () => {
+    setShowCancelDialog(false);
+  };
+
+  // Confirm cancel and navigate back
+  const handleConfirmCancel = () => {
+    setShowCancelDialog(false);
+    backbtnHandle();
+  };
+
+  // Navigate back to contact details
+  const backbtnHandle = () => {
+    navigate('/app/contacts/contact-details', {
+      state: {
+        contactId: { id: state?.id },
+        countries: state?.countries,
+        detail: true,
+      },
+    });
+  };
+
+  // Page metadata
+  const module = 'Contacts';
+  const crntPage = 'Edit Contact';
+  const backBtn = 'Back to Contact Detail';
+
+  // Updated styling for form fields - same as AddContacts
+  const fieldStyles = {
+    fieldContainer: {
+      display: 'flex',
+      justifyContent: 'flex-start',
+      gap: '150px',
+      alignItems: 'flex-start',
+      width: '100%',
+      marginBottom: '10px',
+    },
+    fieldSubContainer: {
+      width: '40%',
+      display: 'flex',
+      flexDirection: 'column' as const,
+    },
+    fieldRow: {
+      display: 'flex',
+      flexDirection: 'row' as const,
+      alignItems: 'flex-start',
+      minHeight: '56px',
+      marginBottom: '0px',
+    },
+    fieldTitle: {
+      width: '130px',
+      marginRight: '15px',
+      marginBottom: 0,
+      textAlign: 'right' as const,
+      paddingTop: '8px',
+    },
+    fieldInput: {
+      flex: 1,
+    },
+  };
+
+  // Reset Quill editor to initial state
+  function resetQuillToInitialState(
+    event: React.MouseEvent<HTMLButtonElement, MouseEvent>
+  ): void {
+    event.preventDefault();
+    if (quill && initialContentRef.current !== null) {
+      quill.clipboard.dangerouslyPasteHTML(initialContentRef.current);
+      setFormData((prev) => ({
+        ...prev,
+        description: initialContentRef.current || '',
+      }));
+    }
   }
-  // console.log(formData, 'editform')
+
+  // Handle form field changes
+  const handleChange = (e: any) => {
+    const { name, value, checked, type } = e.target;
+    setFormData({
+      ...formData,
+      [name]: type === 'checkbox' ? checked : value,
+    });
+
+    // Clear field-specific error when the field is edited
+    if (errors[name as keyof FormErrors]) {
+      setErrors({ ...errors, [name]: undefined });
+    }
+  };
+
   return (
-    <Box sx={{ mt: '60px' }}>
-      <CustomAppBar backbtnHandle={backbtnHandle} module={module} crntPage={crntPage} backBtn={backBtn} onCancel={onCancel} onSubmit={handleSubmit} />
-      <Box sx={{ mt: "120px" }}>
+    <Box sx={{ mt: '60px' }} ref={pageContainerRef}>
+      {/* Custom AppBar with navigation and form controls */}
+      <CustomAppBar
+        module={module}
+        crntPage={crntPage}
+        backBtn={backBtn}
+        backbtnHandle={backbtnHandle}
+        onCancel={onCancel}
+        onSubmit={handleSubmit}
+        variant="form"
+      />
+      <Box sx={{ mt: '120px' }}>
         <form onSubmit={handleSubmit}>
-          {/* lead details */}
           <div style={{ padding: '10px' }}>
-            <div className='leadContainer'>
-              <Accordion style={{ width: '98%' }}
-                defaultExpanded
-              >
-                <AccordionSummary expandIcon={<FiChevronDown style={{ fontSize: '25px' }} />}>
-                  <Typography className='accordion-header'>Contact Information</Typography>
-                </AccordionSummary>
-                <Divider className='divider' />
-                <AccordionDetails>
-                  <Box
-                    sx={{ width: '98%', color: '#1A3353', mb: 1 }}
-                    component='form'
-                    autoComplete='off'
-                  >
-                    <div className='fieldContainer'>
-                      <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>Salutation</div>
-                        <TextField
-                          ref={pageContainerRef} tabIndex={-1}
-                          name='salutation'
-                          className="custom-textfield"
-                          value={formData.salutation}
-                          onChange={handleChange}
-                          style={{ width: '70%' }}
-                          size='small'
-                          error={!!errors?.salutation?.[0]}
-                          helperText={errors?.salutation?.[0] ? errors?.salutation[0] : ''}
-                        />
-                      </div>
-                      <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>First Name</div>
-                        <RequiredTextField
-                          name='first_name'
-                          value={formData.first_name}
-                          onChange={handleChange}
-                          style={{ width: '70%' }}
-                          size='small'
-                          required
-                          error={!!errors?.first_name?.[0]}
-                          helperText={errors?.first_name?.[0] ? errors?.first_name[0] : ''}
-                        />
-                      </div>
-                    </div>
-                    <div className='fieldContainer2'>
-                      <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>Last Name</div>
-                        <RequiredTextField
-                          name='last_name'
-                          value={formData.last_name}
-                          onChange={handleChange}
-                          style={{ width: '70%' }}
-                          size='small'
-                          required
-                          error={!!errors?.last_name?.[0]}
-                          helperText={errors?.last_name?.[0] ? errors?.last_name[0] : ''}
-                        />
-                      </div>
-                      <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>Organization</div>
-                        <RequiredTextField
-                          name='organization'
-                          value={formData.organization}
-                          onChange={handleChange}
-                          style={{ width: '70%' }}
-                          size='small'
-                          required
-                          error={!!errors?.organization?.[0]}
-                          helperText={errors?.organization?.[0] ? errors?.organization[0] : ''}
-                        />
-                      </div>
-                    </div>
-                    <div className='fieldContainer2'>
-                      <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>Primary Email</div>
-                        <RequiredTextField
-                          name='primary_email'
-                          value={formData.primary_email}
-                          onChange={handleChange}
-                          required
-                          style={{ width: '70%' }}
-                          size='small'
-                          error={!!errors?.primary_email?.[0]}
-                          helperText={errors?.primary_email?.[0] ? errors?.primary_email[0] : ''}
-                        />
-                      </div>
-                      <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>Secondary Email</div>
-                        <TextField
-                          name='secondary_email'
-                          value={formData.secondary_email}
-                          onChange={handleChange}
-                          style={{ width: '70%' }}
-                          size='small'
-                          error={!!errors?.secondary_email?.[0]}
-                          helperText={errors?.secondary_email?.[0] ? errors?.secondary_email[0] : ''}
-                        />
-                      </div>
+            {/* Error Alert */}
+            <ErrorAlert
+              open={!!error}
+              message={error || ''}
+              onClose={() => setError(null)}
+              showCloseButton={true}
+              autoHideDuration={5000}
+            />
 
-                    </div>
-                    <div className='fieldContainer2'>
-                      <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>Department</div>
-                        <RequiredTextField
-                          name='department'
-                          id='outlined-error-helper-text'
-                          value={formData.department}
-                          onChange={handleChange}
-                          required
-                          style={{ width: '70%' }}
-                          size='small'
-                          error={!!errors?.department?.[0]}
-                          helperText={errors?.department?.[0] ? errors?.department[0] : ''}
-                        />
-                      </div>
-                      <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>Title</div>
-                        <TextField
-                          name='title'
-                          value={formData.title}
-                          onChange={handleChange}
-                          required
-                          style={{ width: '70%' }}
-                          size='small'
-                          error={!!errors?.title?.[0]}
-                          helperText={errors?.title?.[0] ? errors?.title[0] : ''}
-                        />
-                      </div>
-                    </div>
-                    <div className='fieldContainer2'>
-                      <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>Mobile Number</div>
-                        <Tooltip title="Number must starts with +91">
-                          <RequiredTextField
-                            name='mobile_number'
-                            value={formData.mobile_number}
-                            onChange={handleChange}
-                            required
-                            style={{ width: '70%' }}
-                            size='small'
-                            error={!!errors?.mobile_number?.[0]}
-                            helperText={errors?.mobile_number?.[0] ? errors?.mobile_number[0] : ''}
-                          />
-                        </Tooltip>
-                      </div>
-                      <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>Secondary Number</div>
-                        <Tooltip title="Number must starts with +91">
-                          <RequiredTextField
-                            required
-                            name='secondary_number'
-                            value={formData.secondary_number}
-                            onChange={handleChange}
-                            style={{ width: '70%' }}
-                            size='small'
-                            error={!!errors?.secondary_number?.[0]}
-                            helperText={errors?.secondary_number?.[0] ? errors?.secondary_number[0] : ''}
-                          />
-                        </Tooltip>
-                      </div>
-                    </div>
-                    <div className='fieldContainer2'>
-                      <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>Language</div>
-                        <RequiredTextField
-                          required
-                          name='language'
-                          value={formData.language}
-                          onChange={handleChange}
-                          style={{ width: '70%' }}
-                          size='small'
-                          error={!!errors?.language?.[0]}
-                          helperText={errors?.language?.[0] ? errors?.language[0] : ''}
-                        />
-                      </div>
-                      <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>Do Not Call</div>
-                        <AntSwitch
-                          name='do_not_call'
-                          checked={formData.do_not_call}
-                          onChange={handleChange}
-                          sx={{ mt: '1%' }}
-                        />
-                      </div>
-                    </div>
-                  </Box>
-                </AccordionDetails>
-              </Accordion>
-            </div>
-            {/* address details */}
-            <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', marginTop: '20px' }}>
-              <Accordion style={{ width: '98%' }}
-                defaultExpanded
-              >
-                <AccordionSummary expandIcon={<FiChevronDown style={{ fontSize: '25px' }} />}>
-                  <Typography className='accordion-header'>Address</Typography>
+            {/* Contact Information section */}
+            <div className="leadContainer">
+              <Accordion style={{ width: '98%' }} defaultExpanded>
+                <AccordionSummary
+                  expandIcon={<FiChevronDown style={{ fontSize: '25px' }} />}
+                >
+                  <Typography className="accordion-header">
+                    Contact Information
+                  </Typography>
                 </AccordionSummary>
-                <Divider className='divider' />
+                <Divider className="divider" />
                 <AccordionDetails>
                   <Box
-                    sx={{ width: '98%', color: '#1A3353', mb: 1 }}
-                    component='form'
+                    sx={{
+                      width: '98%',
+                      color: '#1A3353',
+                      mb: 1,
+                      '& .fieldContainer, & .fieldContainer2': {
+                        paddingLeft: '1%',
+                        paddingRight: '8%',
+                      },
+                    }}
                   >
-                    <div className='fieldContainer'>
-                      <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>Billing Address</div>
-                        <RequiredTextField
-                          required
-                          name='address_line'
-                          value={formData.address_line}
-                          onChange={handleChange}
-                          style={{ width: '70%' }}
-                          size='small'
-                          error={!!errors?.address_line?.[0]}
-                          helperText={errors?.address_line?.[0] ? errors?.address_line[0] : ''}
-                        />
+                    {/* Row 1: Salutation and First Name */}
+                    <div style={fieldStyles.fieldContainer}>
+                      <div style={fieldStyles.fieldSubContainer}>
+                        <div style={fieldStyles.fieldRow}>
+                          <div style={fieldStyles.fieldTitle}>Salutation</div>
+                          <div style={fieldStyles.fieldInput}>
+                            <FormControl fullWidth>
+                              <Select
+                                name="salutation"
+                                value={formData.salutation}
+                                onOpen={() => setSalutationSelectOpen(true)}
+                                onClose={() => setSalutationSelectOpen(false)}
+                                open={salutationSelectOpen}
+                                IconComponent={() => (
+                                <div className="select-icon-background">
+                                  {salutationSelectOpen ? (//check if select is open
+
+                                    <FiChevronUp
+                                      className="select-icon"
+                                      onMouseDown={(e) => {
+                                        e.stopPropagation();
+                                        setSalutationSelectOpen(false);// Close the select
+                                      }}
+                                    />
+                                  ) : (
+                                    <FiChevronDown
+                                      className="select-icon"
+                                      onMouseDown={(e) => {
+                                        e.stopPropagation();
+                                        setSalutationSelectOpen(true);// Open the select
+                                      }}
+                                    />
+                                  )}
+
+                                </div>
+                              )}//End IconComponent
+                                // IconComponent={() => (
+                                //   <div className="select-icon-background">
+                                //     {salutationSelectOpen ? (
+                                //       <FiChevronUp className="select-icon" />
+                                //     ) : (
+                                //       <FiChevronDown className="select-icon" />
+                                //     )}
+                                //   </div>
+                                // )}
+                                className={'select'}
+                                onChange={handleChange}
+                                error={!!errors?.salutation?.[0]}
+                              >
+                                <MenuItem value="">
+                                  <em>None</em>
+                                </MenuItem>
+                                {SALUTATIONS.map((sal) => (
+                                  <MenuItem key={sal.value} value={sal.value}>
+                                    {sal.label}
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                              <FormHelperText error={!!errors?.salutation?.[0]}>
+                                {errors?.salutation?.[0] || ' '}
+                              </FormHelperText>
+                            </FormControl>
+                          </div>
+                        </div>
                       </div>
-                      <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>Street</div>
-                        <TextField
-                          name='street'
-                          value={formData.street}
-                          onChange={handleChange}
-                          style={{ width: '70%' }}
-                          size='small'
-                          required
-                          error={!!errors?.street?.[0]}
-                          helperText={errors?.street?.[0] ? errors?.street[0] : ''}
-                        />
+                      <div style={fieldStyles.fieldSubContainer}>
+                        <div style={fieldStyles.fieldRow}>
+                          <div style={fieldStyles.fieldTitle}>First Name </div>
+                          <div style={fieldStyles.fieldInput}>
+                            <RequiredTextField
+                              name="first_name"
+                              value={formData.first_name}
+                              onChange={handleChange}
+                              size="small"
+                              fullWidth
+                              helperText={errors?.first_name?.[0] || ' '}
+                              error={!!errors?.first_name?.[0]}
+                              required
+                            />
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <div className='fieldContainer2'>
-                      <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>City</div>
-                        <TextField
-                          name='city'
-                          value={formData.city}
-                          onChange={handleChange}
-                          style={{ width: '70%' }}
-                          size='small'
-                          required
-                          error={!!errors?.city?.[0]}
-                          helperText={errors?.city?.[0] ? errors?.city[0] : ''}
-                        />
+
+                    {/* Row 2: Last Name and Email */}
+                    <div style={fieldStyles.fieldContainer}>
+                      <div style={fieldStyles.fieldSubContainer}>
+                        <div style={fieldStyles.fieldRow}>
+                          <div style={fieldStyles.fieldTitle}>Last Name</div>
+                          <div style={fieldStyles.fieldInput}>
+                            <RequiredTextField
+                              name="last_name"
+                              value={formData.last_name}
+                              onChange={handleChange}
+                              size="small"
+                              fullWidth
+                              helperText={errors?.last_name?.[0] || ' '}
+                              error={!!errors?.last_name?.[0]}
+                              required
+                            />
+                          </div>
+                        </div>
                       </div>
-                      <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>State</div>
-                        <TextField
-                          name='state'
-                          value={formData.state}
-                          onChange={handleChange}
-                          style={{ width: '70%' }}
-                          size='small'
-                          required
-                          error={!!errors?.state?.[0]}
-                          helperText={errors?.state?.[0] ? errors?.state[0] : ''}
-                        />
+                      <div style={fieldStyles.fieldSubContainer}>
+                        <div style={fieldStyles.fieldRow}>
+                          <div style={fieldStyles.fieldTitle}>Email</div>
+                          <div style={fieldStyles.fieldInput}>
+                            <TextField
+                              name="primary_email"
+                              type="email"
+                              value={formData.primary_email}
+                              onChange={handleChange}
+                              size="small"
+                              fullWidth
+                              helperText={errors?.primary_email?.[0] || ' '}
+                              error={!!errors?.primary_email?.[0]}
+                            />
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <div className='fieldContainer2'>
-                      <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>Postcode</div>
-                        <TextField
-                          name='postcode'
-                          value={formData.postcode}
-                          onChange={handleChange}
-                          style={{ width: '70%' }}
-                          size='small'
-                          required
-                          error={!!errors?.postcode?.[0]}
-                          helperText={errors?.postcode?.[0] ? errors?.postcode[0] : ''}
-                        />
+
+                    {/* Row 3: Company and Job Title */}
+                    <div style={fieldStyles.fieldContainer}>
+                      <div style={fieldStyles.fieldSubContainer}>
+                        <div style={fieldStyles.fieldRow}>
+                          <div style={fieldStyles.fieldTitle}>Company</div>
+                          <div style={fieldStyles.fieldInput}>
+                            <FormControl fullWidth>
+                              <Select
+                                name="company"
+                                value={formData.company}
+                                onOpen={() => setCompanySelectOpen(true)}
+                                onClose={() => setCompanySelectOpen(false)}
+                                open={companySelectOpen}
+                                IconComponent={() => (
+                                <div className="select-icon-background">
+                                  {companySelectOpen ? ( //check if select is open
+                                    <FiChevronUp
+                                      className="select-icon"
+                                      onMouseDown={(e) => {
+                                        e.stopPropagation();
+                                        setCompanySelectOpen(false); // Close the select
+                                      }}
+                                    />
+                                  ) : (
+                                    <FiChevronDown
+                                      className="select-icon"
+                                      onMouseDown={(e) => {
+                                        e.stopPropagation();
+                                        setCompanySelectOpen(true); // Open the select
+                                      }}
+                                    />
+                                  )}
+                                </div>
+                              )} //End IconComponent
+                                // IconComponent={() => (
+                                //   <div className="select-icon-background">
+                                //     {companySelectOpen ? (
+                                //       <FiChevronUp className="select-icon" />
+                                //     ) : (
+                                //       <FiChevronDown className="select-icon" />
+                                //     )}
+                                //   </div>
+                                // )}
+                                className={'select'}
+                                onChange={handleChange}
+                                error={!!errors?.company?.[0]}
+                              >
+                                <MenuItem value="">
+                                  <em>None</em>
+                                </MenuItem>
+                                {companies.map((company: any) => (
+                                  <MenuItem key={company.id} value={company.id}>
+                                    {company.name}
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                              <FormHelperText error={!!errors?.company?.[0]}>
+                                {errors?.company?.[0] || ' '}
+                              </FormHelperText>
+                            </FormControl>
+                          </div>
+                        </div>
                       </div>
-                      <div className='fieldSubContainer'>
-                        <div className='fieldTitle'>Country</div>
-                        <FormControl sx={{ width: '70%' }}>
-                          <Select
-                            name='country'
-                            value={formData.country}
-                            open={countrySelectOpen}
-                            onClick={() => setCountrySelectOpen(!countrySelectOpen)}
-                            IconComponent={() => (
-                              <div onClick={() => setCountrySelectOpen(!countrySelectOpen)} className="select-icon-background">
-                                {countrySelectOpen ? <FiChevronUp className='select-icon' /> : <FiChevronDown className='select-icon' />}
-                              </div>
-                            )}
-                            MenuProps={{
-                              PaperProps: {
+                      <div style={fieldStyles.fieldSubContainer}>
+                        <div style={fieldStyles.fieldRow}>
+                          <div style={fieldStyles.fieldTitle}>Job Title</div>
+                          <div style={fieldStyles.fieldInput}>
+                            <TextField
+                              name="title"
+                              value={formData.title}
+                              onChange={handleChange}
+                              size="small"
+                              fullWidth
+                              helperText={errors?.title?.[0] || ' '}
+                              error={!!errors?.title?.[0]}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Row 4: Language and Department */}
+                    <div style={fieldStyles.fieldContainer}>
+                      <div style={fieldStyles.fieldSubContainer}>
+                        <div style={fieldStyles.fieldRow}>
+                          <div style={fieldStyles.fieldTitle}>Language</div>
+                          <div style={fieldStyles.fieldInput}>
+                            <FormControl fullWidth>
+                              <Select
+                                name="language"
+                                value={formData.language}
+                                onOpen={() => setLanguageSelectOpen(true)}
+                                onClose={() => setLanguageSelectOpen(false)}
+                                open={languageSelectOpen}
+                                IconComponent={() => (
+                                <div className="select-icon-background">
+                                  {languageSelectOpen ? ( //check if select is open
+                                    <FiChevronUp
+                                      className="select-icon"
+                                      onMouseDown={(e) => {
+                                        e.stopPropagation();
+                                        setLanguageSelectOpen(false); // Close the select
+                                      }}
+                                    />
+                                  ) : (
+                                    <FiChevronDown
+                                      className="select-icon"
+                                      onMouseDown={(e) => {
+                                        e.stopPropagation();
+                                        setLanguageSelectOpen(true); // Open the select
+                                      }}
+                                    />
+                                  )}
+                                </div>
+                              )} //End IconComponent
+                                // IconComponent={() => (
+                                //   <div className="select-icon-background">
+                                //     {languageSelectOpen ? (
+                                //       <FiChevronUp className="select-icon" />
+                                //     ) : (
+                                //       <FiChevronDown className="select-icon" />
+                                //     )}
+                                //   </div>
+                                // )}
+                                className={'select'}
+                                onChange={handleChange}
+                                error={!!errors?.language?.[0]}
+                                displayEmpty
+                              >
+                                <MenuItem value="">
+                                  <em>None</em>
+                                </MenuItem>
+                                {LANGUAGE_CHOICES.map(([code, label]) => (
+                                  <MenuItem key={code} value={code}>
+                                    {label}
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                              <FormHelperText error={!!errors?.language?.[0]}>
+                                {errors?.language?.[0] || ' '}
+                              </FormHelperText>
+                            </FormControl>
+                          </div>
+                        </div>
+                      </div>
+                      <div style={fieldStyles.fieldSubContainer}>
+                        <div style={fieldStyles.fieldRow}>
+                          <div style={fieldStyles.fieldTitle}>Department</div>
+                          <div style={fieldStyles.fieldInput}>
+                            <TextField
+                              name="department"
+                              value={formData.department}
+                              onChange={handleChange}
+                              size="small"
+                              fullWidth
+                              placeholder="Enter department"
+                              helperText={errors?.department?.[0] || ' '}
+                              error={!!errors?.department?.[0]}
+                              InputProps={{
                                 style: {
-                                  height: '200px'
-                                }
-                              }
-                            }}
-                            className={'select'}
-                            onChange={handleChange}
-                            error={!!errors?.country?.[0]}
-                          >
-                            {state?.countries?.length && state?.countries.map((option: any) => (
-                              <MenuItem key={option[0]} value={option[0]}>
-                                {option[1]}
-                              </MenuItem>
-                            ))}
+                                  color: '#9e9e9e',
+                                },
+                              }}
+                              sx={{
+                                '& .MuiInputBase-input.Mui-disabled': {
+                                  WebkitTextFillColor: '#9e9e9e',
+                                  cursor: 'default',
+                                },
+                                '& .MuiOutlinedInput-root.Mui-disabled': {
+                                  '& > fieldset': {
+                                    borderColor: '#e0e0e0',
+                                  },
+                                },
+                              }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
 
-                          </Select>
-                          <FormHelperText>{errors?.country?.[0] ? errors?.country[0] : ''}</FormHelperText>
-                        </FormControl>
+                    {/* Row 5: Phone Number and Do not Call */}
+                    <div style={fieldStyles.fieldContainer}>
+                      <div style={fieldStyles.fieldSubContainer}>
+                        <div style={fieldStyles.fieldRow}>
+                          <div style={fieldStyles.fieldTitle}>Phone Number</div>
+                          <div style={fieldStyles.fieldInput}>
+                            <TextField
+                              name="mobile_number"
+                              value={formData.mobile_number}
+                              onChange={handleChange}
+                              size="small"
+                              fullWidth
+                              placeholder="+12345678900"
+                              helperText={
+                                errors?.mobile_number?.[0]
+                                  ? errors.mobile_number[0]
+                                  : 'International format: +1234567890'
+                              }
+                              error={!!errors?.mobile_number?.[0]}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div style={fieldStyles.fieldSubContainer}>
+                        <div style={fieldStyles.fieldRow}>
+                          <div style={fieldStyles.fieldTitle}>Do not Call</div>
+                          <div style={fieldStyles.fieldInput}>
+                            <FormControlLabel
+                              control={
+                                <Switch
+                                  checked={formData.do_not_call}
+                                  onChange={handleChange}
+                                  name="do_not_call"
+                                  color="primary"
+                                />
+                              }
+                              label=""
+                            />
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </Box>
                 </AccordionDetails>
               </Accordion>
             </div>
-            {/* Description details  */}
-            <div className='leadContainer'>
-              <Accordion
-                defaultExpanded
-                style={{ width: '98%' }}>
-                <AccordionSummary expandIcon={<FiChevronDown style={{ fontSize: '25px' }} />}>
-                  <Typography className='accordion-header'>Description</Typography>
+
+            {/* Description section with Quill rich text editor */}
+            <div className="leadContainer">
+              <Accordion defaultExpanded style={{ width: '98%' }}>
+                <AccordionSummary
+                  expandIcon={<FiChevronDown style={{ fontSize: '25px' }} />}
+                >
+                  <Typography className="accordion-header">
+                    Description
+                  </Typography>
                 </AccordionSummary>
-                <Divider className='divider' />
+                <Divider className="divider" />
                 <AccordionDetails>
                   <Box
                     sx={{ width: '100%', color: '#1A3353', mb: 1 }}
-                    component='form'
+                    component="form"
                     noValidate
-                    autoComplete='off'
+                    autoComplete="off"
                   >
-                    <div className='DescriptionDetail'>
-                      <div className='descriptionTitle'>Description</div>
+                    <div className="DescriptionDetail">
+                      <div className="descriptionTitle">Description</div>
                       <div style={{ width: '100%', marginBottom: '3%' }}>
                         <div ref={quillRef} />
+                        {errors?.description && (
+                          <FormHelperText error={true} sx={{ mt: 1 }}>
+                            {errors.description[0]}
+                          </FormHelperText>
+                        )}
                       </div>
                     </div>
-                    <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', mt: 1.5 }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        mt: 1.5,
+                      }}
+                    >
+                      {/* Cancel button for the editor */}
                       <Button
-                        className='header-button'
-                        onClick={emptyDescription}
-                        size='small'
-                        variant='contained'
-                        startIcon={<FaTimesCircle style={{ fill: 'white', width: '16px', marginLeft: '2px' }} />}
-                        sx={{ backgroundColor: '#2b5075', ':hover': { backgroundColor: '#1e3750' } }}
+                        className="header-button"
+                        onClick={resetQuillToInitialState}
+                        size="small"
+                        variant="contained"
+                        startIcon={
+                          <FaTimesCircle
+                            style={{
+                              fill: 'white',
+                              width: '16px',
+                              marginLeft: '2px',
+                            }}
+                          />
+                        }
+                        sx={{
+                          backgroundColor: '#2b5075',
+                          ':hover': { backgroundColor: '#1e3750' },
+                        }}
                       >
                         Cancel
                       </Button>
+                      {/* Save button for the editor */}
                       <Button
-                        className='header-button'
-                        onClick={() => setFormData({ ...formData, description: quillRef.current.firstChild.innerHTML })}
-                        variant='contained'
-                        size='small'
-                        startIcon={<FaCheckCircle style={{ fill: 'white', width: '16px', marginLeft: '2px' }} />}
+                        className="header-button"
+                        onClick={() => {
+                          if (quillRef?.current?.firstChild) {
+                            setFormData({
+                              ...formData,
+                              description:
+                                quillRef.current.firstChild.innerHTML,
+                            });
+                          }
+                        }}
+                        variant="contained"
+                        size="small"
+                        startIcon={
+                          <FaCheckCircle
+                            style={{
+                              fill: 'white',
+                              width: '16px',
+                              marginLeft: '2px',
+                            }}
+                          />
+                        }
                         sx={{ ml: 1 }}
                       >
                         Save
@@ -608,76 +1038,32 @@ function EditContact() {
                 </AccordionDetails>
               </Accordion>
             </div>
-            {/* Socials */}
-            <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', marginTop: '20px' }}>
-              <Accordion
-                defaultExpanded
-                style={{ width: '98%' }}>
-                <AccordionSummary expandIcon={<FiChevronDown style={{ fontSize: '25px' }} />}>
-                  <Typography className='accordion-header'>Socials</Typography>
-                </AccordionSummary>
-                <Divider className='divider' />
-                <AccordionDetails>
-                  <Box
-                    sx={{ width: '100%', color: '#1A3353', mb: 1 }}
-                    component='form'
-                    noValidate
-                    autoComplete='off'
-                  >
-                    <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-around' }}>
-                      <div style={{ width: '40%', display: 'flex', flexDirection: 'row' }}>
-                        <div style={{ marginRight: '10px', fontSize: '13px', width: '22%', textAlign: 'right', fontWeight: 'bold' }}>Linkedin Url</div>
-                        <TextField
-                          name='linked_in_url'
-                          value={formData.linked_in_url}
-                          onChange={handleChange}
-                          style={{ width: '70%' }}
-                          size='small'
-                          error={!!errors?.linked_in_url?.[0]}
-                          helperText={errors?.linked_in_url?.[0] ? errors?.linked_in_url[0] : ''}
-                        />
-                      </div>
-                      <div style={{ width: '40%', display: 'flex', flexDirection: 'row' }}>
-                        <div style={{ marginRight: '10px', fontSize: '13px', width: '22%', textAlign: 'right', fontWeight: 'bold' }}>Facebook Url</div>
-                        <TextField
-                          name='facebook_url'
-                          value={formData.facebook_url}
-                          onChange={handleChange}
-                          style={{ width: '70%' }}
-                          size='small'
-                          error={!!errors?.facebook_url?.[0]}
-                          helperText={errors?.facebook_url?.[0] ? errors?.facebook_url[0] : ''}
-                        />
-                      </div>
-                    </div>
-                    <div style={{ marginTop: '20px' }}>
-                      <div style={{
-                        width: '40%', display: 'flex', flexDirection: 'row'
-                        , marginLeft: '5%'
-                      }}>
-                        <div style={{ marginRight: '10px', fontSize: '13px', width: '22%', textAlign: 'right', fontWeight: 'bold' }}>Twitter Username</div>
-                        <RequiredTextField
-                          required
-                          name='twitter_username'
-                          value={formData.twitter_username}
-                          onChange={handleChange}
-                          style={{ width: '70%' }}
-                          size='small'
-                          error={!!errors?.twitter_username?.[0]}
-                          helperText={errors?.twitter_username?.[0] ? errors?.twitter_username[0] : ''}
-                        />
-                      </div>
-                    </div>
-                  </Box>
-                </AccordionDetails>
-              </Accordion>
-            </div>
           </div>
         </form>
       </Box>
 
+      {/* Success Alert */}
+      <SuccessAlert
+        open={showSuccessAlert}
+        message="Contact updated successfully"
+        onClose={handleCloseSuccessAlert}
+        type="success"
+      />
+
+      {/* Cancel Confirmation Dialog */}
+      <DialogModal
+        isDelete={showCancelDialog}
+        onClose={handleCloseDialog}
+        onConfirm={handleConfirmCancel}
+        modalDialog="Are you sure you want to cancel? All unsaved changes will be lost."
+        confirmText="Yes, Cancel"
+        cancelText="Continue Editing"
+      />
+
+      {/* Loading overlay */}
+      {loading && <Spinner />}
     </Box>
-  )
+  );
 }
 
-export default EditContact
+export default EditContact;

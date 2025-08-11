@@ -1,492 +1,811 @@
-import { Avatar, AvatarGroup, Box, Button, Card, List, Stack, Tab, TablePagination, Tabs, Toolbar, Typography, Link, Select, MenuItem, TableContainer, Table, TableSortLabel, TableCell, TableRow, TableHead, Paper, TableBody, IconButton, Container } from '@mui/material'
-import React, { SyntheticEvent, useEffect, useState } from 'react'
-import { Spinner } from '../../components/Spinner';
-import { FiPlus } from "@react-icons/all-files/fi/FiPlus";
-import { FiChevronLeft } from "@react-icons/all-files/fi/FiChevronLeft";
-import { FiChevronRight } from "@react-icons/all-files/fi/FiChevronRight";
-import { CustomTab, CustomToolbar, FabLeft, FabRight, StyledTableCell, StyledTableRow } from '../../styles/CssStyled';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchData } from '../../components/FetchData';
-import { getComparator, stableSort } from '../../components/Sorting';
-import { Label } from '../../components/Label';
-import { FaTrashAlt } from 'react-icons/fa';
-import { OpportunityUrl } from '../../services/ApiUrls';
-import { DeleteModal } from '../../components/DeleteModal';
+import {
+  Box,
+  Button,
+  Stack,
+  Typography,
+  Paper,
+  Select,
+  MenuItem,
+  Container,
+  Pagination,
+  Avatar,
+  IconButton,
+  InputBase,
+  FormControl,
+  Chip,
+  TextField,
+  InputAdornment,
+  Grid,
+} from '@mui/material';
+import { Spinner } from '../../components/Spinner';
+import { FiPlus } from '@react-icons/all-files/fi/FiPlus';
+import { FiSearch } from '@react-icons/all-files/fi/FiSearch';
+import { FaDownload, FaTrashAlt, FaEdit,FaFileExport } from 'react-icons/fa';
 import { FiChevronUp } from '@react-icons/all-files/fi/FiChevronUp';
 import { FiChevronDown } from '@react-icons/all-files/fi/FiChevronDown';
-import { EnhancedTableHead } from '../../components/EnchancedTableHead';
+import { CustomToolbar } from '../../styles/CssStyled';
+import { fetchData } from '../../components/FetchData';
+import { OpportunityUrl } from '../../services/ApiUrls';
+import { DeleteModal } from '../../components/DeleteModal';
+import { useUser } from '../../context/UserContext';
+import { opportunityStageShortNames } from '../../constants/stageNames';
+import { getStageColor, stageChipStyles } from '../../constants/stageColors';
+import { CustomButton } from '../../components/Button';
+import { SuccessAlert, ErrorAlert } from '../../components/Button/SuccessAlert';
 
+// AG Grid imports
+import { ModuleRegistry, ClientSideRowModelModule } from 'ag-grid-community';
+import { AgGridReact } from 'ag-grid-react';
+import 'ag-grid-community/styles/ag-grid.css';
+import 'ag-grid-community/styles/ag-theme-alpine.css';
+import { ICellRendererParams } from 'ag-grid-community';
 
-interface HeadCell {
-  disablePadding: boolean;
-  id: any;
-  label: string;
-  numeric: boolean;
-}
-const headCells: readonly HeadCell[] = [
-  // {
-  //   id: '',
-  //   numeric: false,
-  //   disablePadding: false,
-  //   label: ''
-  // },
-  {
-    id: 'name',
-    numeric: false,
-    disablePadding: false,
-    label: 'Name'
-  },
-  {
-    id: 'account',
-    numeric: false,
-    disablePadding: false,
-    label: 'Account'
-  },
-  {
-    id: 'assigned_to',
-    numeric: false,
-    disablePadding: false,
-    label: 'Assigned To'
-  },
-  {
-    id: 'stage',
-    numeric: false,
-    disablePadding: false,
-    label: 'Stage'
-  },
-  {
-    id: 'created_on',
-    numeric: false,
-    disablePadding: false,
-    label: 'Created On'
-  },
-  {
-    id: 'tags',
-    numeric: false,
-    disablePadding: false,
-    label: 'Tags'
-  },
-  {
-    id: 'lead_source',
-    numeric: false,
-    disablePadding: false,
-    label: 'Lead Source'
-  },
-  {
-    id: '',
-    numeric: true,
-    disablePadding: false,
-    label: 'Action'
-  }
-]
+ModuleRegistry.registerModules([ClientSideRowModelModule]);
 
-type Item = {
-  id: string;
-};
-
-export default function Opportunities(props: any) {
-  const navigate = useNavigate()
-  const [tab, setTab] = useState('open');
+export default function Opportunities() {
+  const navigate = useNavigate();
+  const { user } = useUser();
   const [loading, setLoading] = useState(true);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [allOpportunities, setAllOpportunities] = useState([]); // Store ALL opportunities
+  const [contacts, setContacts] = useState([]);
+  const [tags, setTags] = useState([]);
+  const [currency, setCurrency] = useState([]);
+  const [leadSource, setLeadSource] = useState([]);
+  const [account, setAccount] = useState([]);
+  const [stage, setStage] = useState([]);
+  const [teams, setTeams] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [countries, setCountries] = useState([]);
+  const [deleteRowModal, setDeleteRowModal] = useState(false);
+  const [selectedId, setSelectedId] = useState('');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const [rowsPerPage, setRowsPerPage] = useState(10)
-  const [page, setPage] = useState(0)
-
-  const [opportunities, setOpportunities] = useState([])
-  const [openOpportunities, setOpenOpportunities] = useState([])
-  const [openOpportunitiesCount, setOpenOpportunitiesCount] = useState(0)
-  const [closedOpportunities, setClosedOpportunities] = useState([])
-  const [closedOpportunitiesCount, setClosedOpportunitiesCount] = useState(0)
-  const [contacts, setContacts] = useState([])
-  const [tags, setTags] = useState([])
-  const [currency, setCurrency] = useState([])
-  const [leadSource, setLeadSource] = useState([])
-  const [account, setAccount] = useState([])
-  const [stage, setStage] = useState([])
-  const [teams, setTeams] = useState([])
-  const [users, setUsers] = useState([])
-  const [countries, setCountries] = useState([])
-
-  const [deleteRowModal, setDeleteRowModal] = useState(false)
-
-  const [selectOpen, setSelectOpen] = useState(false);
-
-  const [order, setOrder] = useState('asc')
-  const [orderBy, setOrderBy] = useState('name')
-
-  const [selected, setSelected] = useState<string[]>([]);
-  const [selectedId, setSelectedId] = useState<string[]>([]);
-  const [isSelectedId, setIsSelectedId] = useState<boolean[]>([]);
-
+  // Pagination states
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [recordsPerPage, setRecordsPerPage] = useState<number>(10);
-  const [totalPages, setTotalPages] = useState<number>(0);
 
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedStage, setSelectedStage] = useState('');
+  const [selectedContact, setSelectedContact] = useState('');
+  const [stageSelectOpen, setStageSelectOpen] = useState(false);
+  const [contactSelectOpen, setContactSelectOpen] = useState(false);
 
+  const gridRef = useRef<AgGridReact>(null);
+  const [gridApi, setGridApi] = useState<any>(null);
+
+  // Fetch ALL opportunities once on component mount
   useEffect(() => {
-    getOpportunities()
-  }, [currentPage, recordsPerPage]);
+    getAllOpportunities();
+  }, []);
 
-  const getOpportunities = async () => {
+  // Frontend filtering and pagination
+  const filteredAndPaginatedData = useMemo(() => {
+    let filtered = [...allOpportunities];
+
+    // Apply search filter
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = filtered.filter((opportunity: any) =>
+        opportunity.name?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Apply stage filter
+    if (selectedStage) {
+      filtered = filtered.filter((opportunity: any) =>
+        opportunity.stage === selectedStage
+      );
+    }
+
+    // Apply contact filter
+    if (selectedContact) {
+      filtered = filtered.filter((opportunity: any) =>
+        opportunity.contact?.id === selectedContact
+      );
+    }
+
+    // Calculate pagination
+    const totalFiltered = filtered.length;
+    const totalPages = Math.ceil(totalFiltered / recordsPerPage);
+    const startIndex = (currentPage - 1) * recordsPerPage;
+    const endIndex = startIndex + recordsPerPage;
+    const paginatedData = filtered.slice(startIndex, endIndex);
+
+    return {
+      data: paginatedData,
+      totalItems: totalFiltered,
+      totalPages: totalPages
+    };
+  }, [allOpportunities, searchTerm, selectedStage, selectedContact, currentPage, recordsPerPage]);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedStage, selectedContact]);
+
+  // Fetch ALL opportunities from API (no pagination, no filters)
+  const getAllOpportunities = async () => {
     const Header = {
       Accept: 'application/json',
       'Content-Type': 'application/json',
       Authorization: localStorage.getItem('Token'),
-      org: localStorage.getItem('org')
-    }
+      org: localStorage.getItem('org'),
+    };
+
     try {
-      const offset = (currentPage - 1) * recordsPerPage;
-      await fetchData(`${OpportunityUrl}/?offset=${offset}&limit=${recordsPerPage}`, 'GET', null as any, Header)
-        // fetchData(`${OpportunityUrl}/`, 'GET', null as any, Header)
-        .then((res) => {
-          // console.log(res, 'Opportunity')
-          if (!res.error) {
-            setOpportunities(res?.opportunities)
-            // setOpenOpportunities(res?.open_leads?.open_leads)
-            // setOpenOpportunitiesCount(res?.open_leads?.leads_count)
-            // setClosedOpportunities(res?.close_leads?.close_leads)
-            // setClosedOpportunitiesCount(res?.close_leads?.leads_count)
-            setTotalPages(Math.ceil(res?.opportunities_count / recordsPerPage));
-            setContacts(res?.contacts_list)
-            setAccount(res?.accounts_list)
-            setCurrency(res?.currency)
-            setLeadSource(res?.lead_source)
-            setStage(res?.stage)
-            setTags(res?.tags)
-            setTeams(res?.teams)
-            setUsers(res?.users)
-            setCountries(res?.countries)
-            setLoading(false)
-          }
-        })
-    }
-    catch (error) {
-      console.error('Error fetching data:', error);
-    }
-  }
+      // Fetch ALL opportunities - remove offset, limit, and filter parameters
+      const url = `${OpportunityUrl}/`;
 
-  const handleChangeTab = (e: SyntheticEvent, val: any) => {
-    setTab(val)
-  }
+      const data = await fetchData(url, 'GET', null as any, Header);
 
+      if (!data.error) {
+        setAllOpportunities(data.opportunities || []);
+
+        // Set reference data
+        setContacts(data.contacts_list || []);
+        setAccount(data.accounts_list || []);
+        setCurrency(data.currency || []);
+        setLeadSource(data.lead_source || []);
+        setStage(data.stage || []);
+        setTags(data.tags || []);
+        setTeams(data.teams || []);
+        setUsers(data.users || []);
+        setCountries(data.countries || []);
+
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Error fetching opportunities:', error);
+      setErrorMessage('Failed to fetch opportunities');
+      setLoading(false);
+    }
+  };
+
+  // Get unique stages from ALL opportunities for filtering
+  const getUniqueStages = () => {
+    if (!allOpportunities || allOpportunities.length === 0) return [];
+
+    const stages = allOpportunities
+      .map((item: any) => item?.stage)
+      .filter((stage: string) => stage && stage.trim() !== '')
+      .filter(
+        (stage: string, index: number, arr: string[]) =>
+          arr.indexOf(stage) === index
+      );
+
+    return stages;
+  };
+
+  // Get unique contacts from ALL opportunities for filtering
+  const getUniqueContacts = () => {
+    const contacts = allOpportunities
+      .map((item: any) => {
+        if (item?.contact) {
+          const fullName = `${item.contact.salutation || ''} ${
+            item.contact.first_name || ''
+          } ${item.contact.last_name || ''}`.trim();
+          return { id: item.contact.id, name: fullName };
+        }
+        return null;
+      })
+      .filter((contact: any) => contact && contact.name)
+      .filter(
+        (contact: any, index: number, arr: any[]) =>
+          arr.findIndex((c: any) => c.id === contact.id) === index
+      );
+    return contacts;
+  };
+
+  // Navigation handlers
   const onAddOpportunity = () => {
     if (!loading) {
       navigate('/app/opportunities/add-opportunity', {
         state: {
           detail: false,
-          contacts: contacts || [], leadSource: leadSource || [], currency: currency || [], tags: tags || [], account: account || [], stage: stage || [], users: users || [], teams: teams || [], countries: countries || []
-        }
-      })
+          contacts: contacts || [],
+          leadSource: leadSource || [],
+          currency: currency || [],
+          tags: tags || [],
+          account: account || [],
+          stage: stage || [],
+          users: users || [],
+          teams: teams || [],
+          countries: countries || [],
+        },
+      });
     }
-  }
-  const handleRequestSort = (event: any, property: any) => {
-    const isAsc = orderBy === property && order === 'asc'
-    setOrder(isAsc ? 'desc' : 'asc')
-    setOrderBy(property)
-  }
-
-  type SelectedItem = string[];
-
-  const isSelected = (name: string, selected: SelectedItem): boolean => {
-    return selected.indexOf(name) !== -1;
   };
 
+  const handleViewOpportunity = (opportunity: any) => {
+    navigate('view', {
+      state: { opportunityData: opportunity },
+    });
+  };
 
   const opportunityDetail = (opportunityId: any) => {
-    navigate(`/app/opportunities/opportunity-details`, {
+    navigate(`/app/opportunities/${opportunityId}/pipeline`, {
       state: {
-        opportunityId, detail: true,
-        contacts: contacts || [], leadSource: leadSource || [], currency: currency || [], tags: tags || [], account: account || [], stage: stage || [], users: users || [], teams: teams || [], countries: countries || []
-      }
-    })
-  }
+        opportunityId,
+        detail: true,
+        contacts: contacts || [],
+        leadSource: leadSource || [],
+        currency: currency || [],
+        tags: tags || [],
+        account: account || [],
+        stage: stage || [],
+        users: users || [],
+        teams: teams || [],
+        countries: countries || [],
+      },
+    });
+  };
 
+  // Delete handlers
   const deleteRow = (id: any) => {
-    setSelectedId(id)
-    setDeleteRowModal(!deleteRowModal)
-  }
-  const deleteRowModalClose = () => {
-    setDeleteRowModal(false)
-    setSelectedId([])
-  }
+    setSelectedId(id);
+    setDeleteRowModal(true);
+  };
 
-  const deleteItem = () => {
+  const deleteRowModalClose = () => {
+    setDeleteRowModal(false);
+    setSelectedId('');
+  };
+
+  const deleteItem = async () => {
+    setDeleteLoading(true);
     const Header = {
       Accept: 'application/json',
       'Content-Type': 'application/json',
       Authorization: localStorage.getItem('Token'),
-      org: localStorage.getItem('org')
+      org: localStorage.getItem('org'),
+    };
+
+    try {
+      const res = await fetchData(
+        `${OpportunityUrl}/${selectedId}/`,
+        'DELETE',
+        null as any,
+        Header
+      );
+
+      if (!res.error) {
+        setSuccessMessage('Opportunity deleted successfully');
+        deleteRowModalClose();
+        getAllOpportunities(); // Refresh all data
+      } else {
+        setErrorMessage('Failed to delete opportunity');
+      }
+    } catch (error) {
+      setErrorMessage('Failed to delete opportunity');
+    } finally {
+      setDeleteLoading(false);
     }
-    fetchData(`${OpportunityUrl}/${selectedId}/`, 'DELETE', null as any, Header)
-      .then((res: any) => {
-        console.log('delete:', res);
-        if (!res.error) {
-          deleteRowModalClose()
-          getOpportunities()
-        }
-      })
-      .catch(() => {
-      })
-  }
-  const handlePreviousPage = () => {
-    setLoading(true)
-    setCurrentPage((prevPage) => Math.max(prevPage - 1, 1));
   };
 
-  const handleNextPage = () => {
-    setLoading(true)
-    setCurrentPage((prevPage) => Math.min(prevPage + 1, totalPages));
+  // Pagination handlers
+  const handlePageChange = (_e: any, page: number) => {
+    setCurrentPage(page);
   };
 
-  const handleRecordsPerPage = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setLoading(true)
-    setRecordsPerPage(parseInt(event.target.value));
+  const handleRecordsPerPageChange = (event: any) => {
+    setRecordsPerPage(Number(event.target.value));
     setCurrentPage(1);
   };
-  // const handleSelectAllClick = () => {
-  //   if (tab === 'open') {
-  //     if (selected.length === openOpportunities.length) {
-  //       setSelected([]);
-  //       setSelectedId([]);
-  //       setIsSelectedId([]);
-  //     } else {
-  //       const newSelectedIds = openOpportunities.map((opportunities) => opportunities?.id);
-  //       setSelected(newSelectedIds);
-  //       setSelectedId(newSelectedIds);
-  //       setIsSelectedId(newSelectedIds.map(() => true));
-  //     }
-  //   } else {
-  //     if (selected.length === closedOpportunities.length) {
-  //       setSelected([]);
-  //       setSelectedId([]);
-  //       setIsSelectedId([]);
-  //     } else {
-  //       const newSelectedIds = closedOpportunities.map((opportunities) => opportunities?.id);
-  //       setSelected(newSelectedIds);
-  //       setSelectedId(newSelectedIds);
-  //       setIsSelectedId(newSelectedIds.map(() => true));
-  //     }
-  //   }
 
-  // };
+  // Grid theme
+  const gridTheme = {
+    '--ag-header-background-color': '#2E4258',
+    '--ag-header-foreground-color': '#FFFFFF',
+    '--ag-header-border-color': 'transparent',
+    '--ag-odd-row-background-color': '#FFFFFF',
+    '--ag-even-row-background-color': '#F3F8FF',
+    '--ag-row-border-color': '#E0E0E0',
+  } as React.CSSProperties;
 
-  const handleRowSelect = (accountId: string) => {
-    const selectedIndex = selected.indexOf(accountId);
-    let newSelected: string[] = [...selected];
-    let newSelectedIds: string[] = [...selectedId];
-    let newIsSelectedId: boolean[] = [...isSelectedId];
+  // AG Grid column definitions
+  const columnDefs = [
+    {
+      headerName: 'Name',
+      field: 'name',
+      flex: 2,
+      sortable: true,
 
-    if (selectedIndex === -1) {
-      newSelected.push(accountId);
-      newSelectedIds.push(accountId);
-      newIsSelectedId.push(true);
-    } else {
-      newSelected.splice(selectedIndex, 1);
-      newSelectedIds.splice(selectedIndex, 1);
-      newIsSelectedId.splice(selectedIndex, 1);
-    }
+      cellRenderer: (params: ICellRendererParams) => (
+        <span
+          style={{
+            cursor: 'pointer',
+            color: '#1976d2',
+            fontWeight: 500,
+          }}
+          onClick={() => handleViewOpportunity(params.data)}
+        >
+          {params.value || '—'}
+        </span>
+      ),
+    },
+    {
+      headerName: 'Contact',
+      field: 'contact',
+      flex: 2,
+      sortable: true,
 
-    setSelected(newSelected);
-    setSelectedId(newSelectedIds);
-    setIsSelectedId(newIsSelectedId);
-  };
-  const modalDialog = 'Are You Sure You want to delete selected Opportunity?'
-  const modalTitle = 'Delete Opportunity'
+      cellRenderer: (params: ICellRendererParams) => {
+        const contact = params.value;
+        if (!contact) return '—';
 
-  const recordsList = [[10, '10 Records per page'], [20, '20 Records per page'], [30, '30 Records per page'], [40, '40 Records per page'], [50, '50 Records per page']]
-  const tag = ['account', 'leading', 'account', 'leading', 'account', 'leading', 'account', 'account', 'leading', 'account', 'leading', 'account', 'leading', 'leading', 'account', 'account', 'leading', 'account', 'leading', 'account', 'leading', 'account', 'leading', 'account', 'leading', 'account', 'leading']
-  return (
-    <Box sx={{ mt: '60px' }}>
-      <CustomToolbar sx={{ flexDirection: 'row-reverse' }}>
-        {/* <Tabs defaultValue={tab} onChange={handleChangeTab} sx={{ mt: '26px' }}>
-          <CustomTab value="open" label="Open"
+        return `${contact.salutation || ''} ${contact.first_name || ''} ${
+          contact.last_name || ''
+        }`.trim();
+      },
+    },
+    {
+      headerName: 'Stage',
+      field: 'stage',
+      flex: 1.5,
+      sortable: true,
+
+      cellRenderer: (params: ICellRendererParams) => {
+        if (!params.value) return '—';
+
+        return (
+          <Chip
+            label={
+              opportunityStageShortNames[params.value.toLowerCase()] ||
+              params.value
+            }
             sx={{
-              backgroundColor: tab === 'open' ? '#F0F7FF' : '#284871',
-              color: tab === 'open' ? '#3f51b5' : 'white',
-            }} />
-          <CustomTab value="closed" label="Closed"
-            sx={{
-              backgroundColor: tab === 'closed' ? '#F0F7FF' : '#284871',
-              color: tab === 'closed' ? '#3f51b5' : 'white',
-              ml: '5px',
+              backgroundColor: getStageColor(params.value),
+              ...stageChipStyles,
             }}
           />
-        </Tabs> */}
+        );
+      },
+    },
+    {
+      headerName: 'Expected Result',
+      field: 'amount',
+      flex: 1.5,
+      sortable: true,
 
-        <Stack sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-          <Select
-            value={recordsPerPage}
-            onChange={(e: any) => handleRecordsPerPage(e)}
-            open={selectOpen}
-            onOpen={() => setSelectOpen(true)}
-            onClose={() => setSelectOpen(false)}
-            className={`custom-select`}
-            onClick={() => setSelectOpen(!selectOpen)}
-            IconComponent={() => (
-              <div onClick={() => setSelectOpen(!selectOpen)} className="custom-select-icon">
-                {selectOpen ? <FiChevronUp style={{ marginTop: '12px' }} /> : <FiChevronDown style={{ marginTop: '12px' }} />}
-              </div>
-            )}
-            sx={{
-              '& .MuiSelect-select': { overflow: 'visible !important' }
-            }}
-          >
-            {recordsList?.length && recordsList.map((item: any, i: any) => (
-              <MenuItem key={i} value={item[0]}>
-                {item[1]}
-              </MenuItem>
-            ))}
-          </Select>
-          <Box sx={{ borderRadius: '7px', backgroundColor: 'white', height: '40px', minHeight: '40px', maxHeight: '40px', display: 'flex', flexDirection: 'row', alignItems: 'center', mr: 1, p: '0px' }}>
-            <FabLeft onClick={handlePreviousPage} disabled={currentPage === 1}>
-              <FiChevronLeft style={{ height: '15px' }} />
-            </FabLeft>
-            <Typography sx={{ mt: 0, textTransform: 'lowercase', fontSize: '15px', color: '#1A3353', textAlign: 'center' }}>
-              {currentPage} to {totalPages}
-              {/* {renderPageNumbers()} */}
+      cellRenderer: (params: ICellRendererParams) => {
+        const { data } = params;
+        if (!data.amount || !data.probability) return '—';
+
+        return (
+          <Stack>
+            <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+              {data.currency || '$'} {Number(data.amount).toLocaleString()}
             </Typography>
-            <FabRight onClick={handleNextPage} disabled={currentPage === totalPages}>
-              <FiChevronRight style={{ height: '15px' }} />
-            </FabRight>
-          </Box>
-          <Button
-            variant='contained'
-            startIcon={<FiPlus className='plus-icon' />}
-            onClick={onAddOpportunity}
-            className={'add-button'}
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              {data.probability}% Probability
+            </Typography>
+          </Stack>
+        );
+      },
+    },
+    {
+      headerName: 'Close Date',
+      field: 'expected_close_date',
+      flex: 1.5,
+      sortable: true,
+
+      valueFormatter: (params: any) => params.value || '—',
+    },
+    {
+      headerName: 'Assigned To',
+      field: 'assigned_to',
+      flex: 2,
+      sortable: true,
+
+      cellRenderer: (params: ICellRendererParams) => {
+        const assignedTo = params.value;
+        if (!assignedTo || !assignedTo.length) return '—';
+
+        const user = assignedTo[0]?.user_details;
+        if (!user) return '—';
+
+        return (
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <Avatar
+              src={user.profile_pic || ''}
+              alt={user.first_name || user.email || 'User'}
+              sx={{ width: 32, height: 32 }}
+            >
+              {user.first_name?.charAt(0).toUpperCase() || 'U'}
+            </Avatar>
+            <Typography>
+              {user.first_name && user.last_name
+                ? `${user.first_name} ${user.last_name}`
+                : user.email || '—'}
+            </Typography>
+          </Stack>
+        );
+      },
+    },
+    {
+      headerName: 'Actions',
+      field: 'id',
+      minWidth: 120,
+      flex: 1,
+      sortable: false,
+
+      cellRenderer: (params: ICellRendererParams) => (
+        <Stack direction="row" spacing={1}>
+          <IconButton
+            size="small"
+            onClick={() => opportunityDetail(params.value)}
+            sx={{ color: '#0F2A55' }}
           >
-            Add Opportunity
+            <FaEdit />
+          </IconButton>
+          {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
+            <IconButton
+              size="small"
+              onClick={() => deleteRow(params.value)}
+              sx={{ color: '#D32F2F' }}
+            >
+              <FaTrashAlt />
+            </IconButton>
+          )}
+        </Stack>
+      ),
+    },
+  ];
+
+  // Default column definition
+  const defaultColDef = {
+    resizable: true,
+    sortable: true,
+
+    wrapText: true,
+    autoHeight: true,
+    unSortIcon: true,
+    cellStyle: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+      paddingLeft: '8px',
+    },
+  };
+
+  // Modal dialog text
+  const modalDialog = 'Are you sure you want to delete this opportunity?';
+  const modalTitle = 'Delete Opportunity';
+
+  return (
+    <Box sx={{ mt: '65px' }}>
+      {/* Toolbar with search and filters */}
+      <CustomToolbar
+        sx={{
+          bgcolor: '#F3F8FF !important',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          p: '2px 16px',
+          borderBottom: '1px solid #e0e0e0',
+          flexWrap: 'wrap',
+          gap: 2,
+          minHeight: '44px',
+        }}
+      >
+        {/* LEFT: Filters */}
+        <Stack
+          direction="row"
+          spacing={2}
+          alignItems="center"
+          sx={{ flexWrap: 'wrap' }}
+        >
+          {/* Search */}
+          <Box
+            sx={{ position: 'relative', display: 'flex', alignItems: 'center' }}
+          >
+            <FiSearch
+              style={{
+                position: 'absolute',
+                left: 12,
+                zIndex: 1,
+                color: '#666',
+              }}
+            />
+            <InputBase
+              placeholder="Search opportunities..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+              }}
+              sx={{
+                background: '#fff',
+                borderRadius: 2,
+                px: 2,
+                py: 0.5,
+                pl: 5,
+                border: '1px solid #D9D9D9',
+                minWidth: 200,
+                fontSize: 16,
+              }}
+            />
+          </Box>
+
+          {/* Stage Filter */}
+          <FormControl sx={{ minWidth: 160 }}>
+            <Select
+              displayEmpty
+              value={selectedStage}
+              onChange={(e) => {
+                setSelectedStage(e.target.value);
+              }}
+              onOpen={() => setStageSelectOpen(true)}
+              onClose={() => setStageSelectOpen(false)}
+              open={stageSelectOpen}
+              IconComponent={() => (
+                <div style={{ marginRight: 8 }}>
+                  {stageSelectOpen ? <FiChevronUp /> : <FiChevronDown />}
+                </div>
+              )}
+              sx={{
+                background: '#fff',
+                borderRadius: 2,
+                fontSize: 16,
+                height: 40,
+              }}
+            >
+              <MenuItem value="">
+                <em>All Stages</em>
+              </MenuItem>
+              {getUniqueStages().map((stage: string, index: number) => (
+                <MenuItem key={`stage-${index}-${stage}`} value={stage}>
+                  <Chip
+                    label={stage}
+                    size="small"
+                    sx={{
+                      backgroundColor: getStageColor(stage),
+                      color: 'white',
+                      fontWeight: 'bold',
+                      fontSize: '0.7rem',
+                      height: '20px',
+                      minWidth: '80px',
+                    }}
+                  />
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          {/* Contact Filter */}
+          <FormControl sx={{ minWidth: 160 }}>
+            <Select
+              displayEmpty
+              value={selectedContact}
+              onChange={(e) => {
+                setSelectedContact(e.target.value);
+              }}
+              onOpen={() => setContactSelectOpen(true)}
+              onClose={() => setContactSelectOpen(false)}
+              open={contactSelectOpen}
+              IconComponent={() => (
+                <div style={{ marginRight: 8 }}>
+                  {contactSelectOpen ? <FiChevronUp /> : <FiChevronDown />}
+                </div>
+              )}
+              sx={{
+                background: '#fff',
+                borderRadius: 2,
+                fontSize: 16,
+                height: 40,
+              }}
+            >
+              <MenuItem value="">
+                <em>All Contacts</em>
+              </MenuItem>
+              {getUniqueContacts().map((contact: any) => (
+                <MenuItem key={contact.id} value={contact.id}>
+                  {contact.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Stack>
+
+        {/* RIGHT: Export + Add Opportunity */}
+        <Stack direction="row" spacing={2}>
+          <Button
+            variant="outlined"
+            sx={{
+              background: '#2B5075',
+              boxShadow:
+                '0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px rgba(0,0,0,0.14), 0px 1px 5px rgba(0,0,0,0.12)',
+              borderRadius: '4px',
+              textTransform: 'none',
+              border: 'none',
+              color: '#FFFFFF',
+              '&:hover': {
+                backgroundColor: '#fff !important',
+                color: '#284871 !important',
+                border: '1px solid #284871 !important',
+              },
+            }}
+            startIcon={<FaFileExport />}
+            onClick={() => {}}
+          >
+            Export
           </Button>
+          
         </Stack>
       </CustomToolbar>
-      <Container sx={{ width: '100%', maxWidth: '100%', minWidth: '100%' }}>
-        <Box sx={{ width: '100%', minWidth: '100%', m: '15px 0px 0px 0px' }}>
-          <Paper sx={{ width: 'cal(100%-15px)', mb: 2, p: '0px 15px 15px 15px' }}>
-            {/* <Toolbar sx={{ pl: { sm: 2 }, pr: { xs: 1, sm: 1 } }}>
-                            <Tooltip title='Delete'>
-                                <Button
-                                    variant='outlined'
-                                    onClick={() => !!(selectedId?.length !== 0) && handleDelete(selectedId)}
-                                    startIcon={<FaTrashAlt color='red' style={{ width: '12px' }} />}
-                                    size='small'
-                                    color='error'
-                                    sx={{ fontWeight: 'bold', textTransform: 'capitalize', color: 'red', borderColor: 'darkgrey' }}
-                                >
-                                    Delete
-                                </Button>
-                            </Tooltip>
-                            {selected.length > 0 ? (
-                                <Typography sx={{ flex: '1 1 100%', margin: '5px' }} color='inherit' variant='subtitle1' component='div'>
-                                    {selected.length} selected
-                                </Typography>
-                            ) : (
-                                ''
-                            )}
-                        </Toolbar> */}
-            <TableContainer>
-              <Table>
-                <EnhancedTableHead
-                  numSelected={selected.length}
-                  order={order}
-                  orderBy={orderBy}
-                  // onSelectAllClick={handleSelectAllClick}
-                  onRequestSort={handleRequestSort}
-                  // rowCount={tab === 'open' ? openOpportunities?.length : closedOpportunities?.length}
-                  rowCount={opportunities?.length}
-                  numSelectedId={selectedId}
-                  isSelectedId={isSelectedId}
-                  headCells={headCells}
-                />
-                <TableBody>
-                  {
-                    opportunities?.length > 0
-                      ? stableSort(opportunities, getComparator(order, orderBy)).map((item: any, index: any) => {
-                        // .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((item: any, index: any) => {
-                        const labelId = `enhanced-table-checkbox-${index}`
-                        const rowIndex = selectedId.indexOf(item.id);
-                        return (
-                          <TableRow
-                            tabIndex={-1}
-                            key={index}
-                            sx={{ border: 0, '&:nth-of-type(even)': { backgroundColor: 'whitesmoke' }, color: 'rgb(26, 51, 83)', textTransform: 'capitalize' }}
-                          >
-                            {/* <TableCell
-                                                                    padding='checkbox'
-                                                                    sx={{ border: 0, color: 'inherit' }}
-                                                                    align='left'
-                                                                >
-                                                                    <Checkbox
-                                                                        checked={isSelectedId[rowIndex] || false}
-                                                                        onChange={() => handleRowSelect(item.id)}
-                                                                        inputProps={{
-                                                                            'aria-labelledby': labelId,
-                                                                        }}
-                                                                        sx={{ border: 0, color: 'inherit' }}
-                                                                    />
-                                                                </TableCell> */}
-                            <TableCell
-                              className='tableCell-link'
-                              onClick={() => opportunityDetail(item.id)}
-                            >
-                              {item?.name ? item?.name : '---'}
-                            </TableCell>
-                            <TableCell className='tableCell'>
-                              {item?.account ? item?.account?.name : '---'}
-                            </TableCell>
-                            <TableCell className='tableCell'>
-                              {item?.assigned_to ? <Avatar src={item?.assigned_to} alt={item?.assigned_to} /> : '----'}
-                              {/* <Stack style={{ display: 'flex', flexDirection: 'row', alignItems: "center" }}>
-                                  <Avatar src={item?.lead?.created_by?.profile_pic} alt={item?.lead?.created_by?.email} /><Stack sx={{ ml: 1 }}>{item?.lead?.account_name ? item?.lead?.account_name : '---'}</Stack>
-                                </Stack> */}
-                            </TableCell>
-                            <TableCell className='tableCell'>
-                              {item?.stage ? item?.stage : '---'}
-                            </TableCell>
-                            <TableCell className='tableCell'>
-                              {item?.created_on_arrow ? item?.created_on_arrow : '---'}
-                            </TableCell>
-                            <TableCell className='tableCell'>
-                              {item?.tags?.length ? item?.tags.map((tag: any, i: any) => <Stack sx={{ mr: 0.5 }}> <Label tags={tag} /></Stack>) : '---'}
-                            </TableCell>
-                            <TableCell className='tableCell'>
-                              {item?.lead_source ? item?.lead_source : '---'}
-                            </TableCell>
-                            <TableCell className='tableCell'>
-                              {/* <IconButton>
-                                                                        <FaEdit
-                                                                            onClick={() => EditItem(item?.id)}
-                                                                            style={{ fill: '#1A3353', cursor: 'pointer', width: '18px' }}
-                                                                        />
-                                                                    </IconButton> */}
-                              <IconButton>
-                                <FaTrashAlt
-                                  onClick={() => deleteRow(item?.id)}
-                                  style={{ fill: '#1A3353', cursor: 'pointer', width: '15px' }} />
-                              </IconButton>
-                            </TableCell>
-                          </TableRow>
-                        )
-                      })
-                      : <TableRow> <TableCell colSpan={8} sx={{ border: 0 }}><Spinner /></TableCell></TableRow>
-                  }
-                  {/* {
-                    emptyRows > 0 && (
-                        <TableRow
-                            style={{
-                                height: (dense ? 33 : 53) * emptyRows
-                            }}
-                        >
-                            <TableCell colSpan={6} />
-                        </TableRow>
-                    )
-                  }
- */}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Paper>
-        </Box>
+
+      {/* Grid + Pagination */}
+      <Container
+        maxWidth={false}
+        disableGutters
+        sx={{ pl: 1, pr: 1, mt: 2, px: 1, ml: 1.5 }}
+      >
+        <Grid container spacing={0}>
+          <Grid item xs={12}>
+            <Paper
+              sx={{ width: '98%', mb: 2, p: 0, border: 'none' }}
+              elevation={0}
+              square
+            >
+              {loading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+                  <Spinner />
+                </Box>
+              ) : (
+                <>
+                  {/* AG Grid */}
+                  <Box
+                    className="ag-theme-alpine opportunities-ag-theme"
+                    sx={{
+                      width: '100%',
+                      ...gridTheme,
+                      '--ag-icon-color': '#FFFFFF',
+                      '& .ag-root-wrapper': {
+                        border: 'none',
+                      },
+                      // Styles for rounded header corners
+                      '& .ag-header': {
+                        borderRadius: '8px 8px 0 0',
+                        overflow: 'hidden',
+                      },
+                      '& .ag-header-cell:first-of-type': {
+                        borderTopLeftRadius: '8px',
+                      },
+                      '& .ag-header-cell:last-of-type': {
+                        borderTopRightRadius: '8px',
+                      },
+                      '& .ag-header-row': {
+                        borderBottom: 'none',
+                      },
+                      // Icon styling
+                      '& .ag-header-cell-label .ag-icon, & .ag-header-cell-label .ag-icon-wrapper svg':
+                        {
+                          fill: '#FFFFFF',
+                          color: '#FFFFFF',
+                        },
+                      '& .ag-sort-ascending-icon, & .ag-sort-descending-icon, & .ag-sort-none-icon':
+                        {
+                          fill: '#FFFFFF',
+                          color: '#FFFFFF',
+                        },
+                      // Row and cell styling
+                      '& .ag-row': { display: 'flex', alignItems: 'center' },
+                      '& .ag-cell': {
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'flex-start',
+                        paddingLeft: '4px',
+                        paddingRight: '4px',
+                      },
+                      '& .ag-header-cell': {
+                        paddingLeft: '4px',
+                        paddingRight: '4px',
+                      },
+                      '& .ag-pinned-right-cols-viewport .ag-cell': {
+                        paddingRight: '8px',
+                      },
+                    }}
+                  >
+                    <AgGridReact
+                      ref={gridRef}
+                      rowData={filteredAndPaginatedData.data} // Use filtered and paginated data
+                      columnDefs={columnDefs}
+                      defaultColDef={defaultColDef}
+                      domLayout="autoHeight"
+                      suppressRowClickSelection
+                      suppressCellFocus
+                      rowHeight={56}
+                      headerHeight={40}
+                      onGridReady={(params) => {
+                        setGridApi(params.api);
+                        params.api.sizeColumnsToFit();
+                      }}
+                      context={{ componentParent: { deleteRow } }}
+                      getRowId={(params) => params.data.id}
+                      animateRows={true}
+                      suppressNoRowsOverlay={false}
+                      rowClassRules={{
+                        even: (params) =>
+                          params.node &&
+                          params.node.rowIndex != null &&
+                          params.node.rowIndex % 2 === 1,
+                      }}
+                    />
+                  </Box>
+
+                  {/* Pagination Footer */}
+                  <Box
+                    sx={{
+                      mt: 1,
+                      px: 2,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                    }}
+                  >
+                    {/* Rows per page */}
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <Typography>Rows&nbsp;per&nbsp;page:</Typography>
+                      <Select
+                        size="small"
+                        value={recordsPerPage}
+                        onChange={handleRecordsPerPageChange}
+                        sx={{ height: 32 }}
+                      >
+                        {[5, 10, 20, 30, 40, 50].map((n) => (
+                          <MenuItem key={n} value={n}>
+                            {n}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                      <Typography sx={{ ml: 1 }}>
+                        {`of ${filteredAndPaginatedData.totalItems} rows`}
+                      </Typography>
+                    </Stack>
+
+                    {/* Page Navigation */}
+                    <Pagination
+                      page={currentPage}
+                      count={filteredAndPaginatedData.totalPages}
+                      onChange={handlePageChange}
+                      variant="outlined"
+                      shape="rounded"
+                      size="small"
+                      showFirstButton
+                      showLastButton
+                      sx={{
+                        '& .MuiPaginationItem-root': {
+                          borderRadius: '50%',
+                          width: 36,
+                          height: 36,
+                          border: '1px solid #CED4DA',
+                        },
+                        '& .MuiPaginationItem-root:not(.Mui-selected):hover': {
+                          backgroundColor: '#F0F7FF',
+                        },
+                        '& .MuiPaginationItem-root.Mui-selected': {
+                          backgroundColor: '#1E3A5F',
+                          color: '#fff',
+                          border: '1px solid #284871',
+                        },
+                        '& .MuiPaginationItem-root.Mui-selected:hover': {
+                          backgroundColor: '#1E3A5F',
+                        },
+                      }}
+                    />
+                  </Box>
+                </>
+              )}
+            </Paper>
+          </Grid>
+        </Grid>
       </Container>
+
+      {/* Delete Modal */}
       <DeleteModal
         onClose={deleteRowModalClose}
         open={deleteRowModal}
@@ -494,7 +813,24 @@ export default function Opportunities(props: any) {
         modalDialog={modalDialog}
         modalTitle={modalTitle}
         DeleteItem={deleteItem}
+        loading={deleteLoading}
+      />
+
+      {/* Success Alert */}
+      <SuccessAlert
+        open={!!successMessage}
+        message={successMessage || ''}
+        onClose={() => setSuccessMessage(null)}
+        type="success"
+      />
+
+      {/* Error Alert */}
+      <ErrorAlert
+        open={!!errorMessage}
+        message={errorMessage || ''}
+        onClose={() => setErrorMessage(null)}
+        showCloseButton={true}
       />
     </Box>
-  )
+  );
 }

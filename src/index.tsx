@@ -4,6 +4,10 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { GoogleOAuthProvider } from '@react-oauth/google'
+import '@fontsource/roboto/400.css';
+import '@fontsource/roboto/600.css';
+import '@fontsource/roboto/700.css';
+
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -11,7 +15,7 @@ const root = ReactDOM.createRoot(
 root.render(
   <React.StrictMode>
     <GoogleOAuthProvider clientId={process.env.REACT_APP_CLIENT_ID as string}>
-    <App />
+      <App />
     </GoogleOAuthProvider>
   </React.StrictMode>
 );

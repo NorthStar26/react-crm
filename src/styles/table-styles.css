@@ -1,0 +1,192 @@
+/* Общие стили для таблиц в приложении */
+.app-table-container {
+  width: 100%;
+}
+
+/* AG Grid базовая тема */
+.app-table-theme {
+  /* Заголовки */
+  --ag-header-background-color: #2e4258;
+  --ag-header-foreground-color: #ffffff;
+  --ag-header-border-color: #d9ebfe;
+
+  /* Строки */
+  --ag-odd-row-background-color: #ffffff;
+  --ag-even-row-background-color: #f9fafb;
+  --ag-row-border-color: #d9ebfe;
+  --ag-row-hover-color: #f3f8ff;
+
+  /* Ячейки */
+  --ag-cell-horizontal-padding: 4px;
+  --ag-header-cell-padding: 8px 20px;
+}
+
+/* Стили ячеек */
+.app-table-theme .ag-header-cell,
+.app-table-mui-table th {
+  padding-left: 20px;
+  padding-right: 20px;
+  background: #2e4258;
+  color: #ffffff;
+  font-weight: bold;
+  font-family: Roboto;
+  font-size: 16px;
+  border-bottom: 1px solid #d9ebfe;
+}
+
+.app-table-theme .ag-cell,
+.app-table-mui-table td {
+  display: flex;
+  align-items: center;
+  padding-left: 20px;
+  padding-right: 20px;
+  border: none;
+}
+
+/* Выравнивание заголовков */
+.app-table-theme .ag-header-cell-label {
+  justify-content: flex-start;
+}
+
+/* Стили для Material UI Table */
+.app-table-mui-table tr {
+  height: 80px;
+  border-bottom: 1px solid #d9ebfe;
+}
+
+.app-table-mui-table tr:nth-of-type(odd) {
+  background-color: #ffffff;
+}
+
+.app-table-mui-table tr:nth-of-type(even) {
+  background-color: #f9fafb;
+}
+
+.app-table-mui-table tr:hover {
+  background-color: #f3f8ff;
+}
+
+/* Стили для статусов */
+.app-table-status-chip {
+  font-weight: 500;
+  font-size: 14px;
+  min-width: 110px;
+  height: 30px;
+  border-radius: 999px;
+  display: flex;
+  justify-content: center;
+  padding: 4px 12px;
+  color: #fff;
+  border: 1px solid transparent;
+  box-shadow: inset 0px 0px 0px 2px rgba(0, 153, 102, 0.2);
+}
+
+/* Стили для заголовков таблиц */
+.dashboard-table-header {
+  border-radius: 8px 8px 0 0;
+  overflow: hidden;
+}
+
+.dashboard-table-header .MuiTableRow-root {
+  border-radius: 8px 8px 0 0;
+}
+
+/* Стили для ячеек заголовка */
+.dashboard-table-header-cell {
+  background: #2e4258 !important; /* Добавляем !important для гарантированного применения */
+  color: #ffffff !important; /* Добавляем !important для белого цвета */
+  font-weight: bold !important;
+  font-family: Roboto;
+  font-size: 16px;
+  border-bottom: 1px solid #d9ebfe;
+  padding: 8px 20px;
+  line-height: 1.2; /* Удаляем общий text-align: center - будем контролировать в компоненте */
+}
+
+/* Специальные стили для выравнивания ячеек заголовка */
+.dashboard-table-header-cell:first-of-type {
+  border-radius: 8px 0 0 0;
+  text-align: left;
+}
+
+.dashboard-table-header-cell:last-of-type {
+  border-radius: 0 8px 0 0;
+  text-align: center !important; /* Переопределяем для правой ячейки */
+}
+
+/* Стили для строк тела таблицы */
+.dashboard-table-row {
+  height: 80px;
+  border-bottom: 1px solid #d9ebfe;
+}
+
+.dashboard-table-row:nth-of-type(odd) {
+  background-color: #ffffff;
+}
+
+.dashboard-table-row:nth-of-type(even) {
+  background-color: #f9fafb;
+}
+
+.dashboard-table-row:hover {
+  background-color: #f3f8ff;
+}
+
+/* Стили для ячеек тела таблицы */
+.dashboard-table-cell {
+  border: none;
+}
+
+/* Стили для ячейки с контактной информацией */
+.dashboard-name-cell {
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-primary-text {
+  font-weight: 600;
+  font-size: 16px;
+  color: #1a3353;
+  font-weight: bold !important;
+}
+
+.dashboard-secondary-text {
+  font-weight: 400;
+  font-size: 14px;
+  color: #1a3353;
+  cursor: pointer;
+}
+
+.dashboard-secondary-text:hover {
+  color: #1976d2;
+}
+
+.dashboard-date-cell {
+  color: #1a3353;
+  font-size: 16px;
+}
+
+.dashboard-status-cell {
+  text-align: right;
+  padding-right: 0px !important;
+}
+
+/* Стили для статусных чипов лидов */
+.lead-status-chip {
+  color: #fff;
+  font-weight: 500;
+  font-size: 14px;
+  min-width: 100px;
+  height: 30px;
+  border-radius: 9999px;
+  justify-content: center;
+  box-shadow: inset 0px 0px 0px 2px rgba(0, 153, 102, 0.2);
+  padding: 2px 12px;
+  border: 1px solid transparent;
+}
+
+.opportunity-stage-chip {
+  color: white !important;
+  padding: 2px 8px; /* Добавляем такой же отступ как для lead-status-chip */
+  min-width: 110px; /* Добавляем такую же минимальную ширину */
+}
